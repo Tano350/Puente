@@ -1,0 +1,5 @@
+# Vercel arma la app desde el código; las claves nunca se suben.
+.env
+.env.*
+dist
+dev-dist

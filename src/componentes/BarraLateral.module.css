@@ -1,0 +1,65 @@
+.barra {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .barra {
+    display: flex;
+    flex-direction: column;
+    flex: none;
+    width: 232px;
+    padding: 24px 14px 20px;
+    background: var(--barra-fondo);
+    border-right: 1px solid var(--borde);
+  }
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 12px;
+}
+
+.nombre {
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 28px;
+}
+
+.relleno {
+  flex: 1;
+}
+
+.enlace {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 6px;
+  color: var(--barra-texto);
+  font-size: 16px;
+  text-decoration: none;
+}
+
+.enlace:hover {
+  color: var(--tinta);
+}
+
+.activo,
+.activo:hover {
+  background: var(--activo-fondo);
+  box-shadow: inset 3px 0 0 var(--acento);
+  color: var(--barra-activo);
+  font-weight: 500;
+}

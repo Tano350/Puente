@@ -1,0 +1,19 @@
+.marco {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}
+
+.contenido {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding-top: env(safe-area-inset-top);
+}
+
+@media (min-width: 1024px) {
+  .marco {
+    flex-direction: row;
+  }
+}

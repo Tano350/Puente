@@ -1,0 +1,108 @@
+/* Colores del lienzo de diseño. El oscuro es el principal; el claro sigue al dispositivo. */
+:root {
+  color-scheme: dark;
+  --fondo: #1e242c;
+  --agujero: #29313b;
+  --tinta: #edf0f3;
+  --sec: #a6b0bb;
+  --apagado: #47515d;
+  --interruptor: #47515d;
+  --acento: #3fa9f5;
+  --sobre: #1a1c1e;
+  --ahora: #3fa9f5;
+  --panel: #272f39;
+  --borde: #323b46;
+  --regla: #4d5866;
+  --trazo: #45515f;
+  --sec-tarjeta: #d3dae2;
+  --barra-fondo: #171c22;
+  --barra-texto: #a6b0bb;
+  --barra-activo: #3fa9f5;
+  --activo-fondo: #272f39;
+  --cinta: #e3d7b0;
+  --cinta-texto: #1e1f1c;
+  --en-contra: #ff8a4c;
+  --a-favor: #4cc9a0;
+  --error: #ff9b8f;
+  --sombra: rgba(0, 0, 0, 0.45);
+
+  --letra: 'Barlow', system-ui, sans-serif;
+  --letra-titulo: 'Barlow Semi Condensed', 'Arial Narrow', sans-serif;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+    --fondo: #eef1f4;
+    --agujero: #dce2e8;
+    --tinta: #1e242c;
+    --sec: #56606b;
+    --apagado: #b7c0c9;
+    --interruptor: #9aa5b1;
+    --acento: #1a6db8;
+    --sobre: #ffffff;
+    --ahora: #1a6db8;
+    --panel: #ffffff;
+    --borde: #d5dce3;
+    --regla: #aeb8c3;
+    --trazo: #c2cbd5;
+    --sec-tarjeta: #333b45;
+    --barra-fondo: #ffffff;
+    --barra-texto: #56606b;
+    --barra-activo: #1a6db8;
+    --activo-fondo: #eef1f4;
+    --en-contra: #c2410c;
+    --a-favor: #0f7b5a;
+    --error: #b42318;
+    --sombra: rgba(30, 36, 44, 0.18);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#raiz {
+  height: 100%;
+  margin: 0;
+}
+
+/* Fondo de rejilla de rack: perforación fina escalonada */
+body {
+  font-family: var(--letra);
+  font-size: 16px;
+  color: var(--tinta);
+  background-color: var(--fondo);
+  background-image:
+    radial-gradient(var(--agujero) 1.1px, transparent 1.3px),
+    radial-gradient(var(--agujero) 1.1px, transparent 1.3px);
+  background-size: 8px 8px;
+  background-position:
+    0 0,
+    4px 4px;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

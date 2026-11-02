@@ -1,0 +1,17 @@
+.seccion {
+  padding: 24px 20px;
+}
+
+@media (min-width: 1024px) {
+  .seccion {
+    padding: 32px 40px;
+  }
+}
+
+.titulo {
+  margin: 0;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 36px;
+}
