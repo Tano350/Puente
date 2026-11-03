@@ -1,6 +1,8 @@
 import type { Persona } from '../datos/consultas.ts'
-import { diasEntre, estadia, rangoLargo } from '../datos/fechas.ts'
+import { diaLargo, diasEntre, estadia, hoyEnCalifornia, indiceEnElViaje, rango, rangoLargo, VIAJE } from '../datos/fechas.ts'
+import { tieneFechas, type ConFechas } from '../datos/grupo.ts'
 import { carreraCorta, primerNombre } from '../datos/nombres.ts'
+import { useTextos } from '../textos.ts'
 import { Avatar } from './Avatar.tsx'
 import { Icono } from './Icono.tsx'
 import estilos from './Tarjeta.module.css'
@@ -45,13 +47,62 @@ export function Tarjeta({ persona }: { persona: Persona }) {
   )
 }
 
-// Lo que acompaña a la tarjeta en el computador: emprendimiento, objetivos y estadía
-export function DetallePersona({ persona }: { persona: Persona }) {
+const porcentaje = (dias: number) => `${(dias / VIAJE.dias) * 100}%`
+
+// Las dos estadías, una sobre otra, con la raya de hoy
+function EstadiaComparada({ persona, yo, hoy }: { persona: ConFechas; yo: ConFechas; hoy: string }) {
+  const textos = useTextos()
+  const hoyEnLaLinea = indiceEnElViaje(hoy)
+  const fila = (quien: ConFechas, tu: boolean) => {
+    const a = Math.max(indiceEnElViaje(quien.llega), 0)
+    const b = Math.min(indiceEnElViaje(quien.vuelve), VIAJE.dias - 1)
+    return (
+      <div className={estilos.compFila}>
+        <span className={estilos.compNombre} data-tu={tu}>{tu ? textos.grupo.tu : primerNombre(quien)}</span>
+        <span className={estilos.compPista}>
+          <span className={estilos.compTramo} data-tu={tu} style={{ left: porcentaje(a), width: porcentaje(b - a + 1) }} />
+        </span>
+      </div>
+    )
+  }
+  return (
+    <div className={estilos.comparada}>
+      <div className={estilos.compMeses}>
+        <span style={{ flex: 31 }}>{textos.fechas.enero}</span>
+        <span style={{ flex: 28 }}>{textos.fechas.febrero}</span>
+      </div>
+      <div className={estilos.compCuerpo}>
+        {hoyEnLaLinea >= 0 && hoyEnLaLinea < VIAJE.dias && (
+          <div className={estilos.compHoy} aria-hidden="true" style={{ left: `calc(var(--etiqueta) + (100% - var(--etiqueta)) * ${(hoyEnLaLinea + 0.5) / VIAJE.dias})` }} />
+        )}
+        {fila(persona, false)}
+        {fila(yo, true)}
+      </div>
+    </div>
+  )
+}
+
+// Lo que acompaña a la tarjeta: emprendimiento, objetivos y estadía.
+// Si mira otra persona (yo), la estadía se compara con la suya.
+export function DetallePersona({ persona, yo }: { persona: Persona; yo?: Persona }) {
+  const textos = useTextos()
+  const t = textos.persona
+  const otra = yo && yo.id !== persona.id ? yo : null
+  const hoy = hoyEnCalifornia()
+
+  const comparacion = (p: ConFechas, mia: ConFechas) => {
+    const estado = hoy < p.llega ? t.llegaEl(diaLargo(p.llega)) : hoy > p.vuelve ? t.volvioEl(diaLargo(p.vuelve)) : t.allaAhora
+    const desde = p.llega > mia.llega ? p.llega : mia.llega
+    const hasta = p.vuelve < mia.vuelve ? p.vuelve : mia.vuelve
+    const juntos = desde > hasta ? t.noCoinciden : hasta < hoy ? t.coincidieron(rango(desde, hasta)) : t.coinciden(rango(desde, hasta))
+    return `${estado} ${juntos}`
+  }
+
   return (
     <>
       {persona.emprendimiento && (
         <div className={estilos.bloque}>
-          <div className={estilos.rotulo}>Emprendimiento</div>
+          <div className={estilos.rotulo}>{t.emprendimiento}</div>
           <div className={estilos.emprendimiento}>
             <div className={estilos.empNombre}>{persona.emprendimiento}</div>
             {persona.emprendimiento_texto && <div>{persona.emprendimiento_texto}</div>}
@@ -60,15 +111,17 @@ export function DetallePersona({ persona }: { persona: Persona }) {
       )}
       {persona.objetivos && (
         <div className={estilos.bloque}>
-          <div className={estilos.rotulo}>Objetivos del viaje</div>
+          <div className={estilos.rotulo}>{t.objetivos}</div>
           <div className={estilos.objetivos}>{persona.objetivos}</div>
         </div>
       )}
-      {persona.llega && persona.vuelve && (
+      {otra && !persona.emprendimiento && !persona.objetivos && <div className={estilos.incompleto}>{t.incompleto(primerNombre(persona))}</div>}
+      {tieneFechas(persona) && (
         <div className={estilos.bloque}>
-          <div className={estilos.rotulo}>Estadía</div>
+          <div className={estilos.rotulo}>{t.estadia}</div>
           <div className={estilos.rango}>{rangoLargo(persona.llega, persona.vuelve)}</div>
-          <div className={estilos.dias}>{diasEntre(persona.llega, persona.vuelve)} días allá.</div>
+          <div className={estilos.dias}>{otra && tieneFechas(otra) ? comparacion(persona, otra) : textos.fechas.dias(diasEntre(persona.llega, persona.vuelve))}</div>
+          {otra && tieneFechas(otra) && <EstadiaComparada persona={persona} yo={otra} hoy={hoy} />}
         </div>
       )}
     </>

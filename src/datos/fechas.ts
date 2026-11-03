@@ -11,6 +11,9 @@ export const VIAJE = { desde: '2027-01-01', hasta: '2027-02-28', dias: 59 }
 const DIA_MS = 86_400_000
 const aFecha = (iso: string) => new Date(`${iso}T00:00:00Z`)
 
+// Solo en desarrollo: ?hoy=2027-01-12 hace como si fuera ese día, para revisar las pantallas del viaje
+const hoyDePrueba = import.meta.env.DEV ? new URLSearchParams(window.location.search).get('hoy') : null
+
 export function sumarDias(iso: string, dias: number): string {
   return new Date(aFecha(iso).getTime() + dias * DIA_MS).toISOString().slice(0, 10)
 }
@@ -40,20 +43,40 @@ export function diaLargo(iso: string): string {
   return `${DIAS[f.getUTCDay()]} ${f.getUTCDate()} de ${MESES[f.getUTCMonth()]}`
 }
 
+// "viernes 15", para lo que pasa en los próximos días
+export function diaDeLaSemana(iso: string): string {
+  const f = aFecha(iso)
+  return `${DIAS[f.getUTCDay()]} ${f.getUTCDate()}`
+}
+
+export function conMayuscula(texto: string): string {
+  return texto.charAt(0).toUpperCase() + texto.slice(1)
+}
+
 export function rangoCorto(a: string, b: string): string {
   return `${diaCorto(a)} – ${diaCorto(b)}`
 }
 
-export function rangoLargo(a: string, b: string): string {
+// "5 al 30 de enero" o "16 de enero al 14 de febrero"
+export function rango(a: string, b: string): string {
   const fa = aFecha(a)
   const fb = aFecha(b)
-  if (fa.getUTCMonth() === fb.getUTCMonth()) return `Del ${fa.getUTCDate()} al ${fb.getUTCDate()} de ${MESES[fb.getUTCMonth()]}`
-  return `Del ${fa.getUTCDate()} de ${MESES[fa.getUTCMonth()]} al ${fb.getUTCDate()} de ${MESES[fb.getUTCMonth()]}`
+  if (fa.getUTCMonth() === fb.getUTCMonth()) return `${fa.getUTCDate()} al ${fb.getUTCDate()} de ${MESES[fb.getUTCMonth()]}`
+  return `${fa.getUTCDate()} de ${MESES[fa.getUTCMonth()]} al ${fb.getUTCDate()} de ${MESES[fb.getUTCMonth()]}`
+}
+
+export function rangoLargo(a: string, b: string): string {
+  return `Del ${rango(a, b)}`
 }
 
 // El día de hoy en California, donde se hace el viaje
 export function hoyEnCalifornia(): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date())
+  return hoyDePrueba ?? new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date())
+}
+
+// El día de hoy donde está el dispositivo: en Chile antes del viaje, en California durante
+export function hoyAqui(): string {
+  return hoyDePrueba ?? new Intl.DateTimeFormat('en-CA').format(new Date())
 }
 
 export type Estadia = { tipo: 'sinFechas' } | { tipo: 'llega'; texto: string } | { tipo: 'alla'; texto: string } | { tipo: 'volvio'; texto: string }

@@ -148,3 +148,87 @@
   line-height: 20px;
   color: var(--sec-tarjeta);
 }
+
+.incompleto {
+  margin-top: 20px;
+  padding: 12px 14px;
+  border: 1.5px dashed var(--regla);
+  border-radius: 10px;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--sec);
+}
+
+/* Estadía de la persona y la tuya, una sobre otra */
+.comparada {
+  --etiqueta: 56px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+.compMeses {
+  display: flex;
+  margin-left: var(--etiqueta);
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--sec);
+}
+
+.compMeses span {
+  padding-left: 3px;
+  border-left: 1px solid var(--regla);
+}
+
+.compCuerpo {
+  position: relative;
+  margin-top: 4px;
+}
+
+.compHoy {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--acento);
+}
+
+.compFila {
+  display: flex;
+  align-items: center;
+  height: 22px;
+}
+
+.compNombre {
+  flex: none;
+  width: var(--etiqueta);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.compNombre[data-tu='true'] {
+  color: var(--ahora);
+}
+
+.compPista {
+  position: relative;
+  flex: 1;
+  height: 8px;
+}
+
+.compTramo {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 4px;
+  background: var(--sec);
+}
+
+.compTramo[data-tu='true'] {
+  background: var(--acento);
+}

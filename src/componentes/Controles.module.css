@@ -304,6 +304,12 @@
   background: var(--panel);
 }
 
+/* Dentro de la hoja, los campos van del color del fondo para que se distingan */
+.hoja .campo,
+.hoja .campoLargo {
+  background: var(--fondo);
+}
+
 .manilla {
   width: 36px;
   height: 4px;
@@ -338,6 +344,10 @@
   font-size: 15px;
   line-height: 20px;
   box-shadow: 0 8px 24px var(--sombra);
+}
+
+.avisoSobrePie {
+  bottom: calc(166px + env(safe-area-inset-bottom));
 }
 
 @media (min-width: 1024px) {

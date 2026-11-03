@@ -81,6 +81,37 @@ const trazos = {
       <path d="M7 11l5 5l5-5M12 4v12" />
     </>
   ),
+  buscar: (
+    <>
+      <circle cx="10" cy="10" r="7" />
+      <path d="M21 21l-6-6" />
+    </>
+  ),
+  correo: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3 7l9 6l9-6" />
+    </>
+  ),
+  opciones: (
+    <>
+      <circle cx="5" cy="12" r="1" />
+      <circle cx="12" cy="12" r="1" />
+      <circle cx="19" cy="12" r="1" />
+    </>
+  ),
+  copiar: (
+    <>
+      <rect x="8" y="8" width="12" height="12" rx="2" />
+      <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" />
+    </>
+  ),
+  sacar: (
+    <>
+      <path d="M14 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2" />
+      <path d="M9 12h12l-3-3M18 15l3-3" />
+    </>
+  ),
 }
 
 export type NombreIcono = keyof typeof trazos

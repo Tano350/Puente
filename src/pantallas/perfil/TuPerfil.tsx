@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router'
+import { useEffect, useState, type ReactNode } from 'react'
+import { useLocation, useNavigate } from 'react-router'
 import { Atras, Aviso, BotonBorde, BotonPrincipal, Fila, Grupo, Hoja, Pie, Titulo, TituloHoja } from '../../componentes/Controles.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
 import { DetallePersona, Tarjeta } from '../../componentes/Tarjeta.tsx'
+import { useAviso } from '../../componentes/useAviso.ts'
 import { useEsComputador } from '../../componentes/useEsComputador.ts'
 import { usePersonas } from '../../datos/consultas.ts'
 import { activarAvisos, marcarInstalada, pedirInstalar } from '../../datos/dispositivo.ts'
@@ -64,18 +65,6 @@ function SubPantalla({ titulo, pie, children, volverA, onVolver }: Envoltura & {
       {pie && <Pie>{pie}</Pie>}
     </div>
   )
-}
-
-function useAvisoTemporal() {
-  const [texto, setTexto] = useState<string | null>(null)
-  const reloj = useRef<number | undefined>(undefined)
-  useEffect(() => () => window.clearTimeout(reloj.current), [])
-  const mostrar = (nuevo: string) => {
-    setTexto(nuevo)
-    window.clearTimeout(reloj.current)
-    reloj.current = window.setTimeout(() => setTexto(null), 4000)
-  }
-  return { texto, mostrar }
 }
 
 function Nota({ texto }: { texto: string | null }) {
@@ -218,12 +207,17 @@ export function TuPerfil() {
   const textos = useTextos()
   const sesion = useSesion()
   const navigate = useNavigate()
+  const location = useLocation()
   const esComputador = useEsComputador()
   const dispositivo = useDispositivo()
   const { data: personas = [] } = usePersonas()
-  const aviso = useAvisoTemporal()
-  const [abierto, setAbierto] = useState<Abierto | null>(null)
+  const aviso = useAviso()
+  // Un pendiente de Hoy puede pedir que se abra un ajuste, como "Editar perfil"
+  const [abierto, setAbierto] = useState<Abierto | null>(() => (location.state as { abrir?: Abierto } | null)?.abrir ?? null)
   const [confirmarSalir, setConfirmarSalir] = useState(false)
+  useEffect(() => {
+    if (location.state) navigate(location.pathname, { replace: true, state: null })
+  }, [location, navigate])
   if (sesion.tipo !== 'dentro') return null
   const { persona } = sesion
   const t = textos.perfil

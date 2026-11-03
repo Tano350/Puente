@@ -82,9 +82,10 @@ type PropsTexto = {
   autoComplete?: string
   inputMode?: 'text' | 'email' | 'url'
   lista?: string
+  autoFocus?: boolean
 }
 
-export function CampoTexto({ id, valor, onCambio, error, multilinea = false, placeholder, autoComplete, inputMode, lista }: PropsTexto) {
+export function CampoTexto({ id, valor, onCambio, error, multilinea = false, placeholder, autoComplete, inputMode, lista, autoFocus }: PropsTexto) {
   const clase = `${multilinea ? estilos.campoLargo : estilos.campo} ${error ? estilos.campoMal : ''}`
   const comun = {
     id,
@@ -92,15 +93,26 @@ export function CampoTexto({ id, valor, onCambio, error, multilinea = false, pla
     value: valor,
     placeholder,
     autoComplete,
+    autoFocus,
     'aria-invalid': Boolean(error),
     'aria-describedby': error ? `${id}-error` : undefined,
   }
+  // Correos y enlaces se escriben tal cual: sin mayúscula inicial ni corrector
+  const literal = inputMode === 'email' || inputMode === 'url'
   return (
     <>
       {multilinea ? (
         <textarea {...comun} rows={2} onChange={(e) => onCambio(e.target.value)} />
       ) : (
-        <input {...comun} type="text" inputMode={inputMode} list={lista} onChange={(e) => onCambio(e.target.value)} />
+        <input
+          {...comun}
+          type={inputMode === 'email' ? 'email' : 'text'}
+          inputMode={inputMode}
+          autoCapitalize={literal ? 'none' : undefined}
+          spellCheck={literal ? false : undefined}
+          list={lista}
+          onChange={(e) => onCambio(e.target.value)}
+        />
       )}
       <ErrorCampo texto={error} id={`${id}-error`} />
     </>
@@ -194,11 +206,11 @@ export function TituloHoja({ children }: { children: ReactNode }) {
   return <h2 className={estilos.tituloHoja}>{children}</h2>
 }
 
-// Aviso abajo, sobre la barra de secciones
-export function Aviso({ texto, onDeshacer }: { texto: string | null; onDeshacer?: () => void }) {
+// Aviso abajo, sobre la barra de secciones (o sobre el botón fijo de la pantalla, si tiene uno)
+export function Aviso({ texto, onDeshacer, sobrePie = false }: { texto: string | null; onDeshacer?: () => void; sobrePie?: boolean }) {
   if (!texto) return null
   return (
-    <div role="status" className={estilos.aviso}>
+    <div role="status" className={`${estilos.aviso} ${sobrePie ? estilos.avisoSobrePie : ''}`}>
       <span className={estilos.avisoTexto}>{texto}</span>
       {onDeshacer && (
         <button type="button" className={estilos.deshacer} onClick={onDeshacer}>

@@ -1,0 +1,198 @@
+/* En el celular va en una tarjeta; en el computador ocupa la columna */
+.linea {
+  --etiqueta: 64px;
+  margin-top: 16px;
+  padding: 12px 12px 10px;
+  border-radius: 12px;
+  background: var(--panel);
+}
+
+.linea[data-computador='true'] {
+  --etiqueta: 130px;
+  margin-top: 0;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.meses {
+  display: flex;
+  margin-left: var(--etiqueta);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--sec);
+}
+
+.meses span {
+  padding-left: 4px;
+  border-left: 1px solid var(--regla);
+}
+
+.cuerpo {
+  position: relative;
+  margin-top: 4px;
+}
+
+.hoy {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--acento);
+  pointer-events: none;
+}
+
+.barras {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 40px;
+  margin-left: var(--etiqueta);
+}
+
+.barra {
+  flex: 1;
+  min-width: 0;
+  border-radius: 1px 1px 0 0;
+  background: var(--regla);
+}
+
+.barra[data-hoy='true'] {
+  background: var(--acento);
+}
+
+.filas {
+  margin-top: 6px;
+}
+
+[data-computador='true'] .filas {
+  margin-top: 8px;
+}
+
+.fila {
+  display: flex;
+  align-items: center;
+  height: 18px;
+}
+
+.nombre {
+  flex: none;
+  width: var(--etiqueta);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+.nombre[data-tu='true'] {
+  font-weight: 500;
+  color: var(--acento);
+}
+
+.pista {
+  position: relative;
+  display: block;
+  flex: 1;
+  height: 8px;
+}
+
+.tramo {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 4px;
+  background: var(--sec);
+}
+
+.tramo[data-tu='true'] {
+  background: var(--acento);
+}
+
+.sinTramo {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--sec);
+}
+
+/* ---------- Computador ---------- */
+.filaPc {
+  display: grid;
+  grid-template-columns: var(--etiqueta) minmax(0, 1fr);
+  align-items: center;
+  width: 100%;
+  min-height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+}
+
+button.filaPc {
+  cursor: pointer;
+}
+
+button.filaPc:hover {
+  background: var(--panel);
+}
+
+.filaPc[aria-pressed='true'] {
+  background: var(--panel);
+  box-shadow: inset 0 0 0 2px var(--acento);
+}
+
+.filaPc .pista {
+  height: 12px;
+}
+
+.filaPc .tramo {
+  border-radius: 6px;
+}
+
+.filaPc .sinTramo {
+  font-size: 13px;
+}
+
+.etiqueta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding-left: 6px;
+}
+
+.tuAvatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--acento);
+  color: var(--sobre);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.nombrePc {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 19px;
+}
+
+.nombrePc[data-tu='true'] {
+  color: var(--ahora);
+}
+
+.nombrePc[data-fuera='true'] {
+  font-weight: 400;
+  color: var(--sec);
+}
