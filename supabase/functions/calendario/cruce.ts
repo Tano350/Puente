@@ -16,8 +16,17 @@ const DEL_VIAJE = /the\s*bridge/i
 export type Evento = { id: string; titulo: string; lugar: string | null; direccion: string | null; notas: string | null; inicio: string; fin: string }
 // Quién va a qué: asistentes con estado 'va' (no la lista de espera), de quienes siguen en Puente
 export type Va = { evento: string; persona: string }
-// De quién es cada calendario (public.calendarios, llenada a mano)
-export type CalendarioDe = { persona: string; google_id: string }
+// De quién es cada calendario (las filas de public.calendarios que quien administra asignó a alguien), con su permiso
+export type CalendarioDe = { persona: string; google_id: string; permiso: string }
+// Un calendario del viaje como se anota en public.calendarios (permiso: owner, writer, reader o freeBusyReader)
+export type CalendarioDelViaje = { google_id: string; nombre: string; permiso: string }
+export type CalendarioGuardado = CalendarioDelViaje & { persona: string | null }
+export type CambiosDeCalendarios = {
+  vistos: CalendarioDelViaje[] // los del viaje que aparecieron en esta vuelta
+  nuevos: CalendarioDelViaje[]
+  cambiados: CalendarioDelViaje[] // cambió el nombre o el permiso
+  borrados: string[] // ya no aparecen y no tienen dueño
+}
 export type Rato = { inicio: string; fin: string }
 export type Ocupado = Rato & { persona: string }
 
@@ -37,44 +46,56 @@ export type Entrada = {
   listas: Map<string, EventoGoogle[]> // lo leído de cada calendario; si falta uno, no se pudo leer y queda como estaba
 }
 
+// Con permiso de dueño o para hacer cambios, Puente pone ahí las copias; con permiso solo para ver, únicamente lee cuándo
+// está ocupado (las copias que ya estén se dejan como están). Con "solo libre u ocupado", events.list no sirve: se salta.
+export const seLee = (permiso: string) => permiso === 'owner' || permiso === 'writer' || permiso === 'reader'
+export const seEscribe = (permiso: string) => permiso === 'owner' || permiso === 'writer'
+
 export function cruzar({ eventos, van, calendarios, ocupados, listas }: Entrada): Operacion[] {
   const ops: Operacion[] = []
   const vigentes = new Map(eventos.filter(enVentana).map((e) => [e.id, e]))
-  for (const { persona, google_id: calendario } of calendarios) {
+  for (const { persona, google_id: calendario, permiso } of calendarios) {
     const lista = listas.get(calendario)
-    if (!lista) continue
-
+    if (!lista || !seLee(permiso)) continue
     // 1. Una copia de cada evento al que va, tal como lo dice Puente
-    const suyos = new Map<string, Evento>()
-    for (const v of van) {
-      const e = vigentes.get(v.evento)
-      if (e && v.persona === persona) suyos.set(e.id, e)
-    }
-    const conCopia = new Set<string>()
-    for (const g of lista) {
-      const id = marca(g)
-      if (id === undefined || !activo(g)) continue
-      const e = suyos.get(id)
-      // Ya no va (soltó el cupo, lo sacaron o quedó en espera), el evento se canceló o se borró, o la copia está repetida
-      if (!e || conCopia.has(id)) {
-        ops.push({ tipo: 'borrar', calendario, googleId: g.id })
-        continue
+    if (seEscribe(permiso)) {
+      const suyos = new Map<string, Evento>()
+      for (const v of van) {
+        const e = vigentes.get(v.evento)
+        if (e && v.persona === persona) suyos.set(e.id, e)
       }
-      conCopia.add(id)
-      const cuerpo = aGoogle(e)
-      if (!igual(g, cuerpo)) ops.push({ tipo: 'actualizar', calendario, googleId: g.id, cuerpo })
+      ops.push(...copias(calendario, lista, suyos))
     }
-    for (const e of suyos.values()) if (!conCopia.has(e.id)) ops.push({ tipo: 'crear', calendario, cuerpo: aGoogle(e) })
-
     // 2. Cuándo está ocupado según su calendario; se reescribe solo si cambió
     const ratos = ratosOcupados(lista)
     if (huella(ratos) !== huella(ocupados.filter((o) => o.persona === persona))) ops.push({ tipo: 'ocupados', persona, ratos })
   }
-  // Quien ya no tiene calendario asignado deja de tener ratos ocupados de Google
-  const conCalendario = new Set(calendarios.map((c) => c.persona))
+  // Quien ya no tiene un calendario que se pueda leer deja de tener ratos ocupados de Google
+  const conCalendario = new Set(calendarios.filter((c) => seLee(c.permiso)).map((c) => c.persona))
   for (const persona of new Set(ocupados.map((o) => o.persona))) {
     if (!conCalendario.has(persona)) ops.push({ tipo: 'ocupados', persona, ratos: [] })
   }
+  return ops
+}
+
+// Las copias en un calendario: una por cada evento al que va, igual a lo que dice Puente
+function copias(calendario: string, lista: EventoGoogle[], suyos: Map<string, Evento>): Operacion[] {
+  const ops: Operacion[] = []
+  const conCopia = new Set<string>()
+  for (const g of lista) {
+    const id = marca(g)
+    if (id === undefined || !activo(g)) continue
+    const e = suyos.get(id)
+    // Ya no va (soltó el cupo, lo sacaron o quedó en espera), el evento se canceló o se borró, o la copia está repetida
+    if (!e || conCopia.has(id)) {
+      ops.push({ tipo: 'borrar', calendario, googleId: g.id })
+      continue
+    }
+    conCopia.add(id)
+    const cuerpo = aGoogle(e)
+    if (!igual(g, cuerpo)) ops.push({ tipo: 'actualizar', calendario, googleId: g.id, cuerpo })
+  }
+  for (const e of suyos.values()) if (!conCopia.has(e.id)) ops.push({ tipo: 'crear', calendario, cuerpo: aGoogle(e) })
   return ops
 }
 
@@ -108,16 +129,30 @@ export function ratosOcupados(lista: EventoGoogle[]): Rato[] {
   return [...ratos.values()].sort((a, b) => a.inicio.localeCompare(b.inicio) || a.fin.localeCompare(b.fin))
 }
 
-// Los calendarios del viaje que todavía no tienen dueño en public.calendarios, con su nombre completo, para asignarlos a mano
-export function sinDueno(lista: CalendarioGoogle[], calendarios: CalendarioDe[]): { nombre: string; id: string }[] {
-  const asignados = new Set(calendarios.map((c) => c.google_id))
-  return lista
-    .flatMap((c) => {
-      const nombre = [c.summaryOverride, c.summary].find((s) => s && DEL_VIAJE.test(s))
-      return nombre && !asignados.has(c.id) ? [{ nombre: nombre.trim(), id: c.id }] : []
-    })
-    .sort((a, b) => a.nombre.localeCompare(b.nombre))
+// Los calendarios del viaje que ve quien administra y qué cambia en public.calendarios: los nuevos entran sin dueño,
+// a los que cambiaron de nombre o de permiso se les anota, y todos los vistos quedan marcados como vistos ahora.
+// Los que ya no aparecen se borran si no tienen dueño; los que tienen dueño se quedan (la app los muestra como no encontrados).
+export function cruzarCalendarios(lista: CalendarioGoogle[], guardados: CalendarioGuardado[]): CambiosDeCalendarios {
+  const antes = new Map(guardados.map((c) => [c.google_id, c]))
+  const vistos = lista.flatMap((c) => {
+    const nombre = [c.summaryOverride, c.summary].find((s) => s && DEL_VIAJE.test(s))
+    return nombre ? [{ google_id: c.id, nombre: nombre.trim(), permiso: permiso(c.accessRole) }] : []
+  })
+  const ids = new Set(vistos.map((c) => c.google_id))
+  return {
+    vistos,
+    nuevos: vistos.filter((c) => !antes.has(c.google_id)),
+    cambiados: vistos.filter((c) => {
+      const guardado = antes.get(c.google_id)
+      return guardado !== undefined && (guardado.nombre !== c.nombre || guardado.permiso !== c.permiso)
+    }),
+    borrados: guardados.filter((c) => c.persona === null && !ids.has(c.google_id)).map((c) => c.google_id),
+  }
 }
+
+// Si Google algún día dijera otro permiso, cuenta como el más bajo
+const PERMISOS = ['owner', 'writer', 'reader', 'freeBusyReader']
+const permiso = (rol: string | undefined) => (rol && PERMISOS.includes(rol) ? rol : 'freeBusyReader')
 
 // ¿La copia de Google dice lo mismo que Puente? Las horas se comparan como instantes: Google las devuelve con desfase
 function igual(g: EventoGoogle, c: CuerpoGoogle): boolean {

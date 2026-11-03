@@ -1,5 +1,6 @@
 import type { Persona } from './consultas.ts'
 import type { Contacto, Nota } from './contactos.ts'
+import type { Calendario, Sincronizacion } from './calendario.ts'
 import type { Asistente, Evento, NotaReunion, Ocupado } from './eventos.ts'
 import { momento, sumarDias, VIAJE } from './fechas.ts'
 
@@ -212,4 +213,30 @@ export function datosDeMaqueta(): Datos {
     notasReunion: [{ evento: 'cafe-laura', autor: YO, aprendi: 'Plug and Play busca startups de logística para su programa de primavera.', sigue: 'Mandarle el deck antes del viernes.', escrita_en: '2027-01-12T19:00:00Z' }],
   }
   return agenda
+}
+
+// Google Calendar (solo quien administra): los calendarios del viaje que ve en su cuenta y si la sincronización está encendida.
+// El tuyo es tuyo; Diego te dio permiso para hacer cambios y Martina solo para ver.
+let calendarios: Calendario[] | null = null
+let sincroniza = false
+
+export function calendariosDeMaqueta(): Calendario[] {
+  calendarios ??= [
+    { google_id: 'cal-josefa', nombre: 'Josefa: The Bridge', permiso: 'owner', persona: YO, visto_en: '2027-01-12T18:00:00Z' },
+    { google_id: 'cal-diego', nombre: 'Diego: The Bridge', permiso: 'writer', persona: null, visto_en: '2027-01-12T18:00:00Z' },
+    { google_id: 'cal-martina', nombre: 'Martina: The bridge', permiso: 'reader', persona: null, visto_en: '2027-01-12T18:00:00Z' },
+  ]
+  return calendarios
+}
+
+export function cambiarCalendariosDeMaqueta(cambiar: (lista: Calendario[]) => Calendario[]) {
+  calendarios = cambiar(calendariosDeMaqueta())
+}
+
+export function sincronizacionDeMaqueta(): Sincronizacion {
+  return { unica: true, activa: sincroniza, ultima_vez: sincroniza ? '2027-01-12T18:11:00Z' : null, errores: 0 }
+}
+
+export function cambiarSincronizacionDeMaqueta(activa: boolean) {
+  sincroniza = activa
 }

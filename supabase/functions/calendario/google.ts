@@ -29,8 +29,8 @@ export type CuerpoGoogle = {
   extendedProperties: { private: { puente: string } }
 }
 
-// Un calendario de la lista de quien administra
-export type CalendarioGoogle = { id: string; summary?: string; summaryOverride?: string }
+// Un calendario de la lista de quien administra, con el permiso que tiene sobre él (owner, writer, reader o freeBusyReader)
+export type CalendarioGoogle = { id: string; summary?: string; summaryOverride?: string; accessRole?: string }
 
 // El cliente OAuth (el mismo de "Entrar con Google") y el permiso de quien administra
 export type Acceso = { client_id: string; client_secret: string; refresh_token: string }

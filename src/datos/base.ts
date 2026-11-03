@@ -53,15 +53,24 @@ export type Database = {
       calendarios: {
         Row: {
           google_id: string
-          persona: string
+          nombre: string
+          permiso: string
+          persona: string | null
+          visto_en: string
         }
         Insert: {
           google_id: string
-          persona: string
+          nombre: string
+          permiso: string
+          persona?: string | null
+          visto_en?: string
         }
         Update: {
           google_id?: string
-          persona?: string
+          nombre?: string
+          permiso?: string
+          persona?: string | null
+          visto_en?: string
         }
         Relationships: [
           {
@@ -444,6 +453,27 @@ export type Database = {
           },
         ]
       }
+      sincronizacion: {
+        Row: {
+          activa: boolean
+          errores: number
+          ultima_vez: string | null
+          unica: boolean
+        }
+        Insert: {
+          activa?: boolean
+          errores?: number
+          ultima_vez?: string | null
+          unica?: boolean
+        }
+        Update: {
+          activa?: boolean
+          errores?: number
+          ultima_vez?: string | null
+          unica?: boolean
+        }
+        Relationships: []
+      }
       suscripciones: {
         Row: {
           auth: string
@@ -483,12 +513,48 @@ export type Database = {
     Functions: {
       administro: { Args: never; Returns: boolean }
       antes_de_crear_usuario: { Args: { event: Json }; Returns: Json }
+      asignar_calendario: {
+        Args: { google_id: string; persona: string }
+        Returns: undefined
+      }
+      buscar_calendarios: { Args: never; Returns: undefined }
       calendario_conectado: { Args: never; Returns: boolean }
+      calendarios_del_viaje: {
+        Args: never
+        Returns: {
+          google_id: string
+          nombre: string
+          permiso: string
+          persona: string | null
+          visto_en: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "calendarios"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       devolver: { Args: { persona: string }; Returns: undefined }
       esperar: { Args: { evento: string }; Returns: number }
       esta_alla: {
         Args: { momento: string; persona: string }
         Returns: boolean
+      }
+      estado_sincronizacion: {
+        Args: never
+        Returns: {
+          activa: boolean
+          errores: number
+          ultima_vez: string | null
+          unica: boolean
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "sincronizacion"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       guardar_acceso_google: { Args: { llave: string }; Returns: undefined }
       invitar: {
@@ -540,6 +606,7 @@ export type Database = {
         Args: { evento: string; persona: string }
         Returns: undefined
       }
+      sincronizar_calendarios: { Args: { activa: boolean }; Returns: undefined }
       sumar_a_evento: {
         Args: { evento: string; persona: string }
         Returns: undefined

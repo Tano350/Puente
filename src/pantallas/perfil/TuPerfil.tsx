@@ -28,6 +28,7 @@ import {
   type ErroresPerfil,
   type Preferencias,
 } from './formularios.tsx'
+import { CalendariosDelViaje } from './CalendariosDelViaje.tsx'
 import estilos from './TuPerfil.module.css'
 
 type Abierto = 'editar' | 'fechas' | 'avisos' | 'instalar' | 'calendario'
@@ -229,7 +230,9 @@ function AjusteCalendario({ conectado, marco }: { conectado: boolean; marco: Con
         <Nota texto={problema} />
       </>
     ),
-    children: (
+    children: conectado ? (
+      <CalendariosDelViaje />
+    ) : (
       <>
         <div className={estilos.bajada}>{t.explica}</div>
         <div className={estilos.bajada}>{t.permiso}</div>
