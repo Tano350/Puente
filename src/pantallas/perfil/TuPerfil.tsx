@@ -12,7 +12,7 @@ import { useSesion, type Persona } from '../../datos/sesion.tsx'
 import { useTextos } from '../../textos.ts'
 import {
   borradorPerfil,
-  cambiosDePerfil,
+  guardarPerfil,
   ComoInstalar,
   FormularioFechas,
   FormularioPerfil,
@@ -86,7 +86,7 @@ function EditarPerfil({ persona, marco, alTerminar }: { persona: Persona; marco:
     setGuardando(true)
     setFallo(false)
     try {
-      await sesion.actualizar(cambiosDePerfil(borrador))
+      await guardarPerfil(persona, borrador, sesion.actualizar)
       alTerminar(textos.perfil.guardado)
     } catch {
       setFallo(true)

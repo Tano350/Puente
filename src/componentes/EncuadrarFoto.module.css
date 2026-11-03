@@ -1,0 +1,234 @@
+/* Siempre oscura, como un editor de fotos: no cambia con el modo claro */
+.encuadre {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background: #0f1216;
+  color: #edf0f3;
+  color-scheme: dark;
+  font-family: var(--letra);
+  overscroll-behavior: contain;
+}
+
+.encuadre:focus {
+  outline: none;
+}
+
+.encuadre :focus-visible {
+  outline-color: #3fa9f5;
+}
+
+.columna {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  max-width: 460px;
+  min-height: 0;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.barra {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+}
+
+.boton {
+  height: 44px;
+  margin: 0 -10px;
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.usar {
+  color: #3fa9f5;
+}
+
+.usar[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.centro {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding-bottom: 56px;
+}
+
+.grupo {
+  width: min(100%, 420px);
+}
+
+/* El cuadrado ocupa el ancho (hasta 420 px) y se achica si a lo alto no caben los controles */
+.visor {
+  position: relative;
+  width: min(100%, 100dvh - 240px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  margin: 0 auto;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: #000000;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.visor[data-arrastrando='true'] {
+  cursor: grabbing;
+}
+
+.lienzo {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* El círculo es la forma del avatar; afuera, la foto se oscurece */
+.circulo {
+  position: absolute;
+  inset: 0;
+  border: 2px solid #edf0f3;
+  border-radius: 50%;
+  box-shadow: 0 0 0 420px rgba(8, 10, 13, 0.62);
+  pointer-events: none;
+}
+
+.ayuda,
+.error {
+  margin: 20px 0 0;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: center;
+}
+
+.ayuda {
+  color: #a6b0bb;
+}
+
+.error {
+  color: #ff9b8f;
+}
+
+/* Los íconos quedan alineados con los bordes del cuadrado */
+.zoom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px -10px 0;
+}
+
+.icono {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.icono[aria-disabled='true'] {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.tamano {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  margin: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.tamano:focus-visible {
+  outline: none;
+}
+
+.tamano::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: #4d5866;
+}
+
+.tamano::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: #4d5866;
+}
+
+.tamano::-webkit-slider-thumb {
+  width: 24px;
+  height: 24px;
+  margin-top: -10px;
+  border: none;
+  border-radius: 50%;
+  background: #edf0f3;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.tamano::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: #edf0f3;
+}
+
+.tamano:focus-visible::-webkit-slider-thumb {
+  box-shadow:
+    0 0 0 2px #0f1216,
+    0 0 0 4px #3fa9f5;
+}
+
+.tamano:focus-visible::-moz-range-thumb {
+  box-shadow:
+    0 0 0 2px #0f1216,
+    0 0 0 4px #3fa9f5;
+}
+
+/* En pantallas bajas (el teléfono de lado) el cuadrado aprovecha todo el alto */
+@media (max-height: 520px) {
+  .centro {
+    padding-bottom: 0;
+  }
+
+  .visor {
+    width: min(100%, 100dvh - 184px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+}
+
+/* En el computador, todo va centrado */
+@media (min-width: 1024px) {
+  .columna {
+    flex: none;
+    margin: auto;
+  }
+
+  .centro {
+    flex: none;
+    padding-bottom: 0;
+  }
+}

@@ -134,6 +134,7 @@ export type Database = {
           emprendimiento_texto: string | null
           entro_en: string | null
           foto: string | null
+          foto_google: string | null
           id: string
           idioma: string
           invitada_en: string
@@ -156,6 +157,7 @@ export type Database = {
           emprendimiento_texto?: string | null
           entro_en?: string | null
           foto?: string | null
+          foto_google?: string | null
           id?: string
           idioma?: string
           invitada_en?: string
@@ -178,6 +180,7 @@ export type Database = {
           emprendimiento_texto?: string | null
           entro_en?: string | null
           foto?: string | null
+          foto_google?: string | null
           id?: string
           idioma?: string
           invitada_en?: string
@@ -252,6 +255,7 @@ export type Database = {
           emprendimiento_texto: string | null
           entro_en: string | null
           foto: string | null
+          foto_google: string | null
           id: string
           idioma: string
           invitada_en: string

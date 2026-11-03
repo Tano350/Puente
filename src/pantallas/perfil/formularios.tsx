@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Avatar } from '../../componentes/Avatar.tsx'
 import { Bajada, CampoFecha, CampoTexto, Etiqueta, Interruptor } from '../../componentes/Controles.tsx'
 import { Histograma } from '../../componentes/Histograma.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
@@ -8,8 +7,10 @@ import type { Json } from '../../datos/base.ts'
 import type { Persona } from '../../datos/consultas.ts'
 import { avisosActivos, esIPhone, estaInstalada, sePuedePedirInstalar } from '../../datos/dispositivo.ts'
 import { diasEntre, VIAJE } from '../../datos/fechas.ts'
+import { limpiarFotos, subirFoto } from '../../datos/fotos.ts'
 import type { CambiosDePersona } from '../../datos/sesion.tsx'
 import { useTextos } from '../../textos.ts'
+import { FotoDePerfil } from './FotoDePerfil.tsx'
 import estilos from './formularios.module.css'
 
 // Formularios que comparten Primera vez y Tu perfil.
@@ -27,7 +28,8 @@ const CARRERAS = [
 ]
 
 // ---------- Perfil ----------
-export type BorradorPerfil = { nombre: string; carrera: string; emprendimiento: string; emprendimiento_texto: string; objetivos: string; linkedin: string }
+// La foto es la que se muestra (la de Google, una propia o ninguna); una foto recién elegida se sube al guardar
+export type BorradorPerfil = { nombre: string; carrera: string; emprendimiento: string; emprendimiento_texto: string; objetivos: string; linkedin: string; foto: string | null; fotoNueva: Blob | null }
 export type ErroresPerfil = { nombre?: string; carrera?: string }
 
 export function borradorPerfil(persona: Persona): BorradorPerfil {
@@ -38,6 +40,8 @@ export function borradorPerfil(persona: Persona): BorradorPerfil {
     emprendimiento_texto: persona.emprendimiento_texto ?? '',
     objetivos: persona.objetivos ?? '',
     linkedin: persona.linkedin ?? '',
+    foto: persona.foto,
+    fotoNueva: null,
   }
 }
 
@@ -65,15 +69,21 @@ export function cambiosDePerfil(b: BorradorPerfil): CambiosDePersona {
   }
 }
 
+// Guarda el perfil; si eligió una foto nueva, primero la sube. Después borra las fotos propias que ya no usa.
+export async function guardarPerfil(persona: Persona, b: BorradorPerfil, actualizar: (cambios: CambiosDePersona) => Promise<void>): Promise<void> {
+  const cambios = cambiosDePerfil(b)
+  if (b.fotoNueva) cambios.foto = await subirFoto(persona.id, b.fotoNueva)
+  else if (b.foto !== persona.foto) cambios.foto = b.foto
+  await actualizar(cambios)
+  if (cambios.foto !== undefined) void limpiarFotos(persona.id, cambios.foto).catch(() => undefined)
+}
+
 export function FormularioPerfil({ persona, borrador, onCambio, errores }: { persona: Persona; borrador: BorradorPerfil; onCambio: (b: BorradorPerfil) => void; errores: ErroresPerfil }) {
   const { perfil: textos } = useTextos()
   const poner = (campo: keyof BorradorPerfil) => (valor: string) => onCambio({ ...borrador, [campo]: valor })
   return (
     <>
-      <div className={estilos.foto}>
-        <Avatar persona={persona} medida={64} />
-        <span className={estilos.fotoTexto}>{textos.foto}</span>
-      </div>
+      <FotoDePerfil persona={persona} foto={borrador.foto} fotoNueva={borrador.fotoNueva} onCambio={(cambio) => onCambio({ ...borrador, ...cambio })} />
       <Etiqueta texto={textos.nombre} para="perfil-nombre" />
       <CampoTexto id="perfil-nombre" valor={borrador.nombre} onCambio={poner('nombre')} error={errores.nombre} autoComplete="name" />
       <Etiqueta texto={textos.carrera} para="perfil-carrera" />

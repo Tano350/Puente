@@ -133,6 +133,27 @@ const trazos = {
       <path d="M12 8h.01M11 12h1v4h1" />
     </>
   ),
+  foto: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <circle cx="8.5" cy="10" r="1.5" />
+      <path d="M21 16l-5-5L5 19" />
+    </>
+  ),
+  google: <path d="M20.945 11a9 9 0 1 1-3.284-5.997l-2.655 2.392a5.5 5.5 0 1 0 2.119 6.605h-4.125v-3h7.945z" />,
+  basura: <path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" />,
+  acercar: (
+    <>
+      <circle cx="10" cy="10" r="7" />
+      <path d="M7 10h6M10 7v6M21 21l-6-6" />
+    </>
+  ),
+  alejar: (
+    <>
+      <circle cx="10" cy="10" r="7" />
+      <path d="M7 10h6M21 21l-6-6" />
+    </>
+  ),
 }
 
 export type NombreIcono = keyof typeof trazos

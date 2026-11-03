@@ -23,7 +23,7 @@ export async function invitar(correo: string): Promise<Persona> {
   // Solo en desarrollo, con ?maqueta: los cambios quedan en las personas de ejemplo
   if (import.meta.env.DEV && modoMaqueta) {
     const limpio = correo.trim().toLowerCase()
-    const nueva = { id: `nueva-${Date.now()}`, correo: limpio, usuario: null, nombre: null, foto: null, carrera: null, emprendimiento: null, emprendimiento_texto: null, objetivos: null, linkedin: null, llega: null, vuelve: null, administra: false, idioma: 'es', invitada_por: null, invitada_en: new Date().toISOString(), entro_en: null, sacada_en: null, bienvenida_en: null, avisos: {} }
+    const nueva = { id: `nueva-${Date.now()}`, correo: limpio, usuario: null, nombre: null, foto: null, foto_google: null, carrera: null, emprendimiento: null, emprendimiento_texto: null, objetivos: null, linkedin: null, llega: null, vuelve: null, administra: false, idioma: 'es', invitada_por: null, invitada_en: new Date().toISOString(), entro_en: null, sacada_en: null, bienvenida_en: null, avisos: {} }
     cambiarMaqueta((personas) => [...personas, nueva])
     await recargar()
     return nueva

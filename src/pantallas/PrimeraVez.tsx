@@ -8,7 +8,7 @@ import { useSesion, type Persona } from '../datos/sesion.tsx'
 import { useTextos } from '../textos.ts'
 import {
   borradorPerfil,
-  cambiosDePerfil,
+  guardarPerfil,
   ComoInstalar,
   FormularioFechas,
   FormularioPerfil,
@@ -65,7 +65,7 @@ function PasoPerfil({ persona, alTerminar }: { persona: Persona; alTerminar: () 
     setGuardando(true)
     setFallo(false)
     try {
-      await sesion.actualizar(cambiosDePerfil(borrador))
+      await guardarPerfil(persona, borrador, sesion.actualizar)
       alTerminar()
     } catch {
       setFallo(true)

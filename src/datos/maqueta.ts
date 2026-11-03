@@ -21,6 +21,7 @@ function persona(id: string, nombre: string, carrera: string, llega: number, vue
     usuario: `u-${id}`,
     nombre,
     foto: null,
+    foto_google: null,
     carrera,
     emprendimiento: null,
     emprendimiento_texto: null,
@@ -46,6 +47,8 @@ export function personaDeMaqueta(): Persona {
   const josefa = persona('josefa.contreras', 'Josefa Contreras', 'Ingeniería Civil Química', 15, 44, {
     ...perfil('Agua Clara', 'Filtros baratos para agua de pozo en zonas rurales.', 'Conocer fondos de impacto y aprender cómo venden startups de hardware a gobiernos.', null),
     administra: true,
+    // Como si viniera de Google, para probar "Usar la de Google"
+    foto_google: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#8fa3b8"/><circle cx="32" cy="26" r="12" fill="#e7c3a1"/><rect x="16" y="42" width="32" height="26" rx="12" fill="#3f6fa0"/></svg>')}`,
   })
   if (modoMaqueta === 'nueva') return { ...josefa, carrera: null, emprendimiento: null, emprendimiento_texto: null, objetivos: null, linkedin: null, llega: null, vuelve: null, bienvenida_en: null }
   // ?maqueta=miembro: la misma Josefa, pero sin administrar (para ver lo que no puede cambiar)
