@@ -1,0 +1,103 @@
+.caja {
+  position: relative;
+  flex: none;
+}
+
+.boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 10px 0 14px;
+  border: 1.5px solid var(--regla);
+  border-radius: 6px;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.boton[aria-expanded='true'] {
+  border-color: var(--tinta);
+}
+
+.cuenta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--tinta);
+  color: var(--fondo);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Encima del tablero y también del panel abierto; crece hacia la izquierda para no salirse en pantallas angostas */
+.menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 6;
+  min-width: 220px;
+  max-height: calc(100dvh - 160px);
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--regla);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 12px 32px var(--sombra);
+}
+
+.opcion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 40px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 15px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.opcion:hover {
+  background: var(--borde);
+}
+
+.casilla {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--regla);
+  border-radius: 4px;
+}
+
+.opcion[aria-pressed='true'] .casilla {
+  border-color: var(--tinta);
+  background: var(--tinta);
+  color: var(--fondo);
+}
+
+.limpiar {
+  display: block;
+  height: 40px;
+  margin-top: 4px;
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}

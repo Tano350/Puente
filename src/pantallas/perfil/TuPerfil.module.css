@@ -1,0 +1,238 @@
+/* ---------- Celular ---------- */
+.celular {
+  padding: 28px 20px 28px;
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: -12px;
+}
+
+.editar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  margin-right: -10px;
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.hojaBotones {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.subpantalla {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.desplazable {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px 20px 24px;
+}
+
+.volver {
+  margin-top: -8px;
+}
+
+.contenido {
+  margin-top: 12px;
+}
+
+.bajada {
+  margin-top: 6px;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--sec-tarjeta);
+}
+
+.nota {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 18px;
+  text-align: center;
+  color: var(--sec);
+}
+
+/* ---------- Computador ---------- */
+.escritorio {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.tituloEscritorio {
+  margin: 0;
+  padding: 28px 32px 0;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 42px;
+  line-height: 1;
+}
+
+.cuerpo {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin-top: 22px;
+}
+
+.columnas {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-rows: minmax(0, 1fr);
+  column-gap: 40px;
+  padding: 0 32px;
+}
+
+.ajustes,
+.lado {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding-bottom: 24px;
+}
+
+.ajustes {
+  max-width: 560px;
+}
+
+.salir {
+  margin-top: 16px;
+  border: 1px solid var(--regla);
+  border-radius: 12px;
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.confirmar {
+  padding: 16px 18px 18px;
+}
+
+.confirmarTitulo {
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 28px;
+}
+
+.confirmarBotones {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.chicoPrincipal,
+.chicoBorde {
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.chicoPrincipal {
+  border: none;
+  background: var(--acento);
+  color: var(--sobre);
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.chicoBorde {
+  padding: 0 18px;
+  border: 2px solid var(--tinta);
+  background: transparent;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.editarFila {
+  display: flex;
+  justify-content: flex-end;
+  height: 40px;
+  margin-bottom: -6px;
+}
+
+.editarBorde {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px 0 10px;
+  border: 2px solid var(--tinta);
+  border-radius: 6px;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Panel encima, como en Contactos y Gastos */
+.panel {
+  position: absolute;
+  top: -8px;
+  right: 0;
+  bottom: 0;
+  width: 430px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 14px 28px 0;
+  border-left: 1px solid var(--regla);
+  border-radius: 12px 0 0 0;
+  background: var(--fondo);
+  box-shadow: -18px 0 40px var(--sombra);
+}
+
+.panelCabeza {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panelTitulo {
+  margin: 0;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 32px;
+}
+
+.cerrar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-right: -8px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.panelPie {
+  position: sticky;
+  bottom: 0;
+  margin-top: 16px;
+  padding: 12px 0 20px;
+  border-top: 1px solid var(--borde);
+  background: var(--fondo);
+}

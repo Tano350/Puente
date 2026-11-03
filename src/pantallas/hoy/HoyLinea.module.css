@@ -1,0 +1,332 @@
+/* La línea del día: horas a la izquierda, el riel con tuercas y los datos de cada parada */
+.linea {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.parada,
+.fila {
+  display: grid;
+  grid-template-columns: 64px 28px minmax(0, 1fr);
+  column-gap: 10px;
+}
+
+.parada {
+  position: relative;
+  --centro: 13px;
+}
+
+.parada[data-estado='proxima'] {
+  --centro: 15px;
+}
+
+.horas {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.hora {
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 26px;
+  font-variant-numeric: tabular-nums;
+}
+
+.parada[data-estado='proxima'] .hora {
+  font-size: 28px;
+  line-height: 30px;
+}
+
+.chile {
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--sec);
+}
+
+.parada[data-estado='pasada'],
+.fila[data-estado='pasada'] {
+  color: var(--sec);
+}
+
+/* El riel: tramo de arriba y de abajo, y la tuerca de la estación */
+.riel {
+  position: relative;
+  display: block;
+}
+
+.tramoArriba,
+.tramoAbajo,
+.mitadArriba,
+.mitadAbajo {
+  position: absolute;
+  left: 12px;
+  width: 4px;
+  background: var(--tinta);
+}
+
+.tramoArriba {
+  top: 0;
+  height: var(--centro);
+}
+
+.tramoAbajo {
+  top: var(--centro);
+  bottom: 0;
+}
+
+.tramoArriba[data-color='apagado'],
+.tramoAbajo[data-color='apagado'] {
+  background: var(--apagado);
+}
+
+.tuerca {
+  position: absolute;
+  left: 4px;
+  top: calc(var(--centro) - 10px);
+  width: 20px;
+  height: 20px;
+  background: var(--tinta);
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+}
+
+.tuerca[data-estado='pasada'] {
+  background: var(--apagado);
+}
+
+.tuerca[data-estado='proxima'] {
+  left: 1px;
+  top: calc(var(--centro) - 13px);
+  width: 26px;
+  height: 26px;
+  background: var(--acento);
+}
+
+.agujero {
+  position: absolute;
+  left: 7px;
+  top: 7px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--puntito, var(--fondo));
+}
+
+.tuerca[data-estado='proxima'] .agujero {
+  left: 9px;
+  top: 9px;
+  width: 8px;
+  height: 8px;
+}
+
+/* ---------- Celular ---------- */
+.datos {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.parada .datos {
+  padding-bottom: 20px;
+}
+
+.parada[data-estado='pasada'] .datos {
+  padding-bottom: 8px;
+}
+
+.parada:last-child .datos {
+  padding-bottom: 12px;
+}
+
+.dia {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec);
+}
+
+/* El título abre el boleto; su área cubre toda la parada */
+.titulo {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 17px;
+  line-height: 26px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.titulo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.linea[data-grande='false'] .titulo {
+  line-height: 22px;
+}
+
+.parada[data-grande='true'] .titulo {
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 30px;
+}
+
+.empieza {
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 20px;
+}
+
+.donde {
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.quienes {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.quienes + .quienes {
+  margin-top: 2px;
+}
+
+.mapa,
+.nota {
+  position: relative;
+  z-index: 1;
+}
+
+.mapa {
+  display: inline-flex;
+  align-items: center;
+  height: 48px;
+  margin-top: 14px;
+  padding: 0 22px;
+  border-radius: 6px;
+  background: var(--acento);
+  color: var(--sobre);
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 19px;
+  text-decoration: none;
+}
+
+.nota {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--tinta);
+  font-size: 15px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* La marca de "ahora" entre lo que pasó y lo que viene */
+.ahora {
+  display: grid;
+  grid-template-columns: 64px 28px minmax(0, 1fr);
+  column-gap: 10px;
+  align-items: center;
+  height: 36px;
+  --mitad: 18px;
+}
+
+.ahoraCompacta {
+  height: 30px;
+  --mitad: 15px;
+}
+
+.ahora .riel {
+  height: 100%;
+}
+
+.ahoraHora {
+  text-align: right;
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.mitadArriba {
+  top: 0;
+  height: var(--mitad);
+  background: var(--apagado);
+}
+
+.mitadAbajo {
+  top: var(--mitad);
+  bottom: 0;
+}
+
+.raya {
+  position: absolute;
+  left: 0;
+  top: calc(var(--mitad) - 1px);
+  width: 28px;
+  height: 2px;
+  background: var(--acento);
+}
+
+.ahoraTexto {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ahora);
+}
+
+/* ---------- Computador: cada parada se elige ---------- */
+.fila {
+  --centro: 21px;
+  --puntito: var(--fondo);
+  width: 100%;
+  padding: 0 12px 0 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.fila[aria-pressed='true'] {
+  --puntito: var(--panel);
+  background: var(--panel);
+  box-shadow: inset 0 0 0 2px var(--acento);
+}
+
+.fila .horas,
+.fila .datos {
+  padding: 9px 0;
+}
+
+.fila .hora {
+  font-size: 22px;
+  line-height: 24px;
+}
+
+.nombre {
+  font-size: 17px;
+  line-height: 24px;
+}
+
+.fila[data-estado='proxima'] .nombre {
+  font-weight: 500;
+}
+
+.fila .donde {
+  font-size: 14px;
+  line-height: 20px;
+}

@@ -1,0 +1,116 @@
+.boleto {
+  position: relative;
+  min-height: 168px;
+}
+
+.dibujo {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.papel {
+  fill: var(--panel);
+  stroke: var(--regla);
+  stroke-width: 1;
+}
+
+.picado {
+  fill: none;
+  stroke: var(--regla);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 5;
+}
+
+/* ---------- Izquierda: el evento ---------- */
+.datos {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 96px;
+  padding: 14px 14px 0 18px;
+}
+
+.tipo {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--sec-tarjeta);
+}
+
+/* Hasta dos líneas: el boleto no crece */
+.titulo {
+  display: -webkit-box;
+  margin: 2px 0 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 28px;
+  overflow-wrap: anywhere;
+}
+
+.fecha,
+.horario {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.fecha {
+  margin-top: 6px;
+}
+
+.chile {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec-tarjeta);
+}
+
+/* ---------- Derecha: el talón con tu estado ---------- */
+.talon {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  padding: 0 4px;
+  text-align: center;
+}
+
+.arriba {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--sec-tarjeta);
+}
+
+.grande {
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 44px;
+  line-height: 48px;
+}
+
+.check,
+.candado {
+  display: flex;
+  margin: 4px 0;
+}
+
+.check {
+  color: var(--acento);
+}
+
+.abajo {
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--sec-tarjeta);
+}

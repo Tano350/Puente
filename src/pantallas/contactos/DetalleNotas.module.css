@@ -1,0 +1,171 @@
+.notas {
+  margin-top: 22px;
+}
+
+.cabeza {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rotulo {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.agregar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  margin-right: -8px;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.nota {
+  margin-top: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.texto {
+  font-size: 15px;
+  line-height: 22px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec);
+}
+
+.marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* El cuadro para escribir una nota: crece con el texto donde se puede */
+.redactar {
+  margin-bottom: 12px;
+  scroll-margin-bottom: 16px;
+}
+
+.redactar textarea {
+  field-sizing: content;
+  max-height: 40vh;
+}
+
+.oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.personal {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  color: var(--sec);
+}
+
+.personalTexto {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  font-size: 16px;
+  line-height: 22px;
+  color: var(--tinta);
+  cursor: pointer;
+}
+
+.personalDetalle {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec);
+}
+
+/* El interruptor de siempre (Controles), con la explicación debajo de "Personal" */
+.interruptor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 56px;
+  height: 44px;
+  margin-right: -4px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.pista {
+  position: relative;
+  display: block;
+  width: 48px;
+  height: 28px;
+  border-radius: 14px;
+  background: var(--interruptor);
+}
+
+.pista[data-activo='true'] {
+  background: var(--acento);
+}
+
+.perilla {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.pista[data-activo='true'] .perilla {
+  left: 23px;
+  background: var(--sobre);
+}
+
+.botones {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (min-width: 1024px) {
+  .notas {
+    margin-top: 20px;
+  }
+
+  .agregar {
+    height: 40px;
+  }
+
+  /* El botón de abajo del panel queda pegado encima del contenido */
+  .redactar {
+    scroll-margin-bottom: 104px;
+  }
+}

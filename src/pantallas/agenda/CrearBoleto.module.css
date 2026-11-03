@@ -1,0 +1,290 @@
+/* El boleto para llenar: cada línea es un campo y el talón muestra el modo */
+.boleto {
+  position: relative;
+  margin: 16px -4px 0;
+}
+
+.boleto[data-computador='true'] {
+  margin: 14px 0 0;
+}
+
+.silueta {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.borde {
+  fill: var(--panel);
+  stroke: var(--regla);
+  stroke-width: 1;
+}
+
+.corte {
+  fill: none;
+  stroke: var(--regla);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 5;
+}
+
+.lineas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(100% - 96px);
+  padding: 14px 14px 0 18px;
+}
+
+/* Los selectores del dispositivo van invisibles encima de cada línea */
+.nativo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  opacity: 0;
+  font-size: 16px;
+  cursor: pointer;
+  appearance: none;
+}
+
+/* ---------- Tipo ---------- */
+.tipo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--sec-tarjeta);
+}
+
+.tipo[data-vacio='true'] {
+  color: var(--sec);
+}
+
+/* Se toca en 44 px: desde un poco más arriba del boleto hasta el nombre */
+.tipo .nativo {
+  top: -18px;
+  left: -10px;
+  width: calc(100% + 20px);
+  height: calc(100% + 20px);
+}
+
+/* ---------- Nombre ---------- */
+.titulo {
+  display: block;
+  box-sizing: content-box;
+  width: 100%;
+  height: 28px;
+  margin: 2px 0 0;
+  padding: 0 0 4px;
+  border: none;
+  border-bottom: 1.5px dashed var(--regla);
+  border-radius: 0;
+  background: transparent;
+  color: var(--tinta);
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 28px;
+  text-overflow: ellipsis;
+  appearance: none;
+}
+
+.titulo::placeholder {
+  color: var(--sec);
+  opacity: 1;
+}
+
+.titulo:focus-visible {
+  outline: none;
+  border-bottom-style: solid;
+  border-bottom-color: var(--acento);
+}
+
+.titulo[aria-invalid='true'] {
+  border-bottom-color: var(--error);
+}
+
+/* ---------- Día, hora y lugar ---------- */
+.fila {
+  display: flex;
+  height: 36px;
+  border-bottom: 1px dashed var(--regla);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--tinta);
+}
+
+.fila[data-mal='true'] {
+  border-bottom-color: var(--error);
+}
+
+.celda {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.resto {
+  flex: 1;
+}
+
+/* El término, después de "15:00 a" */
+.fin {
+  padding-left: 0.28em;
+}
+
+.celda[data-vacio='true'] {
+  color: var(--sec);
+}
+
+.celda svg,
+.lugar svg {
+  color: var(--sec);
+}
+
+.lugar {
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  border-top: none;
+  border-right: none;
+  border-left: none;
+  background: transparent;
+  font-weight: 400;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lugar[data-vacio='true'] {
+  color: var(--sec);
+}
+
+.recorte {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Con teclado, el campo invisible marca su línea */
+@media (hover: hover) {
+  .tipo:has(.nativo:focus-visible),
+  .celda:has(.nativo:focus-visible) {
+    outline: 2px solid var(--acento);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+/* ---------- Talón ---------- */
+.talon {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  text-align: center;
+}
+
+.conCupo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.talonTexto {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--sec-tarjeta);
+}
+
+.bajoIcono {
+  margin-top: 6px;
+}
+
+.bajoRayado {
+  margin-top: 8px;
+}
+
+.cupos {
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 44px;
+  line-height: 48px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pasos {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.paso {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1.5px solid var(--regla);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--tinta);
+  cursor: pointer;
+}
+
+/* Se ve de 40 px y se toca en 44 */
+.paso::after {
+  content: '';
+  position: absolute;
+  inset: -2px -3px;
+}
+
+.paso[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Rato ocupado: rayado, como en la Agenda */
+.rayado {
+  display: block;
+  width: 56px;
+  height: 64px;
+  border: 1px solid var(--tinta);
+  border-radius: 3px;
+  background-image: repeating-linear-gradient(135deg, var(--tinta) 0 1.5px, transparent 1.5px 5px);
+}
+
+/* ---------- Hoja del lugar ---------- */
+.listo {
+  margin-top: 20px;
+}

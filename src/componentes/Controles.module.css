@@ -1,0 +1,392 @@
+.atras {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 44px;
+  margin-left: -10px;
+  padding: 0 10px 0 4px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.titulo,
+.tituloGrande {
+  margin: 0;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 36px;
+}
+
+.tituloGrande {
+  font-size: 36px;
+  line-height: 40px;
+}
+
+.bajada {
+  margin-top: 6px;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--sec-tarjeta);
+}
+
+.pie {
+  flex: none;
+  padding: 12px 20px calc(16px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--borde);
+  background: var(--fondo);
+}
+
+.principal,
+.borde {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.principal {
+  height: 50px;
+  border: none;
+  background: var(--acento);
+  color: var(--sobre);
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 19px;
+}
+
+.principal[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.peligro {
+  background: var(--error);
+  color: var(--sobre-error);
+}
+
+.borde {
+  height: 48px;
+  border: 2px solid var(--tinta);
+  background: transparent;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.etiqueta {
+  display: block;
+  margin-top: 14px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.opcional {
+  font-weight: 400;
+}
+
+.campo,
+.campoLargo,
+.fecha {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  border: 1.5px solid var(--regla);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--tinta);
+  font: inherit;
+  font-size: 16px;
+}
+
+.campo {
+  height: 48px;
+  padding: 0 12px;
+}
+
+.campoLargo {
+  min-height: 72px;
+  padding: 10px 12px;
+  font-size: 15px;
+  line-height: 22px;
+  resize: none;
+}
+
+/* En pantallas táctiles los campos van de 16 px: con menos, el iPhone acerca la pantalla al escribir */
+@media (pointer: coarse) {
+  .campoLargo {
+    font-size: 16px;
+  }
+}
+
+.campo::placeholder,
+.campoLargo::placeholder,
+.vacio {
+  color: var(--sec);
+}
+
+.campoMal {
+  border-color: var(--error);
+}
+
+.error {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--error);
+}
+
+.fecha {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  padding: 0 10px 0 12px;
+  color: var(--tinta);
+}
+
+.fecha svg {
+  color: var(--sec);
+}
+
+/* El calendario del dispositivo, invisible pero encima, para que se abra al tocar */
+.fechaNativa {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.interruptorFila {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  border-top: 1px solid var(--borde);
+}
+
+.ultimo {
+  border-bottom: 1px solid var(--borde);
+}
+
+.interruptorTexto {
+  flex: 1;
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.interruptor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 56px;
+  height: 44px;
+  margin-right: -4px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.pista {
+  position: relative;
+  display: block;
+  width: 48px;
+  height: 28px;
+  border-radius: 14px;
+  background: var(--interruptor);
+}
+
+.pista[data-activo='true'] {
+  background: var(--acento);
+}
+
+.perilla {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.pista[data-activo='true'] .perilla {
+  left: 23px;
+  background: var(--sobre);
+}
+
+.grupo {
+  border: 1px solid var(--regla);
+  border-radius: 12px;
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.fila {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.fila + .fila {
+  border-top: 1px solid var(--borde);
+}
+
+.filaIcono,
+.filaFlecha {
+  display: flex;
+  color: var(--sec);
+}
+
+.filaFlecha {
+  margin-right: -4px;
+}
+
+.filaEtiqueta {
+  flex: 1;
+  min-width: 0;
+  font-size: 17px;
+  line-height: 24px;
+}
+
+.filaValor {
+  flex: none;
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+@media (min-width: 1024px) {
+  .fila {
+    padding: 8px 18px;
+  }
+}
+
+.hojaFondo {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+}
+
+.hojaVelo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: rgba(8, 10, 13, 0.6);
+  cursor: pointer;
+}
+
+.hoja {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 8px 20px calc(28px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--regla);
+  border-radius: 14px 14px 0 0;
+  background: var(--panel);
+}
+
+/* Dentro de la hoja, los campos van del color del fondo para que se distingan */
+.hoja .campo,
+.hoja .campoLargo {
+  background: var(--fondo);
+}
+
+.manilla {
+  width: 36px;
+  height: 4px;
+  margin: 0 auto;
+  border-radius: 2px;
+  background: var(--regla);
+}
+
+.tituloHoja {
+  margin: 12px 0 0;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 30px;
+}
+
+.aviso {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(88px + env(safe-area-inset-bottom));
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 6px 6px 6px 16px;
+  border-radius: 8px;
+  background: var(--tinta);
+  color: var(--fondo);
+  font-size: 15px;
+  line-height: 20px;
+  box-shadow: 0 8px 24px var(--sombra);
+}
+
+.avisoSobrePie {
+  bottom: calc(166px + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 1024px) {
+  .aviso {
+    left: calc(232px + (100vw - 232px) / 2);
+    right: auto;
+    bottom: 22px;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    padding-right: 8px;
+  }
+
+  /* El panel encima mide 430 px */
+  .avisoConPanel {
+    left: calc(232px + (100vw - 232px - 430px) / 2);
+  }
+}
+
+.avisoTexto {
+  padding: 8px 0;
+}
+
+.deshacer {
+  flex: none;
+  height: 40px;
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  color: var(--fondo);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}

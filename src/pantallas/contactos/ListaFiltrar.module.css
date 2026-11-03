@@ -1,0 +1,77 @@
+.cabeza {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.titulo {
+  margin: 0;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 32px;
+}
+
+.limpiar {
+  height: 44px;
+  margin-right: -6px;
+  padding: 0 6px;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.etiqueta {
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.etiqueta[data-segunda='true'] {
+  margin-top: 20px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1.5px solid var(--regla);
+  border-radius: 18px;
+  background: transparent;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+/* Se ve de 36 px, pero se toca en 44 (sin pisar la fila de al lado) */
+.chip::after {
+  content: '';
+  position: absolute;
+  inset: -5.5px 0;
+}
+
+.chip[aria-pressed='true'] {
+  border-color: var(--tinta);
+  background: var(--tinta);
+  color: var(--fondo);
+}
+
+.boton {
+  margin-top: 24px;
+}

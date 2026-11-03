@@ -1,0 +1,120 @@
+/* Pantalla completa, sin la barra de secciones; en el computador, una columna al centro */
+.pantalla {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.desplazable {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: calc(24px + env(safe-area-inset-top)) 20px 24px;
+}
+
+.volver {
+  margin-top: -8px;
+}
+
+.contenido {
+  margin-top: 12px;
+}
+
+.bajada {
+  margin-top: 6px;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--sec-tarjeta);
+}
+
+.lista {
+  padding-top: 16px;
+}
+
+.faltan {
+  margin-top: 4px;
+  font-size: 16px;
+  line-height: 22px;
+  color: var(--sec-tarjeta);
+}
+
+.tareas {
+  margin-top: 20px;
+}
+
+.tarea {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--regla);
+  border-radius: 12px;
+  background: var(--panel);
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Tuerca llena (hecha) o hueca (pendiente) */
+.hecha,
+.pendiente {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+}
+
+.hecha {
+  background: var(--acento);
+  color: var(--sobre);
+}
+
+.pendiente {
+  background: var(--regla);
+}
+
+.pendiente span {
+  width: 22px;
+  height: 22px;
+  background: var(--panel);
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+}
+
+.tareaTexto {
+  flex: 1;
+  min-width: 0;
+}
+
+.tareaTitulo {
+  display: block;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.tareaEstado {
+  display: block;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.flecha {
+  display: flex;
+  color: var(--sec);
+}
+
+.nota {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 18px;
+  text-align: center;
+  color: var(--sec);
+}

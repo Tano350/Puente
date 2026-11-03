@@ -1,0 +1,88 @@
+/* Celular: dentro de la cabecera, bajo las pestañas */
+.franja {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  margin-top: 10px;
+  touch-action: pan-y;
+}
+
+/* Computador: en su propia caja, arriba del día */
+.franjaPc {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--regla);
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+.dia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--tinta);
+  cursor: pointer;
+}
+
+.franjaPc .dia {
+  flex: 1;
+  height: 52px;
+}
+
+.etiqueta {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--sec-tarjeta);
+}
+
+.franjaPc .etiqueta {
+  font-weight: 500;
+}
+
+.numero {
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 24px;
+}
+
+.dia[aria-current='date'] .etiqueta {
+  font-weight: 500;
+  color: var(--ahora);
+}
+
+.dia[aria-pressed='true'] {
+  background: var(--tinta);
+  color: var(--panel);
+}
+
+.dia[aria-pressed='true'] .etiqueta {
+  font-weight: 500;
+  color: inherit;
+}
+
+.dia:disabled {
+  color: var(--apagado);
+  cursor: default;
+}
+
+.dia:disabled .etiqueta {
+  color: var(--apagado);
+}
+
+@media (hover: hover) {
+  .dia:not(:disabled, [aria-pressed='true']):hover {
+    background: var(--activo-fondo);
+  }
+
+  .franjaPc .dia:not(:disabled, [aria-pressed='true']):hover {
+    background: var(--fondo);
+  }
+}

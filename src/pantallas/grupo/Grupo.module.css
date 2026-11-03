@@ -1,0 +1,174 @@
+/* ---------- Celular ---------- */
+.celular,
+.ficha {
+  padding: 28px 20px 28px;
+}
+
+.cabecera {
+  margin: -28px -20px 0;
+  padding: 28px 20px 14px;
+  border-bottom: 1px solid var(--regla);
+  background: var(--panel);
+}
+
+.titulo {
+  margin: 0;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 42px;
+  line-height: 1;
+}
+
+.linea1 {
+  margin-top: 10px;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.linea2 {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sec-tarjeta);
+}
+
+.integrantes {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 24px;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.cuenta {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--sec);
+}
+
+.buscador {
+  margin-top: 8px;
+}
+
+.lista {
+  margin-top: 6px;
+}
+
+.integrante {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 60px;
+  padding: 8px 0;
+  border: none;
+  border-top: 1px solid var(--borde);
+  background: transparent;
+  text-align: left;
+}
+
+button.integrante {
+  cursor: pointer;
+}
+
+.tuAvatar,
+.sobre {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.tuAvatar {
+  background: var(--acento);
+  color: var(--sobre);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* Quien todavía no entra: un sobre, porque solo se sabe su correo */
+.sobre {
+  border: 1.5px dashed var(--regla);
+  color: var(--sec);
+}
+
+.quien {
+  flex: 1;
+  min-width: 0;
+}
+
+.nombre {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.nombre[data-tu='true'] {
+  font-weight: 500;
+  color: var(--acento);
+}
+
+.detalle {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec);
+}
+
+.estado {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec);
+}
+
+.estado[data-alla='true'] {
+  color: var(--tinta);
+}
+
+.punto {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.nadie {
+  padding: 20px 0 8px;
+  font-size: 15px;
+  line-height: 22px;
+  text-align: center;
+  color: var(--sec);
+}
+
+.volver {
+  margin-top: -12px;
+}
+
+/* ---------- Computador ---------- */
+.buscadorPc {
+  flex: none;
+  width: 300px;
+}
+
+.nadiePc {
+  margin-top: 14px;
+  padding-left: 130px;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--sec);
+}

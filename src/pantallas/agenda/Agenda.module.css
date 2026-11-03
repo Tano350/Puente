@@ -1,0 +1,300 @@
+/* ---------- Las dos formas ---------- */
+.titulo {
+  margin: 0;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 42px;
+  line-height: 1;
+}
+
+.nuevo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  height: 44px;
+  padding: 0 16px 0 12px;
+  border: 2px solid var(--tinta);
+  border-radius: 6px;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.nuevo[aria-pressed='true'] {
+  background: var(--tinta);
+  color: var(--panel);
+}
+
+.flecha {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.flecha[aria-disabled='true'] {
+  color: var(--apagado);
+  cursor: default;
+}
+
+.fallo {
+  padding: 40px 8px 0;
+  text-align: center;
+  font-size: 16px;
+  line-height: 22px;
+  color: var(--sec);
+}
+
+.fallo p {
+  margin: 0;
+}
+
+.reintentar {
+  height: 44px;
+  margin-top: 14px;
+  padding: 0 18px;
+  border: 2px solid var(--tinta);
+  border-radius: 6px;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* ---------- Celular ---------- */
+.celular {
+  padding: 28px 20px 24px;
+}
+
+.cabecera {
+  margin: -28px -20px 0;
+  padding: 28px 20px 12px;
+  border-bottom: 1px solid var(--regla);
+  background: var(--panel);
+}
+
+.titular {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.pestanas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  margin-top: 12px;
+  padding: 3px;
+  border: 1px solid var(--regla);
+  border-radius: 8px;
+}
+
+.pestanas button {
+  position: relative;
+  height: 38px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sec-tarjeta);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Se ven de 38 px, pero se tocan en 44 */
+.pestanas button::after {
+  content: '';
+  position: absolute;
+  inset: -3px 0;
+}
+
+.pestanas button[aria-selected='true'] {
+  background: var(--tinta);
+  color: var(--panel);
+}
+
+.periodo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.periodoTexto {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--sec-tarjeta);
+}
+
+.flechas {
+  display: flex;
+}
+
+.controles {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.segmento {
+  display: flex;
+  flex: none;
+  padding: 3px;
+  border: 1px solid var(--regla);
+  border-radius: 8px;
+}
+
+.segmento button {
+  position: relative;
+  height: 36px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sec);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.segmento button::after {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
+}
+
+.segmento button[aria-pressed='true'] {
+  background: var(--tinta);
+  color: var(--fondo);
+}
+
+/* ---------- Computador: la cabecera arriba y dos columnas que se desplazan por separado ---------- */
+.pc {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.cabeceraPc {
+  flex: none;
+  padding: 22px 32px 16px;
+  border-bottom: 1px solid var(--regla);
+  background: var(--panel);
+}
+
+.titularPc {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.navegarPc {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+  margin-left: 12px;
+}
+
+.navegarPc .flecha {
+  width: 40px;
+  height: 40px;
+}
+
+@media (hover: hover) {
+  .navegarPc .flecha:not([aria-disabled='true']):hover {
+    background: var(--fondo);
+  }
+}
+
+.periodoPc {
+  margin-left: 6px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--sec-tarjeta);
+}
+
+.controlesPc {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.segmentoPc {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--regla);
+  border-radius: 8px;
+}
+
+.segmentoPc button {
+  height: 36px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sec-tarjeta);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.segmentoPc button[aria-selected='true'],
+.segmentoPc button[aria-pressed='true'] {
+  background: var(--tinta);
+  color: var(--panel);
+}
+
+.chilePc {
+  margin-left: auto;
+}
+
+.cuerpoPc {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.columnasPc {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-rows: minmax(0, 1fr);
+  column-gap: 28px;
+  padding: 12px 32px 0;
+}
+
+.vistaPc,
+.lado {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding-bottom: 20px;
+}
+
+.ladoVacio {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--sec);
+}
