@@ -1,10 +1,24 @@
+import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
-import { Icono, type NombreIcono } from '../../componentes/Icono.tsx'
+import { Aviso } from '../../componentes/Controles.tsx'
+import { InterruptorHoraDeChile, useHoraDeChile } from '../../componentes/HoraDeChile.tsx'
+import { Icono } from '../../componentes/Icono.tsx'
 import { Tuerca } from '../../componentes/Tuerca.tsx'
+import { useAviso } from '../../componentes/useAviso.ts'
+import { useEsComputador } from '../../componentes/useEsComputador.ts'
+import { usePersonas } from '../../datos/consultas.ts'
 import { useContactos } from '../../datos/contactos.ts'
-import { conMayuscula, diaLargo, diasEntre, hoyAqui } from '../../datos/fechas.ts'
+import { ErrorDeEvento, ir, noIr, useAsistentes, useEventos, useNotasReunion, type Evento } from '../../datos/eventos.ts'
+import { conMayuscula, diaEn, diaLargo, diasEntre, hora, hoyAqui, hoyEnCalifornia } from '../../datos/fechas.ts'
+import { estaAlla } from '../../datos/grupo.ts'
 import { useSesion, type Persona } from '../../datos/sesion.tsx'
 import { useTextos, type Textos } from '../../textos.ts'
+import { DetalleEvento } from '../agenda/DetalleEvento.tsx'
+import { loProximo, momentoDelViaje, porConfirmar, reunionesSinNota, tambienHoy, tuDia, useAhora, type Parada } from './HoyDatos.ts'
+import { TambienHoy } from './HoyGrupo.tsx'
+import { armarEstaciones, Linea, Paradas, type MarcaAhora } from './HoyLinea.tsx'
+import { HojaPendientes, ListaPendientes, pendientesDe } from './HoyPendientes.tsx'
+import { AllaHoy, BoletosSinNota, HojaReuniones, ParaCerrar, type Cierre } from './HoyVolver.tsx'
 import estilos from './Hoy.module.css'
 
 // La ficha de arriba: el día y, en la tuerca, cuánto falta, qué día del viaje es o hace cuánto volviste
@@ -18,29 +32,176 @@ function ficha(persona: Persona, hoy: string, textos: Textos): { fecha: string; 
   return { fecha, detalle: null, tuerca: t.diaDelViaje(diasEntre(llega, hoy)) }
 }
 
+// Antes de llegar: lo próximo y tus pendientes. Durante tu estadía: tu día como línea y lo del grupo al que te puedes sumar.
+// Al volver: lo que falta para cerrar el viaje, tus pendientes y cómo sigue el grupo allá.
 export function Hoy() {
   const textos = useTextos()
   const sesion = useSesion()
   const navigate = useNavigate()
+  const computador = useEsComputador()
+  const ahora = useAhora()
+  const [chile, setChile] = useHoraDeChile()
+  const aviso = useAviso()
   const { data: contactos } = useContactos()
+  const { data: eventos } = useEventos()
+  const { data: asistentes } = useAsistentes()
+  const { data: notas } = useNotasReunion()
+  const { data: personas } = usePersonas()
+  const [elegido, setElegido] = useState<string | null>(null)
+  const [cierreElegido, setCierreElegido] = useState<Cierre['id']>('notas')
+  const [hoja, setHoja] = useState<'pendientes' | 'reuniones' | null>(null)
+  const [yendo, setYendo] = useState<string | null>(null)
   if (sesion.tipo !== 'dentro') return null
   const { persona } = sesion
   const t = textos.hoy
-  const { fecha, detalle, tuerca } = ficha(persona, hoyAqui(), textos)
+  const v = t.viaje
+  const hoy = hoyAqui()
+  const momento = momentoDelViaje(persona, hoy)
+  const durante = momento === 'durante'
+  const { fecha, detalle, tuerca } = ficha(persona, hoy, textos)
+  const cargado = Boolean(eventos && asistentes)
+  const lista = eventos ?? []
+  const van = asistentes ?? []
 
-  // Pendientes: tus contactos por contactar y lo que falta en tu perfil (los eventos por confirmar llegan con Agenda)
-  const pendientes: { texto: string; icono: NombreIcono; ir: () => void }[] = []
-  const porContactar = (contactos ?? []).filter((c) => c.responsable === persona.id && c.etapa === 'por_contactar')
-  if (porContactar.length === 1) pendientes.push({ texto: t.escribeA(porContactar[0].nombre), icono: 'contactos', ir: () => navigate(`/contactos/${porContactar[0].id}`) })
-  if (porContactar.length > 1) pendientes.push({ texto: t.escribeAVarios(porContactar.length), icono: 'contactos', ir: () => navigate('/contactos') })
-  const editarPerfil = () => navigate('/perfil', { state: { abrir: 'editar' } })
-  if (!persona.emprendimiento) pendientes.push({ texto: t.agregaEmprendimiento, icono: 'perfil', ir: editarPerfil })
-  if (!persona.objetivos) pendientes.push({ texto: t.agregaObjetivos, icono: 'perfil', ir: editarPerfil })
-  if (!persona.linkedin) pendientes.push({ texto: t.agregaLinkedin, icono: 'perfil', ir: editarPerfil })
+  // Tu día (durante) o lo próximo (antes), como estaciones
+  let paradas: Parada[] = []
+  let marca: MarcaAhora | null = null
+  if (durante) {
+    const dia = tuDia(lista, van, persona.id, hoy, ahora)
+    paradas = dia.paradas
+    marca = { en: dia.ahoraEn, hora: hora(new Date(ahora).toISOString()) }
+  } else if (momento === 'antes') {
+    paradas = loProximo(lista, van, persona, ahora)
+  }
+  const estaciones = armarEstaciones(paradas, { textos, durante, chile, ahora, hoyCalifornia: hoyEnCalifornia(), yo: persona.id, asistentes: van, personas: personas ?? [], contactos: contactos ?? [], notas: notas ?? [] })
+  const tambien = durante ? tambienHoy(lista, van, persona.id, hoy, ahora) : []
+  const sinConfirmar = durante || momento === 'antes' ? porConfirmar(lista, van, persona, ahora, durante ? hoy : null) : []
+  const pendientes = pendientesDe(persona, contactos ?? [], sinConfirmar, textos, navigate)
+  const sinNota = momento === 'despues' ? reunionesSinNota(lista, van, notas ?? [], persona.id, ahora) : []
 
-  return (
-    <div className={estilos.hoy}>
-      <header className={estilos.ficha}>
+  // Para cerrar tu viaje: por ahora las notas que faltan (Gastos suma aquí lo suyo)
+  const cierres: Cierre[] = sinNota.length > 0 ? [{ id: 'notas', icono: 'lapiz', texto: v.escribeNotas(sinNota.length) }] : []
+
+  // Allá hoy: los que siguen allá y los eventos del día en California
+  const diaAlla = hoyEnCalifornia()
+  const siguen = (personas ?? []).filter((p) => !p.sacada_en && p.id !== persona.id && estaAlla(p, diaAlla)).length
+  const eventosAlla = lista.filter((e) => diaEn(e.inicio) === diaAlla).length
+
+  // En el computador, la parada elegida muestra su boleto al lado (si no eliges, la próxima)
+  const visibles = [...paradas.map((p) => p.evento.id), ...tambien.map((e) => e.id)]
+  const porDefecto = (paradas.find((p) => p.estado === 'proxima') ?? paradas.find((p) => p.estado === 'enCurso') ?? paradas.at(-1))?.evento.id ?? tambien[0]?.id ?? null
+  const idElegido = elegido && visibles.includes(elegido) ? elegido : porDefecto
+  const eventoElegido = lista.find((e) => e.id === idElegido)
+
+  // El boleto sabe que vienes de Hoy (para volver aquí) y si vienes a escribir la nota
+  const abrir = (id: string) => (computador ? setElegido(id) : navigate(`/agenda/${id}`, { state: { desde: 'hoy' } }))
+  const escribirNota = (id: string) => navigate(`/agenda/${id}`, { state: { desde: 'hoy', abrir: 'nota' } })
+  const abrirCierre = (id: Cierre['id']) => {
+    if (computador) setCierreElegido(id)
+    else if (id === 'notas' && sinNota.length === 1) escribirNota(sinNota[0].id)
+    else setHoja('reuniones')
+  }
+  const sumarme = async (evento: Evento) => {
+    setYendo(evento.id)
+    try {
+      await ir(evento.id)
+      aviso.mostrar(v.vasA(evento.titulo), () => void noIr(evento.id).catch(() => aviso.mostrar(v.noSePudoIr.otro)))
+    } catch (error) {
+      aviso.mostrar(v.noSePudoIr[error instanceof ErrorDeEvento ? error.motivo : 'otro'])
+    } finally {
+      setYendo(null)
+    }
+  }
+
+  const conHoras = estaciones.length > 0 || tambien.length > 0
+  const seccionLinea = (durante || momento === 'antes') && (
+    <section className={estilos.seccion} aria-labelledby="hoy-linea">
+      <div className={estilos.cabecera}>
+        <h2 id="hoy-linea" className={estilos.cinta}>
+          {durante ? v.tuDia : v.loProximo}
+        </h2>
+        {conHoras && <InterruptorHoraDeChile activo={chile} onCambio={setChile} />}
+      </div>
+      {cargado &&
+        (estaciones.length === 0 ? (
+          <div>
+            <p className={estilos.vacio}>{durante ? v.sinEventos : v.sinProximos}</p>
+            <button type="button" className={estilos.verAgenda} onClick={() => navigate('/agenda')}>
+              {v.verAgenda}
+            </button>
+          </div>
+        ) : computador ? (
+          <Paradas estaciones={estaciones} ahora={marca} elegida={idElegido} onElegir={setElegido} />
+        ) : (
+          <Linea estaciones={estaciones} ahora={marca} grande={durante} onAbrir={abrir} onNota={escribirNota} />
+        ))}
+    </section>
+  )
+  const seccionTambien = tambien.length > 0 && (
+    <section className={estilos.seccion} aria-labelledby="hoy-tambien">
+      <h2 id="hoy-tambien" className={estilos.cinta}>
+        {v.tambienHoy}
+      </h2>
+      <TambienHoy eventos={tambien} asistentes={van} yo={persona.id} chile={chile} computador={computador} elegido={idElegido} yendo={yendo} onAbrir={abrir} onVoy={(e) => void sumarme(e)} />
+    </section>
+  )
+  const seccionPendientes = (
+    <section className={`${estilos.seccion} ${momento === 'sinFechas' ? estilos.primera : ''}`} aria-labelledby="hoy-pendientes">
+      <h2 id="hoy-pendientes" className={estilos.cinta}>
+        {t.pendientes}
+      </h2>
+      <ListaPendientes pendientes={pendientes.lista} />
+    </section>
+  )
+  const tituloCerrar = (
+    <h2 id="hoy-cerrar" className={estilos.cinta}>
+      {v.paraCerrar}
+    </h2>
+  )
+  const seccionCerrar = cierres.length > 0 && (
+    <section className={estilos.seccion} aria-labelledby="hoy-cerrar">
+      {computador ? <div className={estilos.cabecera}>{tituloCerrar}</div> : tituloCerrar}
+      <ParaCerrar cierres={cierres} computador={computador} elegido={cierreElegido} onElegir={abrirCierre} />
+    </section>
+  )
+  const seccionAlla = momento === 'despues' && siguen > 0 && (
+    <section className={estilos.seccion} aria-labelledby="hoy-alla">
+      <h2 id="hoy-alla" className={estilos.cinta}>
+        {v.allaHoy}
+      </h2>
+      <AllaHoy personas={siguen} eventos={eventosAlla} onAbrir={() => navigate('/grupo')} />
+    </section>
+  )
+
+  let secciones: ReactNode = seccionPendientes
+  if (momento === 'despues')
+    secciones = (
+      <>
+        {seccionCerrar}
+        {seccionPendientes}
+        {seccionAlla}
+      </>
+    )
+  else if (durante)
+    secciones = (
+      <>
+        {seccionLinea}
+        {seccionTambien}
+        {computador && seccionPendientes}
+      </>
+    )
+  else if (momento === 'antes')
+    secciones = (
+      <>
+        {seccionLinea}
+        {seccionPendientes}
+      </>
+    )
+
+  const resumen = durante && !computador ? pendientes.resumen : null
+  const cabeza = (
+    <header className={estilos.ficha} data-fila={Boolean(resumen)}>
+      <div className={estilos.fichaFila}>
         <div>
           <h1 className={estilos.titulo}>{t.titulo}</h1>
           <p className={estilos.fecha}>{fecha}</p>
@@ -56,29 +217,47 @@ export function Hoy() {
             </span>
           </div>
         )}
-      </header>
-      <div className={estilos.contenido}>
-        <section className={estilos.pendientes} aria-labelledby="hoy-pendientes">
-          <h2 id="hoy-pendientes" className={estilos.cinta}>
-            {t.pendientes}
-          </h2>
-          {pendientes.length > 0 ? (
-            <ul className={estilos.lista}>
-              {pendientes.map(({ texto, icono, ir }) => (
-                <li key={texto}>
-                  <button type="button" className={estilos.pendiente} onClick={ir}>
-                    <Icono nombre={icono} medida={20} />
-                    <span className={estilos.pendienteTexto}>{texto}</span>
-                    <Icono nombre="derecha" medida={16} trazo={2} />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className={estilos.sinPendientes}>{t.sinPendientes}</p>
-          )}
-        </section>
       </div>
+      {resumen && (
+        <div className={estilos.resumen}>
+          <button type="button" className={estilos.resumenBoton} aria-haspopup="dialog" onClick={() => setHoja('pendientes')}>
+            <span className={estilos.punto} aria-hidden="true" />
+            <span className={estilos.resumenTexto}>{resumen}</span>
+            <Icono nombre="derecha" medida={16} trazo={2} />
+          </button>
+        </div>
+      )}
+    </header>
+  )
+
+  if (computador) {
+    const lado =
+      momento === 'despues' ? (
+        cierreElegido === 'notas' && sinNota.length > 0 && <BoletosSinNota reuniones={sinNota} contactos={contactos ?? []} onNota={escribirNota} />
+      ) : eventoElegido ? (
+        <DetalleEvento evento={eventoElegido} computador onCerrar={() => setElegido(null)} />
+      ) : null
+    return (
+      <div className={estilos.hoy}>
+        {cabeza}
+        <div className={estilos.cuerpo}>
+          <div className={estilos.columnas}>
+            <div className={estilos.izquierda}>{secciones}</div>
+            <div className={estilos.derecha}>{lado}</div>
+          </div>
+        </div>
+        <Aviso texto={aviso.texto} onDeshacer={aviso.deshacer} conPanel />
+      </div>
+    )
+  }
+
+  return (
+    <div className={estilos.hoy}>
+      {cabeza}
+      {secciones}
+      <HojaPendientes abierta={hoja === 'pendientes'} pendientes={pendientes.lista} onCerrar={() => setHoja(null)} />
+      <HojaReuniones abierta={hoja === 'reuniones'} reuniones={sinNota} onNota={escribirNota} onCerrar={() => setHoja(null)} />
+      <Aviso texto={aviso.texto} onDeshacer={aviso.deshacer} />
     </div>
   )
 }

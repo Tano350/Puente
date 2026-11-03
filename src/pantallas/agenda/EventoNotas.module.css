@@ -1,0 +1,64 @@
+.notas {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--borde);
+}
+
+.notas[data-pc='true'] {
+  margin-top: 14px;
+}
+
+.rotulo {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+/* Como la nota de reunión de un contacto */
+.nota {
+  margin-top: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.pregunta {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--sec);
+}
+
+.texto + .pregunta {
+  margin-top: 10px;
+}
+
+.texto {
+  font-size: 15px;
+  line-height: 22px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec);
+}
+
+/* Las preguntas al escribir: el cuadro crece con el texto */
+.redactar {
+  margin-bottom: 4px;
+}
+
+.redactar label:first-child {
+  margin-top: 8px;
+}
+
+.redactar textarea {
+  field-sizing: content;
+  max-height: 40vh;
+}

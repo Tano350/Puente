@@ -4,14 +4,21 @@
 
 /* La ficha "Tuerca a la derecha": el día a la izquierda y la cuenta en la tuerca */
 .ficha {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
   margin: -28px -20px 0;
   padding: 28px 20px 18px;
   border-bottom: 1px solid var(--regla);
   background: var(--panel);
+}
+
+.ficha[data-fila='true'] {
+  padding-bottom: 0;
+}
+
+.fichaFila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .titulo {
@@ -74,8 +81,62 @@
   font-variant-numeric: tabular-nums;
 }
 
-.pendientes {
+/* Durante el viaje, en el celular: los pendientes resumidos en una fila bajo la ficha */
+.resumen {
+  margin-top: 16px;
+  border-top: 1px solid var(--regla);
+}
+
+.resumenBoton {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.resumenBoton svg {
+  color: var(--sec-tarjeta);
+}
+
+.punto {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--acento);
+}
+
+.resumenTexto {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Secciones: rótulo de cinta y lo suyo debajo */
+.seccion {
+  margin-top: 16px;
+}
+
+.primera {
   margin-top: 22px;
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+}
+
+.cabecera + * {
+  margin-top: 10px;
 }
 
 /* Rótulo de cinta de papel */
@@ -117,44 +178,102 @@
 }
 
 .pendiente svg {
+  flex: none;
   color: var(--sec);
 }
 
 .pendienteTexto {
   flex: 1;
+  min-width: 0;
   padding: 12px 0;
   line-height: 22px;
 }
 
-.sinPendientes {
+.sinPendientes,
+.vacio {
   margin: 12px 0 0;
   font-size: 15px;
   line-height: 22px;
   color: var(--sec);
 }
 
-/* En el computador la ficha es una franja y lo de abajo va en una columna */
+.verAgenda {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* En el computador: la ficha es una franja, a la izquierda tu día y al lado el boleto elegido */
 @media (min-width: 1024px) {
   .hoy {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     padding: 0;
   }
 
   .ficha {
-    gap: 24px;
+    flex: none;
     margin: 0;
     padding: 24px 32px 20px;
   }
 
-  .contenido {
-    padding: 18px 32px 24px;
+  .fichaFila {
+    gap: 24px;
   }
 
-  .pendientes {
-    max-width: 400px;
+  .cuerpo {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .columnas {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: 400px minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    column-gap: 44px;
+    padding: 18px 32px 0;
+  }
+
+  .izquierda,
+  .derecha {
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: none;
+    padding-bottom: 24px;
+  }
+
+  .derecha {
+    padding-top: 8px;
+  }
+
+  .seccion {
+    margin-top: 22px;
+  }
+
+  .seccion:first-child {
     margin-top: 0;
   }
 
   .lista {
     margin-top: 14px;
+  }
+}
+
+/* Entre 1024 y 1200 px la columna de la izquierda cede espacio al boleto */
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .columnas {
+    grid-template-columns: 340px minmax(0, 1fr);
+    column-gap: 32px;
   }
 }

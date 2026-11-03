@@ -93,3 +93,43 @@ export function estadia(llega: string | null, vuelve: string | null, hoy = hoyEn
   if (hoy > vuelve) return { tipo: 'volvio', texto: 'Volvió' }
   return { tipo: 'alla', texto: 'Allá' }
 }
+
+// ---------- Horas de los eventos: se guardan en UTC y se muestran en California (o en Chile) ----------
+export const CALIFORNIA = 'America/Los_Angeles'
+export const CHILE = 'America/Santiago'
+
+const formatoHora = new Map<string, Intl.DateTimeFormat>()
+const formatoDia = new Map<string, Intl.DateTimeFormat>()
+
+// "09:30"
+export function hora(momento: string, zona = CALIFORNIA): string {
+  if (!formatoHora.has(zona)) formatoHora.set(zona, new Intl.DateTimeFormat('es-CL', { timeZone: zona, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }))
+  return formatoHora.get(zona)!.format(new Date(momento))
+}
+
+// El día (AAAA-MM-DD) de un momento, en esa zona
+export function diaEn(momento: string, zona = CALIFORNIA): string {
+  if (!formatoDia.has(zona)) formatoDia.set(zona, new Intl.DateTimeFormat('en-CA', { timeZone: zona }))
+  return formatoDia.get(zona)!.format(new Date(momento))
+}
+
+// Minutos que la zona va adelante de UTC en ese instante (en California, -480 en invierno)
+function desfase(zona: string, instante: Date): number {
+  const partes = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', { timeZone: zona, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      .formatToParts(instante)
+      .map((p) => [p.type, p.value]),
+  )
+  return (Date.UTC(+partes.year, +partes.month - 1, +partes.day, +partes.hour, +partes.minute, +partes.second) - instante.getTime()) / 60_000
+}
+
+// Un día y una hora de California (o de otra zona) como momento en UTC
+export function momento(dia: string, horaYMinutos: string, zona = CALIFORNIA): string {
+  const supuesto = new Date(`${dia}T${horaYMinutos}:00Z`)
+  return new Date(supuesto.getTime() - desfase(zona, supuesto) * 60_000).toISOString()
+}
+
+// Ahora mismo en California, como momento (en desarrollo, ?hoy= lo fija a las 10:15 de ese día)
+export function ahora(): string {
+  return hoyDePrueba ? momento(hoyDePrueba, '10:15') : new Date().toISOString()
+}

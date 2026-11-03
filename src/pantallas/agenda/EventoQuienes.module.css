@@ -1,0 +1,192 @@
+.quienes {
+  margin-top: 16px;
+}
+
+/* En el computador cada parte del boleto va separada por una regla */
+.quienes[data-pc='true'] {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--borde);
+}
+
+.quienes > * {
+  margin: 10px 0 0;
+}
+
+.quienes > :first-child {
+  margin-top: 0;
+}
+
+/* La reunión salió de un contacto: se abre su tarjeta. Se ve como una línea, pero se toca en 44 px */
+.quienes > .contacto {
+  margin: -11px 0;
+}
+
+.quienes > .contacto + * {
+  margin-top: 10px;
+}
+
+.contacto {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  color: var(--tinta);
+  font-size: 15px;
+  line-height: 22px;
+  text-decoration: none;
+}
+
+.contacto svg {
+  color: var(--sec);
+}
+
+/* ---------- Los cupos como asientos de un vagón ---------- */
+.cupos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+
+.vagon {
+  display: block;
+  flex: none;
+  padding: 7px 9px;
+  border: 1.5px solid var(--regla);
+  border-radius: 14px 14px 10px 10px;
+}
+
+.asientos {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.asiento {
+  width: 22px;
+  height: 22px;
+  margin: 3px;
+  border: 2px solid var(--regla);
+  border-radius: 6px 6px 4px 4px;
+}
+
+.asiento[data-asiento='ocupado'] {
+  border-color: var(--sec);
+  background: var(--sec);
+}
+
+.asiento[data-asiento='tuyo'] {
+  border-color: var(--acento);
+  background: var(--acento);
+}
+
+.cuposTexto,
+.modo {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 22px;
+}
+
+.modo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quienes[data-pc='true'] > .modo + * {
+  margin-top: 6px;
+}
+
+.linea,
+.espera {
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.quienes > .espera {
+  margin-top: 2px;
+  color: var(--sec);
+}
+
+/* ---------- Quien organiza: sacar (la ×) y agregar ---------- */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 6px;
+}
+
+.quienes > .chips {
+  margin-top: 4px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+button.chip {
+  cursor: pointer;
+}
+
+button.chip[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.pastilla {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 10px 0 12px;
+  border: 1.5px solid var(--regla);
+  border-radius: 17px;
+  font-size: 15px;
+}
+
+.pastilla svg {
+  color: var(--sec);
+}
+
+.pastilla[data-tu='true'] {
+  padding: 0 12px;
+  border-color: var(--acento);
+  color: var(--acento);
+  font-weight: 500;
+}
+
+.pastilla[data-agregar='true'] {
+  padding: 0 12px 0 10px;
+  border-style: dashed;
+  font-weight: 500;
+}
+
+.pastilla[data-agregar='true'] svg {
+  color: currentColor;
+}
+
+.quienes > .cambiar {
+  margin-top: 2px;
+}
+
+.cambiar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  margin-left: -8px;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.cambiar svg {
+  color: var(--sec);
+}

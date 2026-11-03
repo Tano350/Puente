@@ -1,16 +1,19 @@
 import { useState, type ReactNode } from 'react'
+import { useNavigate } from 'react-router'
 import { Atras, Aviso, BotonPrincipal } from '../../componentes/Controles.tsx'
 import { ElegirPersona } from '../../componentes/ElegirPersona.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
 import { PanelEncima, PantallaConPie } from '../../componentes/Paneles.tsx'
 import { useAviso } from '../../componentes/useAviso.ts'
 import { usePersonas, type Persona } from '../../datos/consultas.ts'
-import { cambiarContacto, puedeCambiar, type Canal, type Contacto, type Etapa } from '../../datos/contactos.ts'
+import { cambiarContacto, puedeCambiar, seAgenda, type Canal, type Contacto, type Etapa } from '../../datos/contactos.ts'
+import { useEventos, useNotasReunion } from '../../datos/eventos.ts'
 import { primerNombre } from '../../datos/nombres.ts'
 import { useSesion } from '../../datos/sesion.tsx'
 import { useTextos } from '../../textos.ts'
 import { DetalleEtapas } from './DetalleEtapas.tsx'
 import { DetalleNotas } from './DetalleNotas.tsx'
+import { DetalleReunion } from './DetalleReunion.tsx'
 import estilos from './DetalleContacto.module.css'
 
 // A dónde lleva el botón del canal: escribir un correo, abrir el LinkedIn o llamar
@@ -26,7 +29,10 @@ function enlace(canal: Canal, dato: string): string {
 export function DetalleContacto({ contacto, computador, onCerrar, onEditar }: { contacto: Contacto; computador: boolean; onCerrar: () => void; onEditar: () => void }) {
   const textos = useTextos()
   const sesion = useSesion()
+  const navigate = useNavigate()
   const { data: personas } = usePersonas()
+  const { data: eventos } = useEventos()
+  const { data: notasReunion } = useNotasReunion()
   const aviso = useAviso()
   const [eligiendo, setEligiendo] = useState(false)
   const [ocupado, setOcupado] = useState(false)
@@ -44,6 +50,9 @@ export function DetalleContacto({ contacto, computador, onCerrar, onEditar }: { 
   // Un contacto personal es siempre de quien lo creó: su responsable no cambia
   const cambiaResponsable = puede && !contacto.personal
   const corto = contacto.nombre.trim().split(/\s+/)[0]
+  // La reunión es el último evento que salió del contacto
+  const reunion = contacto.etapa === 'reunion_agendada' || contacto.etapa === 'reunion_hecha' ? eventos?.filter((e) => e.contacto === contacto.id).at(-1) : undefined
+  const sinTuNota = reunion !== undefined && !notasReunion?.some((n) => n.evento === reunion.id && n.autor === yo.id)
 
   // ---------- Acciones ----------
   // Deshacer vuelve a la etapa anterior con su fecha
@@ -79,18 +88,22 @@ export function DetalleContacto({ contacto, computador, onCerrar, onEditar }: { 
     }
   }
 
-  // El paso siguiente va abajo. "Agendar reunión" por ahora pasa directo a "Reunión agendada";
-  // cuando exista la Agenda, abrirá "Crear evento" enlazado al contacto.
-  const siguientes: Partial<Record<Etapa, { etapa: Etapa; texto: string }>> = {
-    por_contactar: { etapa: 'contactado', texto: d.marcarContactado },
-    contactado: { etapa: 'respondio', texto: d.marcarRespondio },
-    respondio: { etapa: 'reunion_agendada', texto: d.agendarReunion },
+  // Agendar la reunión es crearla en la Agenda; al crearla, el contacto pasa a "Reunión agendada"
+  const agendar = () => navigate('/agenda/nuevo', { state: { contacto: contacto.id } })
+  const elegirEtapa = (etapa: Etapa) => (seAgenda(contacto.etapa, etapa) ? agendar() : void cambiarEtapa(etapa))
+
+  // El paso siguiente va abajo. Después de la reunión, quien no ha escrito su nota la escribe en el evento.
+  const siguientes: Partial<Record<Etapa, { texto: string; accion: () => void }>> = {
+    por_contactar: { texto: d.marcarContactado, accion: () => void cambiarEtapa('contactado') },
+    contactado: { texto: d.marcarRespondio, accion: () => void cambiarEtapa('respondio') },
+    respondio: { texto: d.agendarReunion, accion: agendar },
   }
+  if (reunion && sinTuNota) siguientes.reunion_hecha = { texto: d.escribirNota, accion: () => navigate(`/agenda/${reunion.id}`, { state: { desde: 'contactos', abrir: 'nota' } }) }
   const siguiente = puede ? siguientes[contacto.etapa] : undefined
   let pie: ReactNode = null
   if (siguiente) {
     pie = (
-      <BotonPrincipal ocupado={ocupado} onClick={() => void cambiarEtapa(siguiente.etapa)}>
+      <BotonPrincipal ocupado={ocupado} onClick={siguiente.accion}>
         {siguiente.texto}
       </BotonPrincipal>
     )
@@ -158,7 +171,7 @@ export function DetalleContacto({ contacto, computador, onCerrar, onEditar }: { 
   const cuerpo = (
     <>
       {tarjeta}
-      <DetalleEtapas etapa={contacto.etapa} etapaEn={contacto.etapa_en} activa={puede} onElegir={(etapa) => void cambiarEtapa(etapa)} />
+      <DetalleEtapas etapa={contacto.etapa} etapaEn={contacto.etapa_en} activa={puede} onElegir={elegirEtapa} />
       {cambiaResponsable ? (
         <button type="button" className={estilos.responsable} aria-haspopup="dialog" onClick={() => setEligiendo(true)}>
           {quien}
@@ -166,6 +179,7 @@ export function DetalleContacto({ contacto, computador, onCerrar, onEditar }: { 
       ) : (
         <div className={estilos.responsable}>{quien}</div>
       )}
+      {reunion && <DetalleReunion reunion={reunion} hecha={contacto.etapa === 'reunion_hecha'} yo={yo.id} onAbrir={() => navigate(`/agenda/${reunion.id}`, { state: { desde: 'contactos' } })} />}
       <DetalleNotas key={contacto.id} contacto={contacto} yo={yo} aviso={aviso} />
       {puede && !descartado && (
         <button type="button" className={estilos.descartar} onClick={() => void cambiarEtapa('descartado')}>

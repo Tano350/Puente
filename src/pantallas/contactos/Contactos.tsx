@@ -7,7 +7,7 @@ import { useAviso } from '../../componentes/useAviso.ts'
 import { useEsComputador } from '../../componentes/useEsComputador.ts'
 import escritorio from '../../componentes/Escritorio.module.css'
 import { usePersonas } from '../../datos/consultas.ts'
-import { borrarContacto, cambiarContacto, ETAPAS, puedeCambiar, useContactos, type Contacto, type Etapa } from '../../datos/contactos.ts'
+import { borrarContacto, cambiarContacto, ETAPAS, puedeCambiar, seAgenda, useContactos, type Contacto, type Etapa } from '../../datos/contactos.ts'
 import { plano } from '../../datos/grupo.ts'
 import { primerNombre } from '../../datos/nombres.ts'
 import { useSesion } from '../../datos/sesion.tsx'
@@ -79,6 +79,10 @@ export function Contactos() {
     aviso.mostrar(tl.agregaste(contacto.nombre), () => void deshacer(() => borrarContacto(contacto.id)))
   }
   const mover = async (contacto: Contacto, etapa: Etapa) => {
+    if (seAgenda(contacto.etapa, etapa)) {
+      navigate('/agenda/nuevo', { state: { contacto: contacto.id } })
+      return
+    }
     const antes = { etapa: contacto.etapa, etapa_en: contacto.etapa_en }
     setMovido({ id: contacto.id, etapa })
     try {

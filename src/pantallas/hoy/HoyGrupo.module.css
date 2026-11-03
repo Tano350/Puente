@@ -1,0 +1,133 @@
+.lista {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fila {
+  position: relative;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  column-gap: 10px;
+  align-items: center;
+}
+
+.fila + .fila {
+  margin-top: 12px;
+}
+
+.horas {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.hora {
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chile {
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--sec);
+}
+
+/* En el celular deja libre la columna del riel; tocar la fila abre el boleto */
+.datos {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  margin-left: 38px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.datos::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+/* En pantallas muy angostas el título usa también la columna del riel */
+@media (max-width: 359px) {
+  .datos {
+    margin-left: 0;
+  }
+}
+
+.titulo {
+  font-size: 17px;
+  line-height: 22px;
+}
+
+.detalle {
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.voy {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 16px;
+  border: 2px solid var(--tinta);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--tinta);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.voy[aria-disabled='true'] {
+  background: var(--tinta);
+  color: var(--fondo);
+  cursor: default;
+}
+
+/* En el computador la fila se elige, como las paradas */
+.lista[data-computador='true'] {
+  margin-top: 14px;
+}
+
+.lista[data-computador='true'] .fila {
+  column-gap: 12px;
+  padding-right: 12px;
+  border-radius: 8px;
+}
+
+.lista[data-computador='true'] .fila + .fila {
+  margin-top: 4px;
+}
+
+.lista[data-computador='true'] .datos {
+  margin-left: 0;
+  padding: 9px 0;
+}
+
+.lista[data-computador='true'] .titulo {
+  line-height: 24px;
+}
+
+.lista[data-computador='true'] .detalle {
+  line-height: 22px;
+}
+
+.fila[data-elegida='true'] {
+  background: var(--panel);
+  box-shadow: inset 0 0 0 2px var(--acento);
+}

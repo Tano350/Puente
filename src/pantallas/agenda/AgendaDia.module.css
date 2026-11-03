@@ -1,0 +1,428 @@
+/* ---------- Las dos formas ---------- */
+.lista,
+.listaPc {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.listaPc {
+  margin-top: 16px;
+}
+
+.hora {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.horaGrande {
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 26px;
+  font-variant-numeric: tabular-nums;
+}
+
+.horaChile {
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--sec);
+}
+
+/* La vía: un tramo arriba y otro abajo de la tuerca; lo recorrido va en gris */
+.via {
+  position: relative;
+  display: block;
+}
+
+.arriba,
+.abajo {
+  position: absolute;
+  left: 12px;
+  width: 4px;
+  background: var(--tinta);
+}
+
+.arriba {
+  top: 0;
+  height: 13px;
+}
+
+.abajo {
+  top: 13px;
+  bottom: 0;
+}
+
+[data-tramo='gris'] {
+  background: var(--apagado);
+}
+
+[data-tramo='no'] {
+  display: none;
+}
+
+.tuerca {
+  position: absolute;
+  left: 4px;
+  top: 3px;
+  width: 20px;
+  height: 20px;
+  background: var(--tinta);
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+}
+
+/* Lo tuyo lleva un punto; lo de los demás, un hueco */
+.hueco {
+  position: absolute;
+  left: 7px;
+  top: 7px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--fondo);
+}
+
+[data-tuerca='ajena'] .hueco {
+  left: 3px;
+  top: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 0;
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+}
+
+[data-tuerca='pasada'] .tuerca {
+  background: var(--apagado);
+}
+
+[data-tuerca='proxima'] .tuerca {
+  left: 1px;
+  top: 1px;
+  width: 26px;
+  height: 26px;
+  background: var(--acento);
+}
+
+[data-tuerca='proxima'] .hueco {
+  left: 9px;
+  top: 9px;
+  width: 8px;
+  height: 8px;
+}
+
+.texto {
+  display: block;
+  min-width: 0;
+}
+
+.nombre {
+  display: block;
+  font-size: 17px;
+  line-height: 26px;
+}
+
+[data-tuerca='proxima'] .nombre {
+  font-weight: 500;
+}
+
+.lugar {
+  display: block;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+/* "ahora": una raya de acento que cruza la vía */
+.ahora {
+  display: grid;
+  grid-template-columns: 64px 28px minmax(0, 1fr);
+  column-gap: 10px;
+  align-items: center;
+  height: 32px;
+}
+
+.ahoraHora {
+  text-align: right;
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.ahoraVia {
+  position: relative;
+  height: 100%;
+}
+
+.mitadArriba,
+.mitadAbajo {
+  position: absolute;
+  left: 12px;
+  width: 4px;
+  height: 50%;
+}
+
+.mitadArriba {
+  top: 0;
+  background: var(--apagado);
+}
+
+.mitadAbajo {
+  bottom: 0;
+  background: var(--tinta);
+}
+
+.raya {
+  position: absolute;
+  left: 0;
+  width: 28px;
+  top: calc(50% - 1px);
+  height: 2px;
+  background: var(--acento);
+}
+
+.ahoraTexto {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ahora);
+}
+
+/* ---------- Celular ---------- */
+.fila {
+  position: relative;
+  display: grid;
+  grid-template-columns: 64px 28px minmax(0, 1fr);
+  column-gap: 10px;
+}
+
+.fila[data-pasada='true'] {
+  color: var(--sec);
+}
+
+.fila .texto {
+  padding-bottom: 10px;
+}
+
+.renglon {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* El nombre abre el evento, y su área cubre toda la fila */
+button.nombre {
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.nombre::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+}
+
+button.nombre:focus-visible {
+  outline: none;
+}
+
+button.nombre:focus-visible::after {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+.vas,
+.estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  height: 26px;
+  font-size: 14px;
+}
+
+.vas {
+  font-weight: 500;
+}
+
+.vas svg {
+  color: var(--acento);
+}
+
+.estado {
+  color: var(--sec);
+}
+
+/* Encima del área del nombre, para que se pueda tocar aparte */
+.accion {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  height: 44px;
+  padding: 0 14px;
+  border: 2px solid var(--tinta);
+  border-radius: 6px;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.accion[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.extra {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.asientos {
+  display: flex;
+  gap: 3px;
+  margin-right: 2px;
+}
+
+.asiento {
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--sec);
+}
+
+.asiento[data-libre='true'] {
+  border: 1.5px solid var(--regla);
+  background: transparent;
+}
+
+.vacio,
+.vacioPc {
+  margin: 0;
+  padding: 18px 0 0 74px;
+  font-size: 16px;
+  color: var(--sec);
+}
+
+/* ---------- Computador: cada fila es un botón que elige el evento ---------- */
+.filaPc {
+  display: grid;
+  grid-template-columns: 64px 28px minmax(0, 1fr) auto;
+  column-gap: 10px;
+  width: 100%;
+  padding: 0 14px 0 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--tinta);
+  text-align: left;
+}
+
+button.filaPc {
+  cursor: pointer;
+}
+
+.filaPc[data-pasada='true'] {
+  color: var(--sec);
+}
+
+.filaPc[aria-pressed='true'] {
+  background: var(--panel);
+  box-shadow: inset 0 0 0 2px var(--acento);
+}
+
+@media (hover: hover) {
+  button.filaPc:not([aria-pressed='true']):hover {
+    background: var(--panel);
+  }
+}
+
+.filaPc .hora {
+  padding: 10px 0;
+}
+
+.filaPc .horaGrande {
+  font-size: 22px;
+  line-height: 24px;
+}
+
+.filaPc .arriba {
+  height: 22px;
+}
+
+.filaPc .abajo {
+  top: 22px;
+}
+
+.filaPc .tuerca {
+  top: 12px;
+}
+
+.filaPc[data-tuerca='proxima'] .tuerca {
+  top: 9px;
+}
+
+/* En el computador, lo de los demás va en gris y con un hueco redondo */
+.filaPc[data-tuerca='ajena'] .tuerca {
+  background: var(--sec);
+}
+
+.filaPc[data-tuerca='ajena'] .hueco {
+  left: 4px;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  clip-path: none;
+}
+
+.filaPc[aria-pressed='true'] .hueco {
+  background: var(--panel);
+}
+
+@media (hover: hover) {
+  button.filaPc:hover .hueco {
+    background: var(--panel);
+  }
+}
+
+.filaPc .texto {
+  padding: 10px 0;
+}
+
+.filaPc .nombre {
+  line-height: 24px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--sec);
+}
+
+.chip[data-tipo='vas'] {
+  color: var(--tinta);
+}
+
+.chip[data-tipo='accion'] {
+  color: var(--ahora);
+}
+
+.listaPc .ahora {
+  height: 30px;
+}

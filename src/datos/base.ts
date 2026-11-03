@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      asistentes: {
+        Row: {
+          desde: string
+          estado: string
+          evento: string
+          persona: string
+        }
+        Insert: {
+          desde?: string
+          estado: string
+          evento: string
+          persona: string
+        }
+        Update: {
+          desde?: string
+          estado?: string
+          evento?: string
+          persona?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asistentes_evento_fkey"
+            columns: ["evento"]
+            isOneToOne: false
+            referencedRelation: "eventos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asistentes_persona_fkey"
+            columns: ["persona"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contactos: {
         Row: {
           asignado_por: string | null
@@ -81,6 +117,91 @@ export type Database = {
           },
         ]
       }
+      eventos: {
+        Row: {
+          cambiado_en: string
+          cancelado_en: string | null
+          contacto: string | null
+          creado_en: string
+          creado_por: string | null
+          cupos: number | null
+          desde_google: boolean
+          direccion: string | null
+          fin: string
+          google_id: string | null
+          id: string
+          inicio: string
+          lugar: string | null
+          modo: Database["public"]["Enums"]["modo_evento"]
+          notas: string | null
+          organizador: string | null
+          tipo: Database["public"]["Enums"]["tipo_evento"]
+          titulo: string
+        }
+        Insert: {
+          cambiado_en?: string
+          cancelado_en?: string | null
+          contacto?: string | null
+          creado_en?: string
+          creado_por?: string | null
+          cupos?: number | null
+          desde_google?: boolean
+          direccion?: string | null
+          fin: string
+          google_id?: string | null
+          id?: string
+          inicio: string
+          lugar?: string | null
+          modo?: Database["public"]["Enums"]["modo_evento"]
+          notas?: string | null
+          organizador?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_evento"]
+          titulo: string
+        }
+        Update: {
+          cambiado_en?: string
+          cancelado_en?: string | null
+          contacto?: string | null
+          creado_en?: string
+          creado_por?: string | null
+          cupos?: number | null
+          desde_google?: boolean
+          direccion?: string | null
+          fin?: string
+          google_id?: string | null
+          id?: string
+          inicio?: string
+          lugar?: string | null
+          modo?: Database["public"]["Enums"]["modo_evento"]
+          notas?: string | null
+          organizador?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_evento"]
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eventos_contacto_fkey"
+            columns: ["contacto"]
+            isOneToOne: false
+            referencedRelation: "contactos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventos_creado_por_fkey"
+            columns: ["creado_por"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventos_organizador_fkey"
+            columns: ["organizador"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notas: {
         Row: {
           autor: string
@@ -119,6 +240,77 @@ export type Database = {
             columns: ["contacto"]
             isOneToOne: false
             referencedRelation: "contactos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notas_reunion: {
+        Row: {
+          aprendi: string | null
+          autor: string
+          escrita_en: string
+          evento: string
+          sigue: string | null
+        }
+        Insert: {
+          aprendi?: string | null
+          autor?: string
+          escrita_en?: string
+          evento: string
+          sigue?: string | null
+        }
+        Update: {
+          aprendi?: string | null
+          autor?: string
+          escrita_en?: string
+          evento?: string
+          sigue?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notas_reunion_autor_fkey"
+            columns: ["autor"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_reunion_evento_fkey"
+            columns: ["evento"]
+            isOneToOne: false
+            referencedRelation: "eventos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocupados: {
+        Row: {
+          fin: string
+          id: string
+          inicio: string
+          persona: string
+          titulo: string
+        }
+        Insert: {
+          fin: string
+          id?: string
+          inicio: string
+          persona?: string
+          titulo: string
+        }
+        Update: {
+          fin?: string
+          id?: string
+          inicio?: string
+          persona?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocupados_persona_fkey"
+            columns: ["persona"]
+            isOneToOne: false
+            referencedRelation: "personas"
             referencedColumns: ["id"]
           },
         ]
@@ -243,6 +435,11 @@ export type Database = {
       administro: { Args: never; Returns: boolean }
       antes_de_crear_usuario: { Args: { event: Json }; Returns: Json }
       devolver: { Args: { persona: string }; Returns: undefined }
+      esperar: { Args: { evento: string }; Returns: number }
+      esta_alla: {
+        Args: { momento: string; persona: string }
+        Returns: boolean
+      }
       invitar: {
         Args: { correo_nuevo: string }
         Returns: {
@@ -275,9 +472,26 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      ir: { Args: { evento: string }; Returns: string }
+      libres: {
+        Args: { desde: string; hasta: string }
+        Returns: {
+          alla: number
+          libres: number
+        }[]
+      }
       mi_persona: { Args: never; Returns: string }
+      no_ir: { Args: { evento: string }; Returns: undefined }
       pulso: { Args: never; Returns: string }
       sacar: { Args: { persona: string }; Returns: undefined }
+      sacar_de_evento: {
+        Args: { evento: string; persona: string }
+        Returns: undefined
+      }
+      sumar_a_evento: {
+        Args: { evento: string; persona: string }
+        Returns: undefined
+      }
     }
     Enums: {
       canal: "correo" | "linkedin" | "telefono"
@@ -288,6 +502,8 @@ export type Database = {
         | "reunion_agendada"
         | "reunion_hecha"
         | "descartado"
+      modo_evento: "para_todos" | "con_cupo" | "cerrado"
+      tipo_evento: "visita" | "reunion" | "comida" | "otro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -424,6 +640,8 @@ export const Constants = {
         "reunion_hecha",
         "descartado",
       ],
+      modo_evento: ["para_todos", "con_cupo", "cerrado"],
+      tipo_evento: ["visita", "reunion", "comida", "otro"],
     },
   },
 } as const

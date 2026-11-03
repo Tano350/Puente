@@ -1,0 +1,311 @@
+/* ---------- Las dos formas ---------- */
+.semana,
+.semanaPc {
+  display: grid;
+  background: var(--panel);
+}
+
+.cabeza {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: 40px;
+  padding: 0;
+  border: none;
+  background: var(--panel);
+  color: var(--tinta);
+  cursor: pointer;
+}
+
+.cabezaDia {
+  color: var(--sec-tarjeta);
+}
+
+.cabeza[aria-current='date'] .cabezaDia {
+  font-weight: 500;
+  color: var(--ahora);
+}
+
+/* Los días fuera del viaje no se abren */
+.cabeza:disabled,
+.cabeza:disabled .cabezaDia {
+  color: var(--apagado);
+  cursor: default;
+}
+
+.cabezaNumero {
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+}
+
+.horas {
+  position: relative;
+}
+
+.hora {
+  position: absolute;
+  color: var(--sec);
+  font-variant-numeric: tabular-nums;
+}
+
+.columna {
+  position: relative;
+  min-width: 0;
+  border-left: 1px solid var(--borde);
+  background-image: linear-gradient(var(--borde) 1px, transparent 1px);
+  background-size: 100% var(--hora);
+}
+
+.columna[data-hoy='true'] {
+  background-color: var(--fondo);
+}
+
+.bloque,
+.ocupado {
+  --margen: 3px;
+  position: absolute;
+  overflow: hidden;
+  border: 1.5px solid var(--sec);
+  color: var(--tinta);
+  text-align: left;
+}
+
+.bloque {
+  background: var(--panel);
+  cursor: pointer;
+}
+
+.bloque[data-mio='true'] {
+  border-color: var(--tinta);
+  background: var(--tinta);
+  color: var(--fondo);
+}
+
+.bloque[data-proxima='true'] {
+  border-color: var(--acento);
+  background: var(--acento);
+  color: var(--sobre);
+}
+
+.bloqueHora {
+  display: block;
+  font-variant-numeric: tabular-nums;
+}
+
+.bloqueTitulo {
+  display: block;
+}
+
+.ahora {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--acento);
+  pointer-events: none;
+}
+
+.ahora::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--acento);
+}
+
+/* ---------- Computador ---------- */
+.semanaPc {
+  grid-template-columns: 46px repeat(7, minmax(0, 1fr));
+  border: 1px solid var(--regla);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.semanaPc .esquina {
+  border-bottom: 1px solid var(--regla);
+}
+
+.semanaPc .cabeza {
+  border-left: 1px solid var(--borde);
+  border-bottom: 1px solid var(--regla);
+}
+
+.semanaPc .cabezaDia {
+  font-size: 12px;
+  line-height: 15px;
+}
+
+.semanaPc .cabezaNumero {
+  font-size: 18px;
+  line-height: 20px;
+}
+
+@media (hover: hover) {
+  .semanaPc .cabeza:not(:disabled):hover {
+    background: var(--fondo);
+  }
+}
+
+.semanaPc .hora {
+  right: 8px;
+  text-align: right;
+  font-size: 12px;
+  line-height: 15px;
+}
+
+.horaChile {
+  display: block;
+  font-size: 11px;
+  line-height: 14px;
+  opacity: 0.8;
+}
+
+.semanaPc .bloque,
+.semanaPc .ocupado {
+  padding: 3px 6px;
+  border-radius: 5px;
+}
+
+.semanaPc .bloque[aria-pressed='true'] {
+  z-index: 1;
+  box-shadow:
+    0 0 0 2px var(--panel),
+    0 0 0 4px var(--acento);
+}
+
+.semanaPc .ocupado {
+  background: repeating-linear-gradient(135deg, var(--regla) 0 2px, transparent 2px 7px);
+}
+
+.semanaPc .bloqueHora {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 15px;
+}
+
+.semanaPc .bloqueTitulo {
+  font-size: 12px;
+  line-height: 15px;
+}
+
+.bloqueLugar {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 14px;
+  opacity: 0.85;
+}
+
+/* Con la columna angosta (computador chico) los bloques se aprietan para que la hora quepa entera */
+.semanaPc .columna {
+  container-type: inline-size;
+}
+
+@container (max-width: 64px) {
+  .semanaPc .bloque,
+  .semanaPc .ocupado {
+    --margen: 2px;
+    padding: 2px 3px;
+  }
+
+  .semanaPc .bloqueHora {
+    font-size: 11px;
+  }
+
+  .semanaPc .bloqueTitulo {
+    font-size: 11px;
+    line-height: 14px;
+    -webkit-hyphens: auto;
+    hyphens: auto;
+  }
+
+  .semanaPc .bloqueLugar {
+    display: none;
+  }
+}
+
+/* ---------- Celular: a lo ancho, en un panel ---------- */
+.semana {
+  grid-template-columns: 26px repeat(7, minmax(0, 1fr));
+  margin: 12px -20px 0;
+  padding: 6px 20px 0;
+  border-top: 1px solid var(--regla);
+  border-bottom: 1px solid var(--regla);
+}
+
+.semana .cabezaDia {
+  font-size: 11px;
+  line-height: 14px;
+}
+
+.semana .cabezaNumero {
+  font-size: 16px;
+  line-height: 20px;
+}
+
+.semana .cabeza[data-pasado='true'],
+.semana .cabeza[data-pasado='true'] .cabezaDia {
+  color: var(--sec);
+}
+
+/* En el celular las rayas van cada dos horas y cruzan también las horas */
+.semana .horas,
+.semana .columna {
+  background-image: linear-gradient(var(--borde) 1px, transparent 1px);
+  background-size: 100% calc(2 * var(--hora));
+}
+
+.semana .hora {
+  left: 0;
+  font-size: 11px;
+  line-height: 12px;
+}
+
+.semana .bloque,
+.semana .ocupado {
+  --margen: 2px;
+  padding: 1px 2px;
+  border-radius: 3px;
+  font-size: 11px;
+  line-height: 13px;
+}
+
+.semana .bloque[data-mio='false'] {
+  background: transparent;
+}
+
+.semana .bloque[data-pasada='true'],
+.semana .ocupado[data-pasada='true'] {
+  opacity: 0.5;
+}
+
+.semana .ocupado {
+  border: 1px solid var(--tinta);
+  background: repeating-linear-gradient(135deg, var(--tinta) 0 1.5px, transparent 1.5px 5px);
+}
+
+.semana .bloqueHora {
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+}
+
+.semana .bloqueTitulo {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+}
+
+.semana .ahora {
+  left: -4px;
+}
+
+.semana .ahora::before {
+  left: -1px;
+}

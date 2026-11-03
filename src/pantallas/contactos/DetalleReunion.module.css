@@ -1,0 +1,83 @@
+.reunion {
+  margin-top: 24px;
+}
+
+.rotulo {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.evento {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-top: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--regla);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--tinta);
+  text-align: left;
+  cursor: pointer;
+}
+
+.icono {
+  display: flex;
+  flex: none;
+  color: var(--sec);
+}
+
+.texto {
+  flex: 1;
+  min-width: 0;
+}
+
+.titulo {
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 22px;
+}
+
+.cuando {
+  display: block;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.nota {
+  margin-top: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.etiqueta {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--sec);
+}
+
+.etiqueta[data-segunda='true'] {
+  margin-top: 10px;
+}
+
+.parrafo {
+  font-size: 15px;
+  line-height: 22px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec);
+}

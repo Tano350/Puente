@@ -1,6 +1,7 @@
 import type { Persona } from './consultas.ts'
 import type { Contacto, Nota } from './contactos.ts'
-import { sumarDias, VIAJE } from './fechas.ts'
+import type { Asistente, Evento, NotaReunion, Ocupado } from './eventos.ts'
+import { momento, sumarDias, VIAJE } from './fechas.ts'
 
 // Solo en desarrollo: personas de ejemplo del lienzo, para revisar pantallas sin entrar con Google.
 // Se activa con ?maqueta=nueva (primera vez), ?maqueta=lista (ya entró) o ?maqueta=miembro (sin administrar). Nunca llega a la app publicada:
@@ -44,7 +45,7 @@ function persona(id: string, nombre: string, carrera: string, llega: number, vue
 const sinEntrar: Partial<Persona> = { usuario: null, entro_en: null, nombre: null, carrera: null, llega: null, vuelve: null, bienvenida_en: null }
 
 export function personaDeMaqueta(): Persona {
-  const josefa = persona('josefa.contreras', 'Josefa Contreras', 'Ingeniería Civil Química', 15, 44, {
+  const josefa = persona('josefa.contreras', 'Josefa Contreras', 'Ingeniería Civil Química', 4, 29, {
     ...perfil('Agua Clara', 'Filtros baratos para agua de pozo en zonas rurales.', 'Conocer fondos de impacto y aprender cómo venden startups de hardware a gobiernos.', null),
     administra: true,
     // Como si viniera de Google, para probar "Usar la de Google"
@@ -141,4 +142,74 @@ export function notasDeMaqueta(): Nota[] {
 
 export function cambiarNotasDeMaqueta(cambiar: (lista: Nota[]) => Nota[]) {
   notas = cambiar(notasDeMaqueta())
+}
+
+// ---------- Agenda de ejemplo: la semana del 11 al 16 de enero del lienzo ----------
+type Datos = { readonly personas: Persona[]; eventos: Evento[]; asistentes: Asistente[]; ocupados: Ocupado[]; notasReunion: NotaReunion[] }
+let agenda: Datos | null = null
+
+const YO = 'josefa.contreras'
+const [ANDRES, BENJAMIN, CATALINA, DIEGO, FLORENCIA, IGNACIO, JOAQUIN, MARTINA, PAULA, SOFIA, VICENTE] = ['andres.cifuentes', 'benjamin.silva', 'catalina.perez', 'diego.larrain', 'florencia.diaz', 'ignacio.rivas', 'joaquin.soto', 'martina.vidal', 'paula.torres', 'sofia.mendez', 'vicente.morales']
+
+type Ejemplo = [id: string, dia: number, desde: string, hasta: string, titulo: string, tipo: Evento['tipo'], lugar: string, direccion: string, modo: Evento['modo'], cupos: number | null, organizador: string, van: string[], espera?: string[], notas?: string, contacto?: string]
+
+// Las mismas personas, cupos y listas de espera del lienzo ("Tú" es Josefa)
+export function datosDeMaqueta(): Datos {
+  if (agenda) return agenda
+  const ejemplos: Ejemplo[] = [
+    ['intuit', 11, '09:30', '11:30', 'Visita a Intuit', 'visita', 'Intuit', '2700 Coast Ave, Mountain View', 'con_cupo', 10, BENJAMIN, [BENJAMIN, YO, CATALINA, PAULA, ANDRES, DIEGO, FLORENCIA, IGNACIO]],
+    ['almuerzo-11', 11, '13:00', '14:00', 'Almuerzo del grupo', 'comida', 'Coupa Café', '538 Ramona St, Palo Alto', 'para_todos', null, MARTINA, [MARTINA, YO, ANDRES, CATALINA, DIEGO, PAULA, SOFIA, VICENTE, JOAQUIN]],
+    ['dschool', 11, '18:00', '20:00', 'Charla en la d.school', 'visita', 'Stanford d.school', '416 Escondido Mall, Stanford', 'con_cupo', 14, FLORENCIA, [FLORENCIA, YO, IGNACIO, VICENTE, ANDRES, BENJAMIN, CATALINA, DIEGO, JOAQUIN, MARTINA]],
+    ['cafe-laura', 12, '09:00', '10:00', 'Café con Laura Chen', 'reunion', 'Philz Coffee', '101 Forest Ave, Palo Alto', 'con_cupo', 4, YO, [YO], [], '', 'laura'],
+    ['plug', 12, '10:30', '12:00', 'Plug and Play', 'visita', 'Plug and Play Tech Center', '440 N Wolfe Rd, Sunnyvale', 'con_cupo', 8, CATALINA, [CATALINA, YO, DIEGO, JOAQUIN, MARTINA], [], 'Llevar el pitch de una página. Nos recibe Amir en la recepción.'],
+    ['almuerzo-12', 12, '13:00', '14:00', 'Almuerzo del grupo', 'comida', 'Castro St', 'Castro St, Mountain View', 'para_todos', null, MARTINA, [MARTINA, YO, ANDRES, CATALINA, DIEGO, PAULA, SOFIA, VICENTE]],
+    ['sequoia', 12, '14:30', '15:30', 'Reunión con Sequoia', 'reunion', 'Sequoia Capital', '2800 Sand Hill Rd, Menlo Park', 'cerrado', null, DIEGO, [DIEGO, MARTINA], [], '', 'priya'],
+    ['reunion-ana', 12, '16:00', '17:00', 'Reunión con Ana Rojas', 'reunion', 'Stripe', 'Townsend St, San Francisco', 'con_cupo', 4, YO, [YO], [], '', 'ana'],
+    ['charla-stripe', 12, '17:30', '18:45', 'Charla en Stripe', 'visita', 'Stripe', '354 Oyster Point Blvd, South San Francisco', 'con_cupo', 8, DIEGO, [DIEGO, SOFIA, PAULA, VICENTE], [], 'Charla sobre pagos en Latinoamérica. Hay que llevar pasaporte para entrar.'],
+    ['cena', 12, '19:00', '22:00', 'Cena con exalumnos UC', 'comida', 'Foreign Cinema', '2534 Mission St, San Francisco', 'para_todos', null, JOAQUIN, [JOAQUIN, CATALINA, DIEGO, ANDRES, BENJAMIN, FLORENCIA, IGNACIO, MARTINA, PAULA], [], 'Cada uno paga lo suyo. Reservamos la mesa larga del patio.'],
+    ['google', 13, '08:30', '10:30', 'Visita a Google', 'visita', 'Googleplex', '1600 Amphitheatre Pkwy, Mountain View', 'con_cupo', 6, MARTINA, [MARTINA, CATALINA, IGNACIO, ANDRES, BENJAMIN, DIEGO], [PAULA, SOFIA], 'Recorrido por el campus y conversación con el equipo de Google for Startups.'],
+    ['taller', 13, '11:00', '13:00', 'Taller de pitch', 'otro', 'Hotel Avante', '860 E El Camino Real, Mountain View', 'para_todos', null, PAULA, [PAULA, SOFIA, VICENTE, ANDRES, BENJAMIN, CATALINA, DIEGO], [], 'Trae tu pitch de 3 minutos.'],
+    ['andres-vial', 13, '15:00', '16:00', 'Reunión con Andrés Vial', 'reunion', 'Blue Bottle Coffee', '456 University Ave, Palo Alto', 'con_cupo', 4, YO, [YO]],
+    ['tesla', 14, '10:00', '12:00', 'Visita a Tesla', 'visita', 'Tesla', '3500 Deer Creek Rd, Palo Alto', 'con_cupo', 10, IGNACIO, [IGNACIO, JOAQUIN, PAULA, ANDRES, BENJAMIN, CATALINA, DIEGO]],
+    ['sofia-lagos', 14, '14:00', '15:00', 'Café con Sofía Lagos', 'reunion', 'Verve Coffee', '162 University Ave, Palo Alto', 'con_cupo', 4, YO, [YO]],
+    ['asado', 14, '19:00', '21:00', 'Asado del grupo', 'comida', 'Rinconada Park', '777 Embarcadero Rd, Palo Alto', 'para_todos', null, DIEGO, [DIEGO, YO, ANDRES, BENJAMIN, CATALINA, FLORENCIA, IGNACIO, JOAQUIN, MARTINA, PAULA, SOFIA]],
+    ['apple', 15, '09:30', '12:00', 'Visita a Apple Park', 'visita', 'Apple Park Visitor Center', '10600 N Tantau Ave, Cupertino', 'con_cupo', 6, SOFIA, [SOFIA, BENJAMIN, ANDRES, CATALINA, DIEGO, FLORENCIA], [IGNACIO, JOAQUIN, VICENTE]],
+    ['half-moon-bay', 16, '10:00', '16:00', 'Paseo a Half Moon Bay', 'otro', 'Half Moon Bay', 'Half Moon Bay, CA', 'para_todos', null, MARTINA, [MARTINA, YO, ANDRES, BENJAMIN, CATALINA, DIEGO, FLORENCIA, IGNACIO, JOAQUIN, PAULA]],
+  ]
+  const dia = (n: number) => `2027-01-${String(n).padStart(2, '0')}`
+  const llegada = (minutos: number) => new Date(Date.UTC(2027, 0, 2, 12, minutos)).toISOString()
+  const eventos: Evento[] = ejemplos.map(([id, d, desde, hasta, titulo, tipo, lugar, direccion, modo, cupos, organizador, , , notas, contacto]) => ({
+    id,
+    titulo,
+    tipo,
+    lugar,
+    direccion,
+    modo,
+    cupos,
+    organizador,
+    notas: notas || null,
+    contacto: contacto ?? null,
+    inicio: momento(dia(d), desde),
+    fin: momento(dia(d), hasta),
+    google_id: null,
+    desde_google: false,
+    creado_por: organizador,
+    creado_en: llegada(0),
+    cambiado_en: llegada(0),
+    cancelado_en: null,
+  }))
+  const asistentes: Asistente[] = ejemplos.flatMap(([id, , , , , , , , , , , van, espera = []]) => [
+    ...van.map((persona, i) => ({ evento: id, persona, estado: 'va', desde: llegada(i) })),
+    ...espera.map((persona, i) => ({ evento: id, persona, estado: 'espera', desde: llegada(60 + i) })),
+  ])
+  agenda = {
+    get personas() {
+      return personasDeMaqueta()
+    },
+    eventos,
+    asistentes,
+    ocupados: [{ id: 'clase-online', persona: YO, titulo: 'Clase online', inicio: momento(dia(15), '15:00'), fin: momento(dia(15), '16:00') }],
+    notasReunion: [{ evento: 'cafe-laura', autor: YO, aprendi: 'Plug and Play busca startups de logística para su programa de primavera.', sigue: 'Mandarle el deck antes del viernes.', escrita_en: '2027-01-12T19:00:00Z' }],
+  }
+  return agenda
 }

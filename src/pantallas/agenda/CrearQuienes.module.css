@@ -1,0 +1,137 @@
+/* Quiénes pueden ir: tres opciones juntas y, en uno cerrado, las fichas de las personas */
+.etiqueta {
+  margin-top: 18px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.modos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  margin-top: 6px;
+  padding: 3px;
+  border: 1px solid var(--regla);
+  border-radius: 8px;
+}
+
+.modo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  border-radius: 6px;
+  color: var(--sec);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.modo:has(:checked) {
+  background: var(--tinta);
+  color: var(--fondo);
+}
+
+.modo:has(:focus-visible) {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+/* La opción se toca en todo el alto del grupo */
+.modo::after {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
+}
+
+.radio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.explica {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.fichas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.ficha {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1.5px solid var(--regla);
+  border-radius: 18px;
+  background: transparent;
+  color: var(--tinta);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.ficha[aria-pressed='true'] {
+  padding: 0 10.5px 0 8.5px;
+  border-color: var(--tinta);
+  background: var(--tinta);
+  color: var(--fondo);
+}
+
+.verTodos {
+  position: relative;
+  height: 36px;
+  padding: 0 6px;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* Se ven de 36 px y se tocan en 44 */
+.ficha::after,
+.verTodos::after {
+  content: '';
+  position: absolute;
+  inset: -4px -3px;
+}
+
+/* ---------- Computador: un poco más bajo, como el boleto del lado ---------- */
+[data-computador='true'] > .etiqueta {
+  margin-top: 16px;
+}
+
+[data-computador='true'] .modo {
+  height: 36px;
+  color: var(--sec-tarjeta);
+}
+
+[data-computador='true'] .modo:has(:checked) {
+  color: var(--panel);
+}
+
+[data-computador='true'] .ficha {
+  height: 34px;
+  border-radius: 17px;
+}
+
+[data-computador='true'] .verTodos {
+  height: 34px;
+}

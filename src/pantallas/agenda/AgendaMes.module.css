@@ -1,0 +1,261 @@
+/* ---------- Las dos formas ---------- */
+.semana {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  height: 24px;
+  font-size: 12px;
+  line-height: 24px;
+  text-align: center;
+  color: var(--sec-tarjeta);
+}
+
+.dias {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.celda {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  padding: 6px 0 0;
+  border: none;
+  border-top: 1px solid var(--borde);
+  background: transparent;
+  color: var(--tinta);
+  cursor: pointer;
+}
+
+.celda:disabled {
+  cursor: default;
+}
+
+.numero {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 28px;
+  height: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 24px;
+  font-variant-numeric: tabular-nums;
+  color: var(--sec);
+}
+
+.celda[data-estadia='true'] .numero {
+  color: var(--tinta);
+}
+
+.celda:disabled .numero {
+  color: var(--apagado);
+}
+
+/* Hoy, en una tuerca azul */
+.celda[aria-current='date'] .numero {
+  background: var(--acento);
+  color: var(--sobre);
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+}
+
+/* Tu estadía: una línea que se junta de un día al otro */
+.estadia {
+  flex: none;
+  align-self: stretch;
+  height: 3px;
+}
+
+.celda[data-estadia='true'] .estadia {
+  background: var(--tinta);
+}
+
+.leyenda,
+.leyendaPc {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  color: var(--sec);
+}
+
+.leyenda > span,
+.leyendaPc > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.marcaEstadia {
+  width: 16px;
+  height: 3px;
+  background: var(--tinta);
+}
+
+.marcaVas {
+  background: var(--tinta);
+}
+
+/* ---------- Celular: un punto por evento ---------- */
+.mes {
+  margin: 12px -20px 0;
+  padding: 4px 20px 8px;
+  border-top: 1px solid var(--regla);
+  border-bottom: 1px solid var(--regla);
+  background: var(--panel);
+}
+
+.mes .celda {
+  height: 54px;
+}
+
+.puntos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 10px;
+  margin-top: 4px;
+}
+
+.punto {
+  width: 6px;
+  height: 6px;
+  border: 1.5px solid var(--tinta);
+  border-radius: 50%;
+  background: var(--tinta);
+}
+
+.punto[data-mio='false'] {
+  background: transparent;
+}
+
+.masPuntos {
+  font-size: 11px;
+  line-height: 10px;
+  color: var(--sec);
+}
+
+.mes .estadia {
+  margin-top: 4px;
+}
+
+.leyenda {
+  gap: 6px 14px;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.leyenda .marcaVas,
+.leyenda .marcaNoVas {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.leyenda .marcaNoVas {
+  border: 1.5px solid var(--tinta);
+}
+
+/* ---------- Computador: fichas con hora y nombre ---------- */
+.mesPc {
+  border: 1px solid var(--regla);
+  border-radius: 10px;
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.mesPc .semana {
+  height: 28px;
+  line-height: 28px;
+}
+
+.mesPc .celda {
+  align-items: stretch;
+  height: 104px;
+  padding: 4px 4px 0;
+  border-left: 1px solid var(--borde);
+  text-align: left;
+  overflow: hidden;
+}
+
+.mesPc .celda:nth-child(7n + 1) {
+  border-left: none;
+}
+
+.mesPc .celda[aria-current='date'] {
+  background: var(--fondo);
+}
+
+@media (hover: hover) {
+  .mesPc .celda:not(:disabled, [aria-current='date']):hover {
+    background: color-mix(in srgb, var(--tinta) 5%, var(--panel));
+  }
+}
+
+.mesPc .numero {
+  align-self: flex-start;
+}
+
+.mesPc .estadia {
+  margin: 3px -4px 1px;
+}
+
+.ficha {
+  display: block;
+  flex: none;
+  height: 18px;
+  margin-top: 3px;
+  padding: 0 4px;
+  border: 1px solid var(--sec);
+  border-radius: 3px;
+  background: var(--panel);
+  color: var(--tinta);
+  font-size: 11px;
+  line-height: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ficha[data-tipo='mio'] {
+  border-color: var(--tinta);
+  background: var(--tinta);
+  color: var(--fondo);
+}
+
+.ficha[data-tipo='proxima'] {
+  border-color: var(--acento);
+  background: var(--acento);
+  color: var(--sobre);
+}
+
+.ficha[data-tipo='ocupado'] {
+  background: repeating-linear-gradient(135deg, var(--regla) 0 2px, transparent 2px 7px);
+}
+
+.mas {
+  flex: none;
+  margin-top: 3px;
+  padding-left: 4px;
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--sec);
+}
+
+.leyendaPc {
+  gap: 6px 18px;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.leyendaPc .marcaVas,
+.leyendaPc .marcaNoVas {
+  width: 14px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.leyendaPc .marcaNoVas {
+  border: 1px solid var(--sec);
+}

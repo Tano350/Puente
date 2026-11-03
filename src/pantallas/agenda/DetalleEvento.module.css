@@ -1,0 +1,264 @@
+/* ---------- Celular: "Agenda" arriba y el boleto un poco más ancho que el resto ---------- */
+.cabecera {
+  display: flex;
+  align-items: center;
+  margin-top: -4px;
+}
+
+.boleto {
+  margin: 6px -4px 0;
+}
+
+.pc .boleto {
+  margin: 0;
+}
+
+/* ---------- El lugar, con "Cómo llegar" ---------- */
+.lugar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.lugarIcono {
+  display: flex;
+  color: var(--sec);
+}
+
+.lugarTexto {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.lugarNombre {
+  font-size: 16px;
+  line-height: 22px;
+  overflow-wrap: anywhere;
+}
+
+.direccion {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sec);
+  overflow-wrap: anywhere;
+}
+
+.mapa {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  gap: 6px;
+  height: 40px;
+  padding: 0 12px;
+  border: 2px solid var(--tinta);
+  border-radius: 6px;
+  color: var(--tinta);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+/* Se ve de 40 px, pero se toca en 44 */
+.mapa::before {
+  content: '';
+  position: absolute;
+  inset: -4px -2px;
+}
+
+/* ---------- Quién organiza y sus notas ---------- */
+.organiza {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--borde);
+}
+
+.pc .organiza {
+  margin-top: 14px;
+}
+
+.organizaQuien {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.organizaNotas {
+  margin: 4px 0 0;
+  font-size: 15px;
+  line-height: 22px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.organizaQuien + .organizaNotas {
+  margin-top: 4px;
+}
+
+.organizaNotas:first-child {
+  margin-top: 0;
+}
+
+/* ---------- La acción de abajo (o tu estado) ---------- */
+.acciones {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--borde);
+}
+
+.estado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 50px;
+}
+
+.pc .estado {
+  min-height: 48px;
+}
+
+.estadoTexto {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 22px;
+}
+
+.check,
+.reloj {
+  display: flex;
+}
+
+.check {
+  color: var(--acento);
+}
+
+.reloj {
+  color: var(--sec);
+}
+
+.botonEstado {
+  flex: none;
+  height: 44px;
+  padding: 0 16px;
+  border: 2px solid var(--tinta);
+  border-radius: 6px;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.botonEstado[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.info {
+  display: flex;
+  align-items: center;
+  min-height: 50px;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--sec);
+}
+
+.pc .info {
+  min-height: 48px;
+}
+
+/* Guardar la nota o cancelar */
+.botones {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ---------- Antes de soltar: en el celular, una hoja ---------- */
+.explica {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--sec-tarjeta);
+}
+
+.hojaBotones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.soltar {
+  width: 100%;
+  height: 50px;
+  border: none;
+  border-radius: 6px;
+  background: var(--tinta);
+  color: var(--panel);
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 19px;
+  cursor: pointer;
+}
+
+/* ---------- En el computador, la pregunta va en el lugar del botón ---------- */
+.pregunta {
+  padding: 14px 16px 16px;
+  border: 1px solid var(--regla);
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+.preguntaTitulo {
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 21px;
+  line-height: 25px;
+}
+
+.preguntaExplica {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sec-tarjeta);
+}
+
+.preguntaBotones {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.si,
+.no {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.si {
+  border: none;
+  background: var(--tinta);
+  color: var(--panel);
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.no {
+  border: 2px solid var(--tinta);
+  background: transparent;
+  font-size: 15px;
+  font-weight: 500;
+}

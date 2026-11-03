@@ -154,6 +154,20 @@ const trazos = {
       <path d="M7 10h6M21 21l-6-6" />
     </>
   ),
+  menos: <path d="M5 12h14" />,
+  reloj: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 3" />
+    </>
+  ),
+  lugar: (
+    <>
+      <path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0-6 0" />
+      <path d="M17.66 16.66l-4.25 4.24a2 2 0 0 1-2.82 0l-4.25-4.24a8 8 0 1 1 11.32 0z" />
+    </>
+  ),
+  ruta: <path d="M3 19a2 2 0 1 0 4 0a2 2 0 0 0-4 0M17 5a2 2 0 1 0 4 0a2 2 0 0 0-4 0M11 19h5.5a3.5 3.5 0 0 0 0-7h-8a3.5 3.5 0 0 1 0-7H13" />,
 }
 
 export type NombreIcono = keyof typeof trazos

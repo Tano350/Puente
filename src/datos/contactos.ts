@@ -44,6 +44,11 @@ export function puedeCambiar(contacto: Contacto, yo: Persona): boolean {
   return contacto.creado_por === yo.id || contacto.responsable === yo.id || yo.administra
 }
 
+// Pasar a "Reunión agendada" desde antes es agendar la reunión: abre Crear evento con el contacto
+export function seAgenda(desde: Etapa, hacia: Etapa): boolean {
+  return hacia === 'reunion_agendada' && ETAPAS.findIndex((e) => e === desde) < ETAPAS.indexOf('reunion_agendada')
+}
+
 const recargar = (clave: 'contactos' | 'notas') => consultas.invalidateQueries({ queryKey: [clave] })
 const ahora = () => new Date().toISOString()
 

@@ -7,8 +7,7 @@ import estilos from './TableroContactos.module.css'
 
 const COLUMNAS: Etapa[] = [...ETAPAS, 'descartado']
 
-// Igual que en el detalle: por ahora "Reunión agendada" se marca directo.
-// Cuando exista la Agenda, soltar ahí abrirá "Crear evento", como "Agendar reunión".
+// Soltar en "Reunión agendada" desde antes abre Crear evento, como "Agendar reunión" en el detalle
 function puedeSoltar(contacto: Contacto, etapa: Etapa): boolean {
   return etapa !== contacto.etapa
 }
