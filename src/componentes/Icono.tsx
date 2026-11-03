@@ -38,11 +38,54 @@ const trazos = {
       <path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
     </>
   ),
+  izquierda: <path d="M15 6l-6 6l6 6" />,
+  derecha: <path d="M9 6l6 6l-6 6" />,
+  abajo: <path d="M6 9l6 6l6-6" />,
+  check: <path d="M5 12l5 5L20 7" />,
+  cerrar: <path d="M6 6l12 12M18 6L6 18" />,
+  mas: <path d="M12 5v14M5 12h14" />,
+  lapiz: (
+    <>
+      <path d="M4 20h4L18.5 9.5a2.83 2.83 0 0 0-4-4L4 16v4" />
+      <path d="M13.5 6.5l4 4" />
+    </>
+  ),
+  linkedin: (
+    <>
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+      <path d="M8 11v5M8 8v.01M12 16v-5M16 16v-3a2 2 0 0 0-4 0" />
+    </>
+  ),
+  compartir: <path d="M8 9H7a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1M12 14V3M9 6l3-3l3 3" />,
+  agregarInicio: (
+    <>
+      <rect x="4" y="4" width="16" height="16" rx="3" />
+      <path d="M12 8v8M8 12h8" />
+    </>
+  ),
+  alerta: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8v4M12 16h.01" />
+    </>
+  ),
+  avisos: (
+    <>
+      <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3H4a4 4 0 0 0 2-3v-3a7 7 0 0 1 4-6" />
+      <path d="M9 17v1a3 3 0 0 0 6 0v-1" />
+    </>
+  ),
+  instalar: (
+    <>
+      <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+      <path d="M7 11l5 5l5-5M12 4v12" />
+    </>
+  ),
 }
 
 export type NombreIcono = keyof typeof trazos
 
-export function Icono({ nombre, medida = 24 }: { nombre: NombreIcono; medida?: number }) {
+export function Icono({ nombre, medida = 24, trazo = 1.75 }: { nombre: NombreIcono; medida?: number; trazo?: number }) {
   return (
     <svg
       width={medida}
@@ -50,10 +93,11 @@ export function Icono({ nombre, medida = 24 }: { nombre: NombreIcono; medida?: n
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={1.75}
+      strokeWidth={trazo}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
+      style={{ flex: 'none' }}
     >
       {trazos[nombre]}
     </svg>

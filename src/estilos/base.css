@@ -24,6 +24,7 @@
   --en-contra: #ff8a4c;
   --a-favor: #4cc9a0;
   --error: #ff9b8f;
+  --sobre-error: #1a1c1e;
   --sombra: rgba(0, 0, 0, 0.45);
 
   --letra: 'Barlow', system-ui, sans-serif;
@@ -54,6 +55,7 @@
     --en-contra: #c2410c;
     --a-favor: #0f7b5a;
     --error: #b42318;
+    --sobre-error: #ffffff;
     --sombra: rgba(30, 36, 44, 0.18);
   }
 }

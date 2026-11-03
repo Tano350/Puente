@@ -1,0 +1,100 @@
+.pantalla {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: calc(24px + env(safe-area-inset-top)) 24px calc(36px + env(safe-area-inset-bottom));
+}
+
+.centro {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.dibujo {
+  width: 300px;
+  max-width: 100%;
+  height: auto;
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.nombre {
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 52px;
+  line-height: 1;
+}
+
+.viaje {
+  margin-top: 6px;
+  font-size: 17px;
+  line-height: 24px;
+  color: var(--sec-tarjeta);
+}
+
+.alerta {
+  width: 100%;
+  margin-top: 28px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--error);
+  border-radius: 10px;
+  text-align: left;
+}
+
+.alertaTitulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--error);
+}
+
+.alertaTexto {
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+/* Botón de Google: blanco, como pide su guía de marca */
+.google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 52px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1f1f1f;
+  font-size: 17px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+@media (prefers-color-scheme: light) {
+  .google {
+    border-color: #dadce0;
+  }
+}
+
+.nota {
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: center;
+  color: var(--sec);
+}
