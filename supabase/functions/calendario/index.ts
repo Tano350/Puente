@@ -1,23 +1,24 @@
-// Función "calendario": cruza la Agenda de Puente con el calendario compartido de Google. La llama la base cada
-// 10 minutos (pg_cron + pg_net) con la clave en "x-puente-clave"; sin esa clave no hace nada.
-// Responde cuántas operaciones hizo de cada tipo. Solo lee public.eventos: los ratos ocupados nunca van a Google.
+// Función "calendario": la llama la base cada 10 minutos (pg_cron + pg_net) con la clave en "x-puente-clave"; sin esa
+// clave no hace nada. Escribe en el calendario "The Bridge" de cada uno los eventos a los que va y guarda cuándo está
+// ocupado cada uno según ese calendario. Entra a Google como quien administra, con el permiso guardado en Vault.
+// Responde cuántas operaciones hizo de cada tipo y qué calendarios "The Bridge" falta asignar (sinDueno).
 import postgres from 'npm:postgres@3.4.9'
-import { cruzar, DESDE, HASTA, type FilaEvento, type Operacion } from './cruce.ts'
-import { calendario, ErrorGoogle, pedirToken, type Calendario, type CuentaDeServicio } from './google.ts'
+import { cruzar, DESDE, HASTA, sinDueno, type CalendarioDe, type Evento, type Operacion, type Va } from './cruce.ts'
+import { ErrorGoogle, google, pedirToken, RECONECTAR, type EventoGoogle, type Google } from './google.ts'
 
 type Sql = ReturnType<typeof postgres>
 type Conteo = Record<Operacion['tipo'] | 'errores', number>
 
-// Falta o está mal una variable de entorno; el mensaje solo nombra la variable
+// Falta una variable de entorno; el mensaje solo la nombra
 class FaltaConfigurar extends Error {}
 
 Deno.serve(async (pedido) => {
   if (!(await esLaClave(pedido.headers.get('x-puente-clave')))) return Response.json({ error: 'No autorizado.' }, { status: 401 })
   try {
-    const conteo = await sincronizar()
+    const { conteo, faltan } = await sincronizar()
     console.log('calendario:', JSON.stringify(conteo))
-    if (conteo.errores > 0) return Response.json({ error: 'Algunas operaciones fallaron.', ...conteo }, { status: 500 })
-    return Response.json(conteo)
+    if (conteo.errores > 0) return Response.json({ error: 'Algunas operaciones fallaron.', ...conteo, sinDueno: faltan }, { status: 500 })
+    return Response.json({ ...conteo, sinDueno: faltan })
   } catch (error) {
     console.error('calendario:', error instanceof Error ? error.message : error)
     const corto = error instanceof ErrorGoogle || error instanceof FaltaConfigurar ? error.message : 'Falló la sincronización.'
@@ -25,79 +26,88 @@ Deno.serve(async (pedido) => {
   }
 })
 
-async function sincronizar(): Promise<Conteo> {
-  const cuenta = cuentaDeServicio()
-  const calendarioId = variable('GOOGLE_CALENDARIO_ID')
+async function sincronizar() {
+  const cliente = { client_id: variable('GOOGLE_CLIENT_ID'), client_secret: variable('GOOGLE_CLIENT_SECRET') }
   // La base con todos los permisos, por la dirección que Supabase le da a cada función
   const sql = postgres(variable('SUPABASE_DB_URL'), { prepare: false, max: 1 })
   try {
-    const google = calendario(await pedirToken(cuenta), calendarioId)
-    const [filas, eventos] = await Promise.all([leerEventos(sql), google.listar(DESDE, HASTA)])
-    const conteo: Conteo = { crear: 0, actualizar: 0, borrar: 0, enlazar: 0, traer: 0, cambiar: 0, cancelar: 0, errores: 0 }
-    // De a una: si una falla, las demás siguen y la vuelta siguiente la vuelve a intentar
-    for (const op of cruzar(filas, eventos)) {
+    // Sin el permiso de Google no se escribe nada
+    const [guardado] = await sql<{ decrypted_secret: string | null }[]>`select decrypted_secret from vault.decrypted_secrets where name = 'google_acceso'`
+    if (!guardado?.decrypted_secret) throw new ErrorGoogle(401, RECONECTAR)
+    const g = google(await pedirToken({ ...cliente, refresh_token: guardado.decrypted_secret }))
+    const { eventos, van, calendarios, ocupados } = await leerPuente(sql)
+
+    const conteo: Conteo = { crear: 0, actualizar: 0, borrar: 0, ocupados: 0, errores: 0 }
+    const fallo = (que: string, error: unknown) => {
+      conteo.errores++
+      console.error(`calendario: ${que}:`, error instanceof Error ? error.message : error)
+    }
+    // Cada calendario se lee por separado: si uno no se puede leer, ese queda como estaba y los demás siguen
+    const listas = new Map<string, EventoGoogle[]>()
+    await Promise.all(
+      calendarios.map(async ({ google_id }) => {
+        try {
+          listas.set(google_id, await g.listar(google_id, DESDE, HASTA))
+        } catch (error) {
+          fallo(`leer ${google_id}`, error)
+        }
+      }),
+    )
+    let faltan: ReturnType<typeof sinDueno> | null = null
+    try {
+      faltan = sinDueno(await g.calendarios(), calendarios)
+    } catch (error) {
+      fallo('listar los calendarios', error)
+    }
+    // De a una: si una falla (por ejemplo, alguien no dio permiso para cambiar eventos), las demás siguen
+    for (const op of cruzar({ eventos, van, calendarios, ocupados, listas })) {
       try {
-        await aplicar(op, sql, google)
+        await aplicar(op, sql, g)
         conteo[op.tipo]++
       } catch (error) {
-        conteo.errores++
-        console.error(`calendario: ${op.tipo}:`, error instanceof Error ? error.message : error)
+        fallo(op.tipo === 'ocupados' ? `ocupados de ${op.persona}` : `${op.tipo} en ${op.calendario}`, error)
       }
     }
-    return conteo
+    return { conteo, faltan }
   } finally {
     await sql.end()
   }
 }
 
-async function leerEventos(sql: Sql): Promise<FilaEvento[]> {
-  const filas = await sql<(Omit<FilaEvento, 'inicio' | 'fin' | 'cancelado_en'> & { inicio: Date; fin: Date; cancelado_en: Date | null })[]>`
-    select id, titulo, lugar, direccion, notas, inicio, fin, google_id, desde_google, cancelado_en from public.eventos`
-  return filas.map((f) => ({ ...f, inicio: f.inicio.toISOString(), fin: f.fin.toISOString(), cancelado_en: f.cancelado_en?.toISOString() ?? null }))
+async function leerPuente(sql: Sql) {
+  const [eventos, van, calendarios, ocupados] = await Promise.all([
+    sql<(Omit<Evento, 'inicio' | 'fin'> & { inicio: Date; fin: Date })[]>`
+      select id, titulo, lugar, direccion, notas, inicio, fin from public.eventos where cancelado_en is null`,
+    // Solo los que van (no la lista de espera) y siguen en Puente
+    sql<Va[]>`
+      select a.evento, a.persona from public.asistentes a join public.personas p on p.id = a.persona
+       where a.estado = 'va' and p.sacada_en is null`,
+    sql<CalendarioDe[]>`select persona, google_id from public.calendarios`,
+    sql<{ persona: string; inicio: Date; fin: Date }[]>`select persona, inicio, fin from public.ocupados_google`,
+  ])
+  return {
+    eventos: eventos.map((e) => ({ ...e, inicio: e.inicio.toISOString(), fin: e.fin.toISOString() })),
+    van,
+    calendarios,
+    ocupados: ocupados.map((o) => ({ persona: o.persona, inicio: o.inicio.toISOString(), fin: o.fin.toISOString() })),
+  }
 }
 
-async function aplicar(op: Operacion, sql: Sql, google: Calendario): Promise<void> {
+async function aplicar(op: Operacion, sql: Sql, g: Google): Promise<void> {
   switch (op.tipo) {
     case 'crear':
-      return enlazar(sql, op.evento, (await google.crear(op.cuerpo)).id)
-    case 'actualizar': {
-      const copia = await google.guardar(op.googleId, op.cuerpo)
-      // Google lo había perdido y quedó con otro id
-      if (copia.id !== op.googleId) await enlazar(sql, op.evento, copia.id)
-      return
-    }
+      return g.crear(op.calendario, op.cuerpo)
+    case 'actualizar':
+      return g.guardar(op.calendario, op.googleId, op.cuerpo)
     case 'borrar':
-      return google.borrar(op.googleId)
-    case 'enlazar':
-      return enlazar(sql, op.evento, op.googleId)
-    case 'traer':
-      await sql`insert into public.eventos ${sql(op.fila)} on conflict (google_id) do nothing`
-      return
-    case 'cambiar':
-      await sql`update public.eventos set ${sql(op.cambios)} where id = ${op.evento} and desde_google`
-      return
-    case 'cancelar':
-      await sql`update public.eventos set cancelado_en = now() where id = ${op.evento} and desde_google and cancelado_en is null`
+      return g.borrar(op.calendario, op.googleId)
+    case 'ocupados':
+      await sql.begin(async (tx) => {
+        await tx`delete from public.ocupados_google where persona = ${op.persona}`
+        if (op.ratos.length > 0) await tx`insert into public.ocupados_google ${tx(op.ratos.map((r) => ({ persona: op.persona, ...r })))}`
+      })
       return
   }
-}
-
-async function enlazar(sql: Sql, evento: string, googleId: string): Promise<void> {
-  await sql`update public.eventos set google_id = ${googleId} where id = ${evento} and not desde_google`
-}
-
-function cuentaDeServicio(): CuentaDeServicio {
-  const json = variable('GOOGLE_CUENTA')
-  let cuenta: Partial<CuentaDeServicio> | null = null
-  try {
-    cuenta = JSON.parse(json)
-  } catch {
-    // El mensaje de JSON.parse puede traer un pedazo de la llave: no se muestra
-  }
-  if (typeof cuenta?.client_email !== 'string' || typeof cuenta.private_key !== 'string') {
-    throw new FaltaConfigurar('GOOGLE_CUENTA no es el JSON de la cuenta de servicio.')
-  }
-  return { client_email: cuenta.client_email, private_key: cuenta.private_key }
 }
 
 function variable(nombre: string): string {

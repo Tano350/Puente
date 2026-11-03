@@ -50,6 +50,29 @@ export type Database = {
           },
         ]
       }
+      calendarios: {
+        Row: {
+          google_id: string
+          persona: string
+        }
+        Insert: {
+          google_id: string
+          persona: string
+        }
+        Update: {
+          google_id?: string
+          persona?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendarios_persona_fkey"
+            columns: ["persona"]
+            isOneToOne: true
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contactos: {
         Row: {
           asignado_por: string | null
@@ -315,6 +338,32 @@ export type Database = {
           },
         ]
       }
+      ocupados_google: {
+        Row: {
+          fin: string
+          inicio: string
+          persona: string
+        }
+        Insert: {
+          fin: string
+          inicio: string
+          persona: string
+        }
+        Update: {
+          fin?: string
+          inicio?: string
+          persona?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocupados_google_persona_fkey"
+            columns: ["persona"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       personas: {
         Row: {
           administra: boolean
@@ -434,12 +483,14 @@ export type Database = {
     Functions: {
       administro: { Args: never; Returns: boolean }
       antes_de_crear_usuario: { Args: { event: Json }; Returns: Json }
+      calendario_conectado: { Args: never; Returns: boolean }
       devolver: { Args: { persona: string }; Returns: undefined }
       esperar: { Args: { evento: string }; Returns: number }
       esta_alla: {
         Args: { momento: string; persona: string }
         Returns: boolean
       }
+      guardar_acceso_google: { Args: { llave: string }; Returns: undefined }
       invitar: {
         Args: { correo_nuevo: string }
         Returns: {
@@ -480,6 +531,7 @@ export type Database = {
           libres: number
         }[]
       }
+      llenar_cupos: { Args: { evento: string }; Returns: undefined }
       mi_persona: { Args: never; Returns: string }
       no_ir: { Args: { evento: string }; Returns: undefined }
       pulso: { Args: never; Returns: string }

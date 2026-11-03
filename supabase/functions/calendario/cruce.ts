@@ -1,154 +1,134 @@
-// El cruce entre la Agenda de Puente y el calendario compartido de Google. Recibe las filas de "eventos" y los
-// eventos de Google y devuelve qué hacer; no toca la red ni la base, así que se prueba solo.
-// Puente manda en sus eventos (desde_google = false); Google manda en lo creado directo allá.
-// Si nada cambió no devuelve nada, y lo que escribe en Puente no provoca escrituras en la vuelta siguiente.
-import type { CuerpoGoogle, EventoGoogle, HoraGoogle } from './google.ts'
+// El cruce entre la Agenda de Puente y el calendario "The Bridge" de cada uno. Recibe lo que hay en la base y lo leído
+// de Google y devuelve qué hacer; no toca la red ni la base, así que se prueba solo.
+// Puente manda: cada uno tiene en su calendario una copia de cada evento al que va, igual a lo que dice Puente.
+// De esos calendarios solo se guarda cuándo está ocupado cada uno, sin títulos ni detalles. Si nada cambió, no hace nada.
+import type { CalendarioGoogle, CuerpoGoogle, EventoGoogle, HoraGoogle } from './google.ts'
 
 // Solo se cruza lo que cae en esta ventana, con los mismos bordes que usa Google al listar
 export const DESDE = '2026-12-01T00:00:00Z'
 export const HASTA = '2027-04-01T00:00:00Z'
 export const ZONA = 'America/Los_Angeles'
 const AGENDA = 'https://puente-2027.vercel.app/agenda/'
+// Los calendarios del viaje se llaman como "Josefa: The Bridge" (el nombre puede ir antes o después, con cualquier mayúscula)
+const DEL_VIAJE = /the\s*bridge/i
 
-// Lo que se lee de public.eventos, con las horas en ISO
-export type FilaEvento = {
-  id: string
-  titulo: string
-  lugar: string | null
-  direccion: string | null
-  notas: string | null
-  inicio: string
-  fin: string
-  google_id: string | null
-  desde_google: boolean
-  cancelado_en: string | null
-}
-
-// Lo que Puente toma de un evento de Google
-type DeGoogle = Pick<FilaEvento, 'titulo' | 'lugar' | 'notas' | 'inicio' | 'fin'>
-
-// Un evento creado directo en Google, como entra a Puente: para todos, sin cupos ni organizador
-export type FilaNueva = DeGoogle & {
-  google_id: string
-  desde_google: true
-  tipo: 'otro'
-  modo: 'para_todos'
-  cupos: null
-  organizador: null
-  creado_por: null
-}
-
-export type Cambios = Partial<DeGoogle> & { cancelado_en?: null }
+// Un evento no cancelado de public.eventos, con las horas en ISO
+export type Evento = { id: string; titulo: string; lugar: string | null; direccion: string | null; notas: string | null; inicio: string; fin: string }
+// Quién va a qué: asistentes con estado 'va' (no la lista de espera), de quienes siguen en Puente
+export type Va = { evento: string; persona: string }
+// De quién es cada calendario (public.calendarios, llenada a mano)
+export type CalendarioDe = { persona: string; google_id: string }
+export type Rato = { inicio: string; fin: string }
+export type Ocupado = Rato & { persona: string }
 
 export type Operacion =
-  // En Google, siempre sin avisarle a nadie
-  | { tipo: 'crear'; evento: string; cuerpo: CuerpoGoogle } // y guardar su google_id en Puente
-  | { tipo: 'actualizar'; evento: string; googleId: string; cuerpo: CuerpoGoogle } // si Google ya no lo tiene, se crea de nuevo
-  | { tipo: 'borrar'; googleId: string }
-  // En Puente
-  | { tipo: 'enlazar'; evento: string; googleId: string } // guardar el google_id que una vuelta anterior no alcanzó a guardar
-  | { tipo: 'traer'; fila: FilaNueva }
-  | { tipo: 'cambiar'; evento: string; cambios: Cambios }
-  | { tipo: 'cancelar'; evento: string }
+  // En el calendario de alguien, siempre sin avisarle a nadie
+  | { tipo: 'crear'; calendario: string; cuerpo: CuerpoGoogle }
+  | { tipo: 'actualizar'; calendario: string; googleId: string; cuerpo: CuerpoGoogle }
+  | { tipo: 'borrar'; calendario: string; googleId: string }
+  // En Puente: los ratos ocupados de alguien se reemplazan todos juntos
+  | { tipo: 'ocupados'; persona: string; ratos: Rato[] }
 
-export function cruzar(filas: FilaEvento[], google: EventoGoogle[]): Operacion[] {
+export type Entrada = {
+  eventos: Evento[]
+  van: Va[]
+  calendarios: CalendarioDe[]
+  ocupados: Ocupado[] // lo que ya está en public.ocupados_google
+  listas: Map<string, EventoGoogle[]> // lo leído de cada calendario; si falta uno, no se pudo leer y queda como estaba
+}
+
+export function cruzar({ eventos, van, calendarios, ocupados, listas }: Entrada): Operacion[] {
   const ops: Operacion[] = []
-  const porId = new Map(google.map((e) => [e.id, e]))
-  // Lo de Puente se reconoce por su marca o, si Google lo borró y ya no la muestra, por el google_id guardado
-  const idsDePuente = new Set(filas.flatMap((f) => (!f.desde_google && f.google_id ? [f.google_id] : [])))
-  const esDePuente = (e: EventoGoogle) => marca(e) !== undefined || idsDePuente.has(e.id)
+  const vigentes = new Map(eventos.filter(enVentana).map((e) => [e.id, e]))
+  for (const { persona, google_id: calendario } of calendarios) {
+    const lista = listas.get(calendario)
+    if (!lista) continue
 
-  // 1. Cada evento vigente de Puente queda en Google tal como lo dice Puente
-  const copias = new Set<string>()
-  for (const f of filas) {
-    if (f.desde_google || f.cancelado_en || !enVentana(f)) continue
-    const cuerpo = aGoogle(f)
-    // Su copia es la de su google_id; si no tiene, la que lleva su marca (de una vuelta que no alcanzó a guardar el id)
-    const copia = f.google_id ? porId.get(f.google_id) : google.find((e) => activo(e) && marca(e) === f.id)
-    if (!copia) {
-      // Con google_id pero sin copia a la vista (borrada del todo o movida fuera de la ventana): se actualiza igual
-      ops.push(f.google_id ? { tipo: 'actualizar', evento: f.id, googleId: f.google_id, cuerpo } : { tipo: 'crear', evento: f.id, cuerpo })
-      continue
+    // 1. Una copia de cada evento al que va, tal como lo dice Puente
+    const suyos = new Map<string, Evento>()
+    for (const v of van) {
+      const e = vigentes.get(v.evento)
+      if (e && v.persona === persona) suyos.set(e.id, e)
     }
-    copias.add(copia.id)
-    if (copia.id !== f.google_id) ops.push({ tipo: 'enlazar', evento: f.id, googleId: copia.id })
-    if (!igual(copia, cuerpo)) ops.push({ tipo: 'actualizar', evento: f.id, googleId: copia.id, cuerpo })
-  }
-  // Lo que en Google dice ser de Puente y no es copia de un evento vigente (cancelado, borrado o repetido) se borra
-  for (const e of google) {
-    if (activo(e) && esDePuente(e) && !copias.has(e.id)) ops.push({ tipo: 'borrar', googleId: e.id })
-  }
+    const conCopia = new Set<string>()
+    for (const g of lista) {
+      const id = marca(g)
+      if (id === undefined || !activo(g)) continue
+      const e = suyos.get(id)
+      // Ya no va (soltó el cupo, lo sacaron o quedó en espera), el evento se canceló o se borró, o la copia está repetida
+      if (!e || conCopia.has(id)) {
+        ops.push({ tipo: 'borrar', calendario, googleId: g.id })
+        continue
+      }
+      conCopia.add(id)
+      const cuerpo = aGoogle(e)
+      if (!igual(g, cuerpo)) ops.push({ tipo: 'actualizar', calendario, googleId: g.id, cuerpo })
+    }
+    for (const e of suyos.values()) if (!conCopia.has(e.id)) ops.push({ tipo: 'crear', calendario, cuerpo: aGoogle(e) })
 
-  // 2. Lo creado directo en Google entra a Puente y lo sigue
-  const traidas = new Map<string, FilaEvento>()
-  for (const f of filas) if (f.desde_google && f.google_id) traidas.set(f.google_id, f)
-  const vistos = new Set<string>()
-  for (const e of google) {
-    if (!activo(e) || esDePuente(e)) continue
-    const datos = deGoogle(e)
-    if (!datos) continue // de todo el día o sin duración: no entra
-    vistos.add(e.id)
-    const f = traidas.get(e.id)
-    if (!f) {
-      ops.push({ tipo: 'traer', fila: { ...datos, google_id: e.id, desde_google: true, tipo: 'otro', modo: 'para_todos', cupos: null, organizador: null, creado_por: null } })
-      continue
-    }
-    const cambios = diferencias(f, datos)
-    if (Object.keys(cambios).length > 0) ops.push({ tipo: 'cambiar', evento: f.id, cambios })
+    // 2. Cuándo está ocupado según su calendario; se reescribe solo si cambió
+    const ratos = ratosOcupados(lista)
+    if (huella(ratos) !== huella(ocupados.filter((o) => o.persona === persona))) ops.push({ tipo: 'ocupados', persona, ratos })
   }
-  // Si en Google se canceló, se borró o quedó de todo el día, en Puente se cancela (la fila queda)
-  for (const [googleId, f] of traidas) {
-    if (!f.cancelado_en && enVentana(f) && !vistos.has(googleId)) ops.push({ tipo: 'cancelar', evento: f.id })
+  // Quien ya no tiene calendario asignado deja de tener ratos ocupados de Google
+  const conCalendario = new Set(calendarios.map((c) => c.persona))
+  for (const persona of new Set(ocupados.map((o) => o.persona))) {
+    if (!conCalendario.has(persona)) ops.push({ tipo: 'ocupados', persona, ratos: [] })
   }
   return ops
 }
 
-// Cómo queda en Google un evento de Puente: sin invitados y con su marca
-export function aGoogle(f: FilaEvento): CuerpoGoogle {
-  const lugar = [f.lugar, f.direccion].map(limpio).filter(Boolean).join(', ')
-  const notas = limpio(f.notas)
-  const enlace = AGENDA + f.id
+// Cómo queda una copia de un evento de Puente: sin invitados y con su marca
+export function aGoogle(e: Evento): CuerpoGoogle {
+  const lugar = [e.lugar, e.direccion].map(limpio).filter(Boolean).join(', ')
+  const notas = limpio(e.notas)
+  const enlace = AGENDA + e.id
   return {
-    summary: f.titulo.trim(),
+    summary: e.titulo.trim(),
     ...(lugar ? { location: lugar } : {}),
     description: notas ? `${notas}\n\n${enlace}` : enlace,
-    start: { dateTime: iso(f.inicio), timeZone: ZONA },
-    end: { dateTime: iso(f.fin), timeZone: ZONA },
+    start: { dateTime: iso(e.inicio), timeZone: ZONA },
+    end: { dateTime: iso(e.fin), timeZone: ZONA },
     status: 'confirmed',
-    extendedProperties: { private: { puente: f.id } },
+    extendedProperties: { private: { puente: e.id } },
   }
 }
 
-// Cómo entra a Puente un evento de Google; los de todo el día (sin hora) o sin duración no entran
-function deGoogle(e: EventoGoogle): DeGoogle | null {
-  const inicio = e.start?.dateTime
-  const fin = e.end?.dateTime
-  if (!inicio || !fin || !(segundos(fin) > segundos(inicio))) return null
-  return { titulo: limpio(e.summary) ?? 'Sin título', lugar: limpio(e.location), notas: limpio(textoPlano(e.description)), inicio: iso(inicio), fin: iso(fin) }
+// Lo que bloquea tiempo en un calendario: no las copias de Puente, no lo cancelado, no lo marcado como disponible.
+// Lo de todo el día cuenta como días enteros de California.
+export function ratosOcupados(lista: EventoGoogle[]): Rato[] {
+  const ratos = new Map<string, Rato>()
+  for (const g of lista) {
+    if (marca(g) !== undefined || !activo(g) || g.transparency === 'transparent') continue
+    const [inicio, fin] = g.start?.dateTime && g.end?.dateTime ? [g.start.dateTime, g.end.dateTime]
+      : g.start?.date && g.end?.date ? [medianoche(g.start.date), medianoche(g.end.date)]
+      : []
+    if (inicio && fin && segundos(fin) > segundos(inicio)) ratos.set(`${iso(inicio)} ${iso(fin)}`, { inicio: iso(inicio), fin: iso(fin) })
+  }
+  return [...ratos.values()].sort((a, b) => a.inicio.localeCompare(b.inicio) || a.fin.localeCompare(b.fin))
 }
 
-function diferencias(f: FilaEvento, d: DeGoogle): Cambios {
-  const cambios: Cambios = {}
-  if (f.titulo !== d.titulo) cambios.titulo = d.titulo
-  if (f.lugar !== d.lugar) cambios.lugar = d.lugar
-  if (f.notas !== d.notas) cambios.notas = d.notas
-  if (segundos(f.inicio) !== segundos(d.inicio)) cambios.inicio = d.inicio
-  if (segundos(f.fin) !== segundos(d.fin)) cambios.fin = d.fin
-  if (f.cancelado_en) cambios.cancelado_en = null // volvió a estar en Google
-  return cambios
+// Los calendarios del viaje que todavía no tienen dueño en public.calendarios, con su nombre completo, para asignarlos a mano
+export function sinDueno(lista: CalendarioGoogle[], calendarios: CalendarioDe[]): { nombre: string; id: string }[] {
+  const asignados = new Set(calendarios.map((c) => c.google_id))
+  return lista
+    .flatMap((c) => {
+      const nombre = [c.summaryOverride, c.summary].find((s) => s && DEL_VIAJE.test(s))
+      return nombre && !asignados.has(c.id) ? [{ nombre: nombre.trim(), id: c.id }] : []
+    })
+    .sort((a, b) => a.nombre.localeCompare(b.nombre))
 }
 
 // ¿La copia de Google dice lo mismo que Puente? Las horas se comparan como instantes: Google las devuelve con desfase
-function igual(e: EventoGoogle, c: CuerpoGoogle): boolean {
+function igual(g: EventoGoogle, c: CuerpoGoogle): boolean {
   return (
-    (e.status ?? 'confirmed') === 'confirmed' &&
-    marca(e) === c.extendedProperties.private.puente &&
-    texto(e.summary) === texto(c.summary) &&
-    texto(e.location) === texto(c.location) &&
-    texto(e.description) === texto(c.description) &&
-    mismaHora(e.start, c.start) &&
-    mismaHora(e.end, c.end) &&
-    !e.attendees?.length
+    (g.status ?? 'confirmed') === 'confirmed' &&
+    texto(g.summary) === texto(c.summary) &&
+    texto(g.location) === texto(c.location) &&
+    texto(g.description) === texto(c.description) &&
+    mismaHora(g.start, c.start) &&
+    mismaHora(g.end, c.end) &&
+    !g.attendees?.length
   )
 }
 
@@ -156,26 +136,22 @@ function mismaHora(h: HoraGoogle | undefined, deseada: { dateTime: string; timeZ
   return !!h?.dateTime && segundos(h.dateTime) === segundos(deseada.dateTime) && (!h.timeZone || h.timeZone === deseada.timeZone)
 }
 
-// Si alguien editó la descripción en la página de Google, viene en HTML; en Puente va como texto
-function textoPlano(s: string | undefined): string | undefined {
-  if (!s || !/<[a-z/!]/i.test(s)) return s
-  return s
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(p|div|li|h[1-6])>/gi, '\n')
-    .replace(/<[^>]*>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&apos;/g, "'")
-    .replace(/&amp;/g, '&')
+// La medianoche de California de una fecha: -08:00 en invierno, -07:00 desde el cambio de hora de marzo
+const horaEnCalifornia = new Intl.DateTimeFormat('en-US', { timeZone: ZONA, hour: 'numeric', hourCycle: 'h23' })
+function medianoche(fecha: string): string {
+  const invierno = `${fecha}T00:00:00-08:00`
+  const instante = new Date(invierno)
+  return Number.isNaN(instante.getTime()) || Number(horaEnCalifornia.format(instante)) === 0 ? invierno : `${fecha}T00:00:00-07:00`
 }
 
-const activo = (e: EventoGoogle) => e.status !== 'cancelled'
-const marca = (e: EventoGoogle) => e.extendedProperties?.private?.puente
+// Siempre igual para el mismo conjunto de ratos, sin importar el orden ni cómo vengan escritas las horas
+const huella = (ratos: Rato[]) => ratos.map((r) => `${segundos(r.inicio)}-${segundos(r.fin)}`).sort().join(' ')
+
+const activo = (g: EventoGoogle) => g.status !== 'cancelled'
+const marca = (g: EventoGoogle) => g.extendedProperties?.private?.puente
 const segundos = (momento: string) => Math.floor(Date.parse(momento) / 1000)
 const iso = (momento: string) => new Date(segundos(momento) * 1000).toISOString().replace('.000Z', 'Z')
-const enVentana = (f: FilaEvento) => segundos(f.fin) > segundos(DESDE) && segundos(f.inicio) < segundos(HASTA)
+const enVentana = (e: Evento) => segundos(e.fin) > segundos(DESDE) && segundos(e.inicio) < segundos(HASTA)
 const texto = (s: string | undefined) => (s ?? '').replace(/\r\n?/g, '\n').trim()
 
 function limpio(s: string | null | undefined): string | null {

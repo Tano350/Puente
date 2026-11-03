@@ -65,7 +65,6 @@ export function Entrar() {
         <LogoGoogle />
         {noInvitado ? textos.otraCuenta : textos.conGoogle}
       </button>
-      <div className={estilos.nota}>{textos.soloInvitados}</div>
     </main>
   )
 }

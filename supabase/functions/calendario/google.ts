@@ -1,10 +1,10 @@
-// Google Calendar para la función "calendario". La cuenta de servicio entra con un JWT firmado con su llave (RS256,
-// con WebCrypto) y el calendario compartido se lee y se escribe con fetch. Todo lo que escribe va con
-// sendUpdates=none: Google nunca le manda un correo a nadie.
+// Google Calendar para la función "calendario". Puente entra como quien administra: cambia el permiso que él dio
+// (un refresh token guardado en Vault) por un token de acceso, y con fetch lee y escribe los calendarios de cada uno.
+// Todo lo que escribe va con sendUpdates=none: Google nunca le manda un correo a nadie.
 
 export type HoraGoogle = { dateTime?: string; date?: string; timeZone?: string }
 
-// Un evento como lo devuelve Google (solo lo que usa Puente). Los borrados vienen con status "cancelled" y a veces solo con id.
+// Un evento como lo devuelve Google (solo lo que usa Puente)
 export type EventoGoogle = {
   id: string
   status?: string
@@ -13,11 +13,12 @@ export type EventoGoogle = {
   description?: string
   start?: HoraGoogle
   end?: HoraGoogle
+  transparency?: string
   attendees?: unknown[]
   extendedProperties?: { private?: Record<string, string> }
 }
 
-// Lo que Puente escribe en Google: sin invitados y con la marca de Puente
+// Lo que Puente escribe en el calendario de cada uno: sin invitados y con la marca de Puente
 export type CuerpoGoogle = {
   summary: string
   location?: string
@@ -28,13 +29,17 @@ export type CuerpoGoogle = {
   extendedProperties: { private: { puente: string } }
 }
 
-export type CuentaDeServicio = { client_email: string; private_key: string }
-export type Pedir = (url: string, opciones?: RequestInit) => Promise<Response>
-export type Calendario = ReturnType<typeof calendario>
+// Un calendario de la lista de quien administra
+export type CalendarioGoogle = { id: string; summary?: string; summaryOverride?: string }
 
+// El cliente OAuth (el mismo de "Entrar con Google") y el permiso de quien administra
+export type Acceso = { client_id: string; client_secret: string; refresh_token: string }
+export type Pedir = (url: string, opciones?: RequestInit) => Promise<Response>
+export type Google = ReturnType<typeof google>
+
+export const RECONECTAR = 'Hay que volver a conectar Google Calendar.'
 const TOKEN = 'https://oauth2.googleapis.com/token'
-const ALCANCE = 'https://www.googleapis.com/auth/calendar'
-const API = 'https://www.googleapis.com/calendar/v3/calendars/'
+const API = 'https://www.googleapis.com/calendar/v3'
 const SIN_AVISOS = { sendUpdates: 'none' }
 
 // Un error de Google con un mensaje corto que se puede mostrar: nunca lleva claves ni tokens
@@ -46,44 +51,25 @@ export class ErrorGoogle extends Error {
   }
 }
 
-const utf8 = (texto: string) => new TextEncoder().encode(texto)
-const base64url = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-
-// La llave viene en PEM (PKCS8). Si al pegarla los saltos de línea quedaron escritos como "\n", también sirve.
-function pkcs8(pem: string) {
-  const base64 = pem.replace(/\\n/g, '\n').replace(/-----(BEGIN|END) PRIVATE KEY-----/g, '').replace(/\s/g, '')
-  return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
-}
-
-// El JWT con que la cuenta de servicio pide acceso al calendario (vale una hora)
-export async function firmarJwt(cuenta: CuentaDeServicio, ahora = Date.now()): Promise<string> {
-  const iat = Math.floor(ahora / 1000)
-  const cabecera = base64url(utf8(JSON.stringify({ alg: 'RS256', typ: 'JWT' })))
-  const datos = base64url(utf8(JSON.stringify({ iss: cuenta.client_email, scope: ALCANCE, aud: TOKEN, iat, exp: iat + 3600 })))
-  const llave = await crypto.subtle.importKey('pkcs8', pkcs8(cuenta.private_key), { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign'])
-  const firma = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', llave, utf8(`${cabecera}.${datos}`))
-  return `${cabecera}.${datos}.${base64url(new Uint8Array(firma))}`
-}
-
-// Cambia el JWT por un token de acceso
-export async function pedirToken(cuenta: CuentaDeServicio, pedir: Pedir = fetch): Promise<string> {
+// Cambia el permiso guardado por un token de acceso. Si Google ya no lo acepta (se revocó o venció), hay que reconectar.
+export async function pedirToken(acceso: Acceso, pedir: Pedir = fetch): Promise<string> {
   const respuesta = await pedir(TOKEN, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion: await firmarJwt(cuenta) }),
+    body: new URLSearchParams({ grant_type: 'refresh_token', ...acceso }),
   })
-  const datos = await leerJson(respuesta)
-  const token = (datos as { access_token?: unknown } | null)?.access_token
-  if (!respuesta.ok || typeof token !== 'string') throw new ErrorGoogle(respuesta.status, `Google no dio acceso al calendario (${respuesta.status}${motivo(datos)})`)
-  return token
+  const datos = (await leerJson(respuesta)) as { access_token?: unknown; error?: unknown } | null
+  if (respuesta.ok && typeof datos?.access_token === 'string') return datos.access_token
+  if (datos?.error === 'invalid_grant') throw new ErrorGoogle(respuesta.status, RECONECTAR)
+  throw new ErrorGoogle(respuesta.status, `Google no dio acceso (${respuesta.status}${motivo(datos)})`)
 }
 
-export function calendario(token: string, calendarioId: string, pedir: Pedir = fetch) {
-  const eventos = `${API}${encodeURIComponent(calendarioId)}/events`
+export function google(token: string, pedir: Pedir = fetch) {
+  const eventos = (calendario: string, id?: string) => `${API}/calendars/${encodeURIComponent(calendario)}/events${id ? `/${encodeURIComponent(id)}` : ''}`
 
   // Llama a Google y siempre lee la respuesta completa
-  async function llamar(metodo: string, ruta: string, consulta: Record<string, string>, cuerpo?: CuerpoGoogle) {
-    const respuesta = await pedir(`${eventos}${ruta}?${new URLSearchParams(consulta)}`, {
+  async function llamar(metodo: string, url: string, consulta: Record<string, string>, cuerpo?: CuerpoGoogle) {
+    const respuesta = await pedir(`${url}?${new URLSearchParams(consulta)}`, {
       method: metodo,
       headers: cuerpo ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { Authorization: `Bearer ${token}` },
       body: cuerpo ? JSON.stringify(cuerpo) : undefined,
@@ -96,39 +82,42 @@ export function calendario(token: string, calendarioId: string, pedir: Pedir = f
     return r.datos
   }
 
-  async function crear(cuerpo: CuerpoGoogle): Promise<EventoGoogle> {
-    return exigir(await llamar('POST', '', SIN_AVISOS, cuerpo), 'crear un evento') as EventoGoogle
+  // Todas las páginas de una lista. Una lista ilegible nunca se toma por vacía.
+  async function todo<T>(url: string, consulta: Record<string, string>, que: string): Promise<T[]> {
+    const items: T[] = []
+    let pagina = ''
+    do {
+      const datos = exigir(await llamar('GET', url, pagina ? { ...consulta, pageToken: pagina } : consulta), que) as { items?: T[]; nextPageToken?: string } | null
+      if (!datos) throw new ErrorGoogle(502, `Google respondió sin datos al ${que}`)
+      items.push(...(datos.items ?? []))
+      pagina = datos.nextPageToken ?? ''
+    } while (pagina)
+    return items
+  }
+
+  async function crear(calendario: string, cuerpo: CuerpoGoogle): Promise<void> {
+    exigir(await llamar('POST', eventos(calendario), SIN_AVISOS, cuerpo), 'crear un evento')
   }
 
   return {
-    // Todos los eventos de la ventana: cada repetición por separado y también los borrados (con status "cancelled")
-    async listar(desde: string, hasta: string): Promise<EventoGoogle[]> {
-      const todos: EventoGoogle[] = []
-      let pagina = ''
-      do {
-        const consulta: Record<string, string> = { singleEvents: 'true', showDeleted: 'true', timeMin: desde, timeMax: hasta, maxResults: '2500' }
-        if (pagina) consulta.pageToken = pagina
-        const datos = exigir(await llamar('GET', '', consulta), 'listar los eventos') as { items?: EventoGoogle[]; nextPageToken?: string } | null
-        // Una lista ilegible nunca se toma por vacía: sería como si se hubiera borrado todo
-        if (!datos) throw new ErrorGoogle(502, 'Google respondió sin la lista de eventos')
-        todos.push(...(datos.items ?? []))
-        pagina = datos.nextPageToken ?? ''
-      } while (pagina)
-      return todos
-    },
+    // Los calendarios que ve quien administra (también los que tiene escondidos)
+    calendarios: () => todo<CalendarioGoogle>(`${API}/users/me/calendarList`, { maxResults: '250', showHidden: 'true' }, 'listar los calendarios'),
+
+    // Los eventos de un calendario en la ventana, cada repetición por separado (los borrados no vienen)
+    listar: (calendario: string, desde: string, hasta: string) =>
+      todo<EventoGoogle>(eventos(calendario), { singleEvents: 'true', timeMin: desde, timeMax: hasta, maxResults: '2500' }, 'leer un calendario'),
 
     crear,
 
-    // Lo deja tal como lo dice Puente. Si Google ya no lo tiene (o no lo revive), lo crea de nuevo: la respuesta trae el id nuevo.
-    async guardar(id: string, cuerpo: CuerpoGoogle): Promise<EventoGoogle> {
-      const r = await llamar('PUT', `/${encodeURIComponent(id)}`, SIN_AVISOS, cuerpo)
-      if (noEsta(r.estado)) return crear(cuerpo)
-      const evento = exigir(r, 'actualizar un evento') as EventoGoogle
-      return evento.status === 'cancelled' ? crear(cuerpo) : evento
+    // La deja tal como lo dice Puente; si justo la borraron, la crea de nuevo
+    async guardar(calendario: string, id: string, cuerpo: CuerpoGoogle): Promise<void> {
+      const r = await llamar('PUT', eventos(calendario, id), SIN_AVISOS, cuerpo)
+      if (noEsta(r.estado)) return crear(calendario, cuerpo)
+      exigir(r, 'actualizar un evento')
     },
 
-    async borrar(id: string): Promise<void> {
-      const r = await llamar('DELETE', `/${encodeURIComponent(id)}`, SIN_AVISOS)
+    async borrar(calendario: string, id: string): Promise<void> {
+      const r = await llamar('DELETE', eventos(calendario, id), SIN_AVISOS)
       if (!noEsta(r.estado)) exigir(r, 'borrar un evento') // si ya no estaba, no hay nada que hacer
     },
   }

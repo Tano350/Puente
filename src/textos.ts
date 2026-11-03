@@ -13,7 +13,6 @@ const es = {
     viaje: 'The Bridge 2027',
     conGoogle: 'Entrar con Google',
     otraCuenta: 'Probar con otra cuenta',
-    soloInvitados: 'Solo para los 14 invitados.',
     noInvitada: 'Esta cuenta no está invitada.',
     entrasteComo: (correo: string) =>
       `Entraste como ${correo}. Si crees que es un error, avísale a quien administra Puente.`,
@@ -456,8 +455,8 @@ const es = {
   primeraVez: {
     hola: (nombre: string) => `Hola, ${nombre}`,
     listo: (nombre: string) => `Listo, ${nombre}`,
-    faltan: (n: number) => `Te faltan ${n} de 4 cosas.`,
-    tareas: { perfil: 'Tu perfil', fechas: 'Tus fechas', instalar: 'Instalar la app', avisos: 'Activar avisos' },
+    faltan: (n: number, de: number) => `Te faltan ${n} de ${de} cosas.`,
+    tareas: { perfil: 'Tu perfil', fechas: 'Tus fechas', instalar: 'Instalar la app', avisos: 'Activar avisos', calendario: 'Google Calendar' },
     hecho: 'Hecho',
     falta: 'Falta',
     recomendado: 'Recomendado',
@@ -545,6 +544,19 @@ const es = {
     sinSoporte: 'Este navegador no puede recibir avisos.',
     noSePudo: 'No se pudo activar. Revisa tu conexión y vuelve a intentar.',
     activados: 'Activaste los avisos.',
+  },
+  // Solo quien administra: conectar su cuenta de Google para los calendarios "The Bridge"
+  calendario: {
+    titulo: 'Google Calendar',
+    conectado: 'Conectado',
+    sinConectar: 'Sin conectar',
+    explica: 'Puente pone cada evento en el calendario The Bridge de cada uno que va y mira esos calendarios solo para saber quién está ocupado. Usa tu cuenta de Google, que ya los ve.',
+    permiso: 'Para escribir en el calendario de alguien, esa persona tiene que darte permiso para hacer cambios en eventos.',
+    conectar: 'Conectar con Google',
+    volverAConectar: 'Volver a conectar',
+    conectaste: 'Conectaste Google Calendar.',
+    sinPermiso: 'Google no dio el permiso. Vuelve a intentar.',
+    noSeAbrio: 'No se pudo abrir Google. Revisa tu conexión y vuelve a intentar.',
   },
   noSeGuardo: 'No se pudo guardar. Revisa tu conexión y vuelve a intentar.',
   privacidad: {

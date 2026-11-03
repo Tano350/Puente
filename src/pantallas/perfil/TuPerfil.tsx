@@ -5,6 +5,7 @@ import { Icono } from '../../componentes/Icono.tsx'
 import { DetallePersona, Tarjeta } from '../../componentes/Tarjeta.tsx'
 import { useAviso } from '../../componentes/useAviso.ts'
 import { useEsComputador } from '../../componentes/useEsComputador.ts'
+import { conectarCalendario, guardarAccesoAlVolver, useCalendarioConectado } from '../../datos/calendario.ts'
 import { usePersonas } from '../../datos/consultas.ts'
 import { activarAvisos, marcarInstalada, pedirInstalar } from '../../datos/dispositivo.ts'
 import { rangoCorto } from '../../datos/fechas.ts'
@@ -29,7 +30,7 @@ import {
 } from './formularios.tsx'
 import estilos from './TuPerfil.module.css'
 
-type Abierto = 'editar' | 'fechas' | 'avisos' | 'instalar'
+type Abierto = 'editar' | 'fechas' | 'avisos' | 'instalar' | 'calendario'
 
 // Cómo se envuelve cada ajuste: pantalla propia en el celular, panel encima en el computador
 type Envoltura = { titulo: string; pie?: ReactNode; children: ReactNode }
@@ -203,6 +204,40 @@ function AjusteInstalar({ marco, alInstalar }: { marco: Contenedor; alInstalar: 
   })
 }
 
+// Solo quien administra: conecta su cuenta de Google para los calendarios "The Bridge" (Google vuelve a Tu perfil)
+function AjusteCalendario({ conectado, marco }: { conectado: boolean; marco: Contenedor }) {
+  const textos = useTextos()
+  const t = textos.calendario
+  const [ocupado, setOcupado] = useState(false)
+  const [problema, setProblema] = useState<string | null>(null)
+  const conectar = async () => {
+    setOcupado(true)
+    setProblema(null)
+    try {
+      await conectarCalendario('/perfil')
+    } catch {
+      setProblema(t.noSeAbrio)
+      setOcupado(false)
+    }
+  }
+  const Boton = conectado ? BotonBorde : BotonPrincipal
+  return marco({
+    titulo: t.titulo,
+    pie: (
+      <>
+        <Boton onClick={() => void conectar()} ocupado={ocupado}>{conectado ? t.volverAConectar : t.conectar}</Boton>
+        <Nota texto={problema} />
+      </>
+    ),
+    children: (
+      <>
+        <div className={estilos.bajada}>{t.explica}</div>
+        <div className={estilos.bajada}>{t.permiso}</div>
+      </>
+    ),
+  })
+}
+
 export function TuPerfil() {
   const textos = useTextos()
   const sesion = useSesion()
@@ -215,9 +250,20 @@ export function TuPerfil() {
   // Un pendiente de Hoy puede pedir que se abra un ajuste, como "Editar perfil"
   const [abierto, setAbierto] = useState<Abierto | null>(() => (location.state as { abrir?: Abierto } | null)?.abrir ?? null)
   const [confirmarSalir, setConfirmarSalir] = useState(false)
+  const { data: conectado = false } = useCalendarioConectado(sesion.tipo === 'dentro' && sesion.persona.administra)
   useEffect(() => {
     if (location.state) navigate(location.pathname, { replace: true, state: null })
   }, [location, navigate])
+  // Al volver de Google después de conectar el calendario
+  useEffect(() => {
+    guardarAccesoAlVolver()
+      .then((resultado) => {
+        if (resultado === 'conectado') aviso.mostrar(textos.calendario.conectaste)
+        if (resultado === 'sinPermiso') aviso.mostrar(textos.calendario.sinPermiso)
+      })
+      .catch(() => aviso.mostrar(textos.noSeGuardo))
+    // Solo al abrir Tu perfil
+  }, [])
   if (sesion.tipo !== 'dentro') return null
   const { persona } = sesion
   const t = textos.perfil
@@ -235,6 +281,9 @@ export function TuPerfil() {
       <Fila etiqueta={textos.avisos.titulo} valor={dispositivo.avisos ? t.activados : t.apagados} onClick={() => setAbierto('avisos')} />
       {!dispositivo.instalada && <Fila etiqueta={textos.primeraVez.tareas.instalar} onClick={() => setAbierto('instalar')} />}
       {persona.administra && <Fila etiqueta={t.invitados} valor={t.deTotal(entraron, activos.length)} onClick={() => navigate('/perfil/invitados')} />}
+      {persona.administra && (
+        <Fila etiqueta={textos.calendario.titulo} valor={conectado ? textos.calendario.conectado : textos.calendario.sinConectar} onClick={() => setAbierto('calendario')} />
+      )}
     </>
   )
 
@@ -243,6 +292,7 @@ export function TuPerfil() {
     if (abierto === 'fechas') return <EditarFechas persona={persona} marco={marco} alTerminar={cerrar} />
     if (abierto === 'avisos') return <AjusteAvisos persona={persona} activos={dispositivo.avisos} marco={marco} alActivar={(texto) => { dispositivo.setAvisos(true); cerrar(texto) }} />
     if (abierto === 'instalar') return <AjusteInstalar marco={marco} alInstalar={() => { dispositivo.setInstalada(true); cerrar() }} />
+    if (abierto === 'calendario') return <AjusteCalendario conectado={conectado} marco={marco} />
     return null
   }
 

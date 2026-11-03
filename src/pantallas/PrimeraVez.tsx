@@ -1,6 +1,7 @@
-import { useState, type ReactNode } from 'react'
-import { Atras, BotonPrincipal, Pie, Titulo } from '../componentes/Controles.tsx'
+import { useEffect, useState, type ReactNode } from 'react'
+import { Atras, BotonBorde, BotonPrincipal, Pie, Titulo } from '../componentes/Controles.tsx'
 import { Icono } from '../componentes/Icono.tsx'
+import { conectarCalendario, guardarAccesoAlVolver, useCalendarioConectado } from '../datos/calendario.ts'
 import { usePersonas } from '../datos/consultas.ts'
 import { activarAvisos, marcarInstalada, pedirInstalar } from '../datos/dispositivo.ts'
 import { primerNombre } from '../datos/nombres.ts'
@@ -25,7 +26,8 @@ import {
 } from './perfil/formularios.tsx'
 import estilos from './PrimeraVez.module.css'
 
-type Paso = 'lista' | 'perfil' | 'fechas' | 'instalar' | 'avisos'
+type Paso = 'lista' | 'perfil' | 'fechas' | 'instalar' | 'avisos' | 'calendario'
+type Tarea = Exclude<Paso, 'lista'>
 
 // Pantalla de un paso: "Volver" arriba, el contenido y el botón fijo abajo
 function PantallaPaso({ alVolver, pie, children }: { alVolver?: () => void; pie: ReactNode; children: ReactNode }) {
@@ -161,13 +163,56 @@ function PasoAvisos({ persona, alTerminar, alActivar }: { persona: Persona; alTe
   )
 }
 
-// La lista de tareas de la primera vez: perfil y fechas son obligatorios; instalar y avisos, recomendados
+// Solo quien administra: conecta su cuenta de Google para los calendarios "The Bridge" (Google vuelve aquí)
+function PasoCalendario({ conectado, problemaAlVolver, alTerminar }: { conectado: boolean; problemaAlVolver: string | null; alTerminar: () => void }) {
+  const textos = useTextos()
+  const t = textos.calendario
+  const [ocupado, setOcupado] = useState(false)
+  const [problema, setProblema] = useState(problemaAlVolver)
+  const conectar = async () => {
+    setOcupado(true)
+    setProblema(null)
+    try {
+      await conectarCalendario('/hoy')
+    } catch {
+      setProblema(t.noSeAbrio)
+      setOcupado(false)
+    }
+  }
+  const Boton = conectado ? BotonBorde : BotonPrincipal
+  return (
+    <PantallaPaso alVolver={alTerminar} pie={<><Boton onClick={() => void conectar()} ocupado={ocupado}>{conectado ? t.volverAConectar : t.conectar}</Boton>{problema && <div className={estilos.nota} role="alert">{problema}</div>}</>}>
+      <Titulo>{t.titulo}</Titulo>
+      <div className={estilos.bajada}>{t.explica}</div>
+      <div className={estilos.bajada}>{t.permiso}</div>
+    </PantallaPaso>
+  )
+}
+
+// La lista de tareas de la primera vez: perfil y fechas son obligatorios; instalar, avisos y (para quien administra)
+// Google Calendar, recomendados
 export function PrimeraVez() {
   const textos = useTextos()
   const sesion = useSesion()
   const dispositivo = useDispositivo()
   const [paso, setPaso] = useState<Paso>('lista')
   const [entrando, setEntrando] = useState(false)
+  const { data: conectado = false } = useCalendarioConectado(sesion.tipo === 'dentro' && sesion.persona.administra)
+  const [problemaCalendario, setProblemaCalendario] = useState<string | null>(null)
+  // Al volver de Google después de conectar el calendario: si salió bien, la tarea queda hecha; si no, se abre con el motivo
+  useEffect(() => {
+    guardarAccesoAlVolver()
+      .then((resultado) => {
+        if (resultado !== 'sinPermiso') return
+        setProblemaCalendario(textos.calendario.sinPermiso)
+        setPaso('calendario')
+      })
+      .catch(() => {
+        setProblemaCalendario(textos.noSeGuardo)
+        setPaso('calendario')
+      })
+    // Solo al abrir la bienvenida
+  }, [])
   if (sesion.tipo !== 'dentro') return null
   const { persona } = sesion
   const volver = () => setPaso('lista')
@@ -176,18 +221,26 @@ export function PrimeraVez() {
   if (paso === 'fechas') return <PasoFechas persona={persona} alTerminar={volver} />
   if (paso === 'instalar') return <PasoInstalar alTerminar={volver} alInstalar={() => { dispositivo.setInstalada(true); volver() }} />
   if (paso === 'avisos') return <PasoAvisos persona={persona} alTerminar={volver} alActivar={() => { dispositivo.setAvisos(true); volver() }} />
+  if (paso === 'calendario') return <PasoCalendario conectado={conectado} problemaAlVolver={problemaCalendario} alTerminar={volver} />
 
   const t = textos.primeraVez
-  const hechas = { perfil: perfilCompleto(persona), fechas: Boolean(persona.llega && persona.vuelve), instalar: dispositivo.instalada, avisos: dispositivo.avisos }
-  const faltan = Object.values(hechas).filter((hecha) => !hecha).length
+  const hechas: Record<Tarea, boolean> = {
+    perfil: perfilCompleto(persona),
+    fechas: Boolean(persona.llega && persona.vuelve),
+    instalar: dispositivo.instalada,
+    avisos: dispositivo.avisos,
+    calendario: conectado,
+  }
   const puedeEntrar = hechas.perfil && hechas.fechas
   const nombre = primerNombre(persona)
-  const tareas = [
+  const tareas: { clave: Tarea; pendiente: string }[] = [
     { clave: 'perfil', pendiente: t.falta },
     { clave: 'fechas', pendiente: t.falta },
     { clave: 'instalar', pendiente: t.recomendado },
     { clave: 'avisos', pendiente: t.recomendado },
-  ] as const
+    ...(persona.administra ? [{ clave: 'calendario' as const, pendiente: t.recomendado }] : []),
+  ]
+  const faltan = tareas.filter(({ clave }) => !hechas[clave]).length
   const irAHoy = async () => {
     setEntrando(true)
     try {
@@ -202,7 +255,7 @@ export function PrimeraVez() {
       <div className={estilos.desplazable}>
         <div className={estilos.lista}>
           <Titulo grande>{faltan === 0 ? t.listo(nombre) : t.hola(nombre)}</Titulo>
-          {faltan > 0 && <div className={estilos.faltan}>{t.faltan(faltan)}</div>}
+          {faltan > 0 && <div className={estilos.faltan}>{t.faltan(faltan, tareas.length)}</div>}
           <div className={estilos.tareas}>
             {tareas.map(({ clave, pendiente }) => (
               <button key={clave} type="button" className={estilos.tarea} onClick={() => setPaso(clave)}>
