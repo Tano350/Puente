@@ -1,0 +1,31 @@
+# Pulso: Supabase gratis pausa la base si pasa una semana con poca actividad.
+# Dos veces al día llama tres veces a la función "pulso", que solo devuelve la hora.
+# Usa la llave pública de la app, la misma que va dentro de la página publicada.
+name: Pulso diario
+
+on:
+  schedule:
+    - cron: '17 11 * * *'
+    - cron: '17 23 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/pulso.yml']
+
+permissions: {}
+
+jobs:
+  pulso:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      BASE: https://yzkeajhidbvmemmsufaw.supabase.co
+      LLAVE_PUBLICA: sb_publishable_hwLBJukzIXC6_ThN6S3tRA_E-j-PZGg
+    steps:
+      - name: Llamar a la base
+        run: |
+          for vez in 1 2 3; do
+            curl --fail --silent --show-error --retry 3 --retry-delay 30 -X POST "$BASE/rest/v1/rpc/pulso" -H "apikey: $LLAVE_PUBLICA" -H "Content-Type: application/json" -d '{}'
+            echo
+            sleep 20
+          done
