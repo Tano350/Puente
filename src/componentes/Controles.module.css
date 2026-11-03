@@ -119,6 +119,13 @@
   resize: none;
 }
 
+/* En pantallas táctiles los campos van de 16 px: con menos, el iPhone acerca la pantalla al escribir */
+@media (pointer: coarse) {
+  .campoLargo {
+    font-size: 16px;
+  }
+}
+
 .campo::placeholder,
 .campoLargo::placeholder,
 .vacio {
@@ -358,6 +365,11 @@
     transform: translateX(-50%);
     white-space: nowrap;
     padding-right: 8px;
+  }
+
+  /* El panel encima mide 430 px */
+  .avisoConPanel {
+    left: calc(232px + (100vw - 232px - 430px) / 2);
   }
 }
 

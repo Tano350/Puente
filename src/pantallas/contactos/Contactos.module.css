@@ -1,0 +1,267 @@
+/* ---------- Celular ---------- */
+.celular {
+  padding: 28px 20px 24px;
+}
+
+.cabecera {
+  margin: -28px -20px 0;
+  padding: 28px 20px 14px;
+  border-bottom: 1px solid var(--regla);
+  background: var(--panel);
+}
+
+.titular {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.titulo {
+  margin: 0;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 42px;
+  line-height: 1;
+}
+
+.nuevo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  height: 44px;
+  padding: 0 16px 0 12px;
+  border: 2px solid var(--tinta);
+  border-radius: 6px;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.nuevo[aria-pressed='true'] {
+  background: var(--tinta);
+  color: var(--panel);
+}
+
+/* Sobre el panel de la cabecera, el buscador va del color del fondo */
+.cabecera .buscador {
+  margin-top: 14px;
+  background: var(--fondo);
+}
+
+.controles {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.segmento {
+  display: flex;
+  flex: none;
+  padding: 3px;
+  border: 1px solid var(--regla);
+  border-radius: 8px;
+}
+
+.segmento button {
+  position: relative;
+  height: 36px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sec);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Se ve de 36 px, pero se toca en 44 */
+.segmento button::after {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
+}
+
+.segmento button[aria-pressed='true'] {
+  background: var(--tinta);
+  color: var(--fondo);
+}
+
+.filtrar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 12px;
+  border: 1.5px solid var(--regla);
+  border-radius: 6px;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.cuenta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--tinta);
+  color: var(--fondo);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.activos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--regla);
+  border-radius: 15px;
+  background: var(--panel);
+  font-size: 14px;
+}
+
+.limpiar {
+  position: relative;
+  height: 30px;
+  padding: 0 6px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.limpiar::after {
+  content: '';
+  position: absolute;
+  inset: -7px 0;
+}
+
+/* ---------- Sin resultados y sin contactos (las dos formas) ---------- */
+.sinResultados {
+  padding: 56px 8px 0;
+  text-align: center;
+}
+
+.sinResultadosTexto {
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.botonBorde {
+  height: 44px;
+  margin-top: 16px;
+  padding: 0 18px;
+  border: 2px solid var(--tinta);
+  border-radius: 6px;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 96px 12px 0;
+  text-align: center;
+}
+
+.tuercaVacia {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  background: var(--regla);
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+}
+
+.tuercaVacia::after {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 7px;
+  width: 42px;
+  height: 42px;
+  background: var(--fondo);
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+}
+
+.vacioTexto {
+  margin-top: 18px;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.agregar {
+  height: 50px;
+  margin-top: 20px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 6px;
+  background: var(--acento);
+  color: var(--sobre);
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 19px;
+  cursor: pointer;
+}
+
+/* ---------- Computador ---------- */
+.cabeceraPc {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 28px 32px 0;
+}
+
+.filtrosPc {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 0 32px;
+}
+
+.buscadorPc {
+  flex: none;
+  width: 320px;
+}
+
+/* Sin relleno a los lados: el panel encima llega hasta el borde derecho */
+.cuerpoPc {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin-top: 20px;
+}
+
+/* Con el panel abierto, los mensajes se centran en lo que queda a la izquierda */
+.pc[data-panel='true'] .vacio,
+.pc[data-panel='true'] .sinResultados {
+  padding-right: 430px;
+}

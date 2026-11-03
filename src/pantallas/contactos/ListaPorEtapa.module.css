@@ -1,0 +1,210 @@
+.lista {
+  margin-top: 10px;
+}
+
+/* Cabeza de cada estado: la tuerca sobre la línea y el nombre del estado */
+.cabeza {
+  display: flex;
+  align-items: flex-end;
+  height: 60px;
+}
+
+.cabeza[data-primera='true'] {
+  height: 44px;
+}
+
+.riel {
+  position: relative;
+  display: block;
+  flex: none;
+  align-self: stretch;
+  width: 28px;
+}
+
+.tramo {
+  position: absolute;
+  left: 12px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--regla);
+}
+
+/* La línea parte y termina en el centro de la tuerca */
+.tramo[data-desde='tuerca'] {
+  top: calc(100% - 22px);
+}
+
+.tramo[data-hasta='tuerca'] {
+  bottom: 22px;
+}
+
+.tuerca {
+  position: absolute;
+  left: 5px;
+  bottom: 13px;
+  width: 18px;
+  height: 18px;
+  background: var(--tinta);
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+}
+
+.tuerca::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--fondo);
+}
+
+.etapa {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  height: 44px;
+  margin: 0;
+  padding-left: 12px;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 44px;
+}
+
+.cuenta,
+.descartadosCuenta {
+  font-family: var(--letra);
+  font-size: 15px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  color: var(--sec);
+}
+
+.fila {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.contenido {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  min-height: 56px;
+  padding: 7px 0 7px 12px;
+}
+
+.quien {
+  display: block;
+  min-width: 0;
+}
+
+.nombreFila {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.nombre {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 22px;
+}
+
+.candado {
+  display: flex;
+  flex: none;
+  color: var(--sec);
+}
+
+.org {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.responsable {
+  flex: none;
+  font-size: 14px;
+  color: var(--sec);
+}
+
+.responsable[data-tu='true'] {
+  font-weight: 500;
+  color: var(--acento);
+}
+
+/* ---------- Descartados ---------- */
+.descartados {
+  margin-top: 12px;
+}
+
+.plegar {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--sec);
+  cursor: pointer;
+}
+
+.flecha {
+  display: flex;
+  justify-content: center;
+  width: 28px;
+}
+
+.flecha[data-abierta='true'] svg {
+  transform: rotate(90deg);
+}
+
+.descartadosTitulo {
+  padding-left: 12px;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.descartadosCuenta {
+  margin-left: 8px;
+}
+
+.descartado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 7px 0 7px 40px;
+  border: none;
+  background: transparent;
+  color: var(--sec);
+  text-align: left;
+  cursor: pointer;
+}
+
+.descartado .org,
+.descartado .candado {
+  color: inherit;
+}

@@ -8,7 +8,7 @@ import { useAviso } from '../../componentes/useAviso.ts'
 import { useEsComputador } from '../../componentes/useEsComputador.ts'
 import escritorio from '../../componentes/Escritorio.module.css'
 import { usePersonas, type Persona } from '../../datos/consultas.ts'
-import { diaCorto, hoyAqui } from '../../datos/fechas.ts'
+import { diaCorto, diaLocal, hoyAqui } from '../../datos/fechas.ts'
 import { coincide, porNombre } from '../../datos/grupo.ts'
 import { devolver, ENLACE_DE_PUENTE, ErrorAlInvitar, invitar, sacar } from '../../datos/invitados.ts'
 import { carreraCorta, primerNombre } from '../../datos/nombres.ts'
@@ -17,7 +17,6 @@ import { useTextos } from '../../textos.ts'
 import estilos from './Invitados.module.css'
 
 const CORREO_VALIDO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
-const diaLocal = (momento: string) => new Intl.DateTimeFormat('en-CA').format(new Date(momento))
 // El correo se puede cortar después de la @, para que no se parta en cualquier parte
 const correoCortable = (correo: string) => correo.replace('@', '@​')
 

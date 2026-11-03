@@ -1,0 +1,450 @@
+/* La tarjeta para llenar: la organización en la cinta, el nombre en la línea y el canal abajo */
+
+/* ---------- Cabecera del celular ---------- */
+.cabeza {
+  margin: -24px -20px 0;
+  padding: 20px 20px 14px;
+  border-bottom: 1px solid var(--regla);
+  background: var(--panel);
+}
+
+.cabezaFila {
+  display: flex;
+  align-items: center;
+  height: 44px;
+}
+
+.cancelar {
+  height: 44px;
+  margin-left: -8px;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.titulo {
+  margin: 4px 0 0;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 34px;
+  line-height: 38px;
+}
+
+.tituloPanel {
+  margin: 0;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 32px;
+}
+
+/* ---------- Tarjeta ---------- */
+.tarjeta {
+  position: relative;
+  margin-top: 30px;
+  padding: 24px 18px 14px;
+  border: 1px solid var(--regla);
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+.formulario[data-computador='true'] .tarjeta {
+  margin-top: 26px;
+}
+
+/* Cinta de papel con la organización: el texto invisible le da el ancho y el campo va encima */
+.cinta {
+  position: absolute;
+  top: -13px;
+  left: 14px;
+  max-width: calc(100% - 28px);
+  padding: 3px 10px;
+  background: var(--cinta);
+  color: var(--cinta-texto);
+  font-family: var(--letra-titulo);
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 20px;
+  transform: rotate(-1.5deg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.cinta:focus-within {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+.cintaMedida {
+  display: block;
+  overflow: hidden;
+  white-space: pre;
+  visibility: hidden;
+}
+
+/* Lugar para el cursor al final */
+.cinta:focus-within .cintaMedida {
+  padding-right: 2px;
+}
+
+/* Más alto que la cinta, para tocarlo en 44 px */
+.cintaCampo {
+  position: absolute;
+  top: -12px;
+  bottom: -6px;
+  left: 0;
+  width: 100%;
+  padding: 15px 10px 9px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-overflow: ellipsis;
+  appearance: none;
+}
+
+.cintaCampo:focus-visible {
+  outline: none;
+}
+
+.cintaCampo::placeholder {
+  color: var(--cinta-suave);
+  opacity: 1;
+}
+
+/* Nombre y dato se escriben sobre la línea punteada; el relleno de arriba agranda el toque sin moverlos */
+.nombre,
+.dato {
+  box-sizing: content-box;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--tinta);
+  text-overflow: ellipsis;
+  appearance: none;
+}
+
+.nombre {
+  display: block;
+  width: 100%;
+  height: 34px;
+  margin-top: -6px;
+  padding: 6px 0 4px;
+  border-bottom: 1.5px dashed var(--regla);
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 34px;
+}
+
+.separador {
+  margin: 14px 0 10px;
+  border-top: 1.5px dashed var(--regla);
+}
+
+.canalFila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.canales {
+  display: flex;
+  flex: none;
+  gap: 4px;
+}
+
+.canal {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1.5px solid var(--regla);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--tinta);
+  cursor: pointer;
+}
+
+/* Se ve de 40 px y se toca en 44 */
+.canal::after {
+  content: '';
+  position: absolute;
+  inset: -3.5px;
+}
+
+.canal[aria-pressed='true'] {
+  border-color: var(--tinta);
+  background: var(--tinta);
+  color: var(--fondo);
+}
+
+.dato {
+  flex: 1;
+  min-width: 0;
+  height: 22px;
+  margin-top: -17px;
+  padding: 17px 0 4px;
+  border-bottom: 1px dashed var(--regla);
+  font: inherit;
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.nombre::placeholder,
+.dato::placeholder {
+  color: var(--sec);
+  opacity: 1;
+}
+
+.nombre:focus-visible,
+.dato:focus-visible {
+  outline: none;
+  border-bottom-style: solid;
+  border-bottom-color: var(--acento);
+}
+
+.nombre[aria-invalid='true'],
+.dato[aria-invalid='true'] {
+  border-bottom-color: var(--error);
+}
+
+/* ---------- Errores y "ya existe" ---------- */
+.errores {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--error);
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.existe {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--regla);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--sec);
+}
+
+.existeTexto {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--tinta);
+}
+
+.verContacto {
+  position: relative;
+  flex: none;
+  height: 40px;
+  padding: 0 12px;
+  border: 2px solid var(--tinta);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--tinta);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.verContacto::after {
+  content: '';
+  position: absolute;
+  inset: -4px -2px;
+}
+
+/* ---------- Responsable y personal ---------- */
+.filas {
+  margin-top: 20px;
+  border-top: 1px solid var(--borde);
+}
+
+.formulario[data-computador='true'] .filas {
+  margin-top: 16px;
+  border-top: none;
+}
+
+.formulario[data-computador='true'] .responsable {
+  border-top: 1px solid var(--borde);
+}
+
+.responsable,
+.personal {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--sec);
+}
+
+.responsable {
+  width: 100%;
+  min-height: 56px;
+  padding: 6px 0;
+  border: none;
+  border-bottom: 1px solid var(--borde);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.responsable[aria-disabled='true'] {
+  cursor: default;
+}
+
+.personal {
+  min-height: 61px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.filaTexto {
+  flex: 1;
+  min-width: 0;
+}
+
+.filaNota {
+  display: block;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec);
+}
+
+.responsableNombre,
+.personalTitulo {
+  display: block;
+  font-size: 16px;
+  line-height: 22px;
+  color: var(--tinta);
+}
+
+.responsableNombre[data-tu='true'] {
+  font-weight: 500;
+  color: var(--acento);
+}
+
+/* El mismo interruptor de Controles */
+.interruptor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 56px;
+  height: 44px;
+  margin-right: -4px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.pista {
+  position: relative;
+  display: block;
+  width: 48px;
+  height: 28px;
+  border-radius: 14px;
+  background: var(--interruptor);
+}
+
+.pista[data-activo='true'] {
+  background: var(--acento);
+}
+
+.perilla {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.pista[data-activo='true'] .perilla {
+  left: 23px;
+  background: var(--sobre);
+}
+
+/* ---------- Notas ---------- */
+.etiqueta {
+  display: block;
+  margin-top: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.notas {
+  display: block;
+  width: 100%;
+  min-height: 64px;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--regla);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--tinta);
+  font: inherit;
+  font-size: 15px;
+  line-height: 22px;
+  resize: none;
+  field-sizing: content;
+}
+
+.notas::placeholder {
+  color: var(--sec);
+}
+
+/* ---------- Botones ---------- */
+.botones {
+  display: flex;
+  gap: 10px;
+}
+
+.botones > button {
+  height: 48px;
+}
+
+.botones > button:first-child {
+  flex: 1;
+  width: auto;
+}
+
+.botones > button:last-child {
+  flex: none;
+  width: auto;
+  padding: 0 18px;
+}
+
+.nota {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 18px;
+  text-align: center;
+  color: var(--sec);
+}
+
+/* En pantallas táctiles los campos van de 16 px: con menos, el iPhone acerca la pantalla al escribir */
+@media (pointer: coarse) {
+  .cinta,
+  .notas {
+    font-size: 16px;
+  }
+}

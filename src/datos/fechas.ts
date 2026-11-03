@@ -79,6 +79,11 @@ export function hoyAqui(): string {
   return hoyDePrueba ?? new Intl.DateTimeFormat('en-CA').format(new Date())
 }
 
+// El día de un momento guardado (fecha y hora), donde está el dispositivo
+export function diaLocal(momento: string): string {
+  return new Intl.DateTimeFormat('en-CA').format(new Date(momento))
+}
+
 export type Estadia = { tipo: 'sinFechas' } | { tipo: 'llega'; texto: string } | { tipo: 'alla'; texto: string } | { tipo: 'volvio'; texto: string }
 
 // Cómo se ve la estadía de alguien hoy: "Llega el 16 ene", "Allá" o "Volvió"

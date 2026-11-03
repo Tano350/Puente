@@ -1,0 +1,104 @@
+/* Las cinco etapas unidas por la línea; el avance va en tinta hasta la actual */
+.etapas {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 22px -6px 0;
+  text-align: center;
+}
+
+.riel,
+.avance {
+  position: absolute;
+  left: 10%;
+  top: 9px;
+  height: 4px;
+}
+
+.riel {
+  right: 10%;
+  background: var(--regla);
+}
+
+.avance {
+  background: var(--tinta);
+}
+
+.estacion {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 2px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.estacion:disabled {
+  cursor: default;
+}
+
+.tuerca {
+  position: relative;
+  display: block;
+  width: 22px;
+  height: 22px;
+  background: var(--regla);
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+}
+
+[data-paso='hecha'] .tuerca {
+  background: var(--tinta);
+}
+
+[data-paso='actual'] .tuerca {
+  background: var(--acento);
+}
+
+/* Si no lo puedes cambiar, la actual va en tinta: el acento es solo para lo tuyo */
+.etapas[data-activa='false'] [data-paso='actual'] .tuerca {
+  background: var(--tinta);
+}
+
+.hueco {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 14px;
+  height: 14px;
+  background: var(--fondo);
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+}
+
+.agujero {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--fondo);
+}
+
+.nombre {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 15px;
+  color: var(--sec);
+}
+
+[data-paso='hecha'] .nombre,
+[data-paso='actual'] .nombre {
+  color: var(--tinta);
+}
+
+[data-paso='actual'] .nombre {
+  font-weight: 500;
+}
+
+.fecha {
+  font-size: 12px;
+  line-height: 15px;
+  color: var(--sec);
+}

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router'
-import { Icono } from '../../componentes/Icono.tsx'
+import { Icono, type NombreIcono } from '../../componentes/Icono.tsx'
 import { Tuerca } from '../../componentes/Tuerca.tsx'
+import { useContactos } from '../../datos/contactos.ts'
 import { conMayuscula, diaLargo, diasEntre, hoyAqui } from '../../datos/fechas.ts'
 import { useSesion, type Persona } from '../../datos/sesion.tsx'
 import { useTextos, type Textos } from '../../textos.ts'
@@ -21,16 +22,21 @@ export function Hoy() {
   const textos = useTextos()
   const sesion = useSesion()
   const navigate = useNavigate()
+  const { data: contactos } = useContactos()
   if (sesion.tipo !== 'dentro') return null
   const { persona } = sesion
   const t = textos.hoy
   const { fecha, detalle, tuerca } = ficha(persona, hoyAqui(), textos)
-  // Por ahora los pendientes son del perfil; los contactos y eventos por confirmar llegan con sus secciones
-  const pendientes = [
-    { falta: !persona.emprendimiento, texto: t.agregaEmprendimiento },
-    { falta: !persona.objetivos, texto: t.agregaObjetivos },
-    { falta: !persona.linkedin, texto: t.agregaLinkedin },
-  ].filter((p) => p.falta)
+
+  // Pendientes: tus contactos por contactar y lo que falta en tu perfil (los eventos por confirmar llegan con Agenda)
+  const pendientes: { texto: string; icono: NombreIcono; ir: () => void }[] = []
+  const porContactar = (contactos ?? []).filter((c) => c.responsable === persona.id && c.etapa === 'por_contactar')
+  if (porContactar.length === 1) pendientes.push({ texto: t.escribeA(porContactar[0].nombre), icono: 'contactos', ir: () => navigate(`/contactos/${porContactar[0].id}`) })
+  if (porContactar.length > 1) pendientes.push({ texto: t.escribeAVarios(porContactar.length), icono: 'contactos', ir: () => navigate('/contactos') })
+  const editarPerfil = () => navigate('/perfil', { state: { abrir: 'editar' } })
+  if (!persona.emprendimiento) pendientes.push({ texto: t.agregaEmprendimiento, icono: 'perfil', ir: editarPerfil })
+  if (!persona.objetivos) pendientes.push({ texto: t.agregaObjetivos, icono: 'perfil', ir: editarPerfil })
+  if (!persona.linkedin) pendientes.push({ texto: t.agregaLinkedin, icono: 'perfil', ir: editarPerfil })
 
   return (
     <div className={estilos.hoy}>
@@ -58,10 +64,10 @@ export function Hoy() {
           </h2>
           {pendientes.length > 0 ? (
             <ul className={estilos.lista}>
-              {pendientes.map(({ texto }) => (
+              {pendientes.map(({ texto, icono, ir }) => (
                 <li key={texto}>
-                  <button type="button" className={estilos.pendiente} onClick={() => navigate('/perfil', { state: { abrir: 'editar' } })}>
-                    <Icono nombre="perfil" medida={20} />
+                  <button type="button" className={estilos.pendiente} onClick={ir}>
+                    <Icono nombre={icono} medida={20} />
                     <span className={estilos.pendienteTexto}>{texto}</span>
                     <Icono nombre="derecha" medida={16} trazo={2} />
                   </button>

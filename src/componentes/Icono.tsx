@@ -112,6 +112,27 @@ const trazos = {
       <path d="M9 12h12l-3-3M18 15l3-3" />
     </>
   ),
+  filtrar: (
+    <>
+      <path d="M4 6h8M16 6h4M4 12h2M10 12h10M4 18h11M19 18h1" />
+      <circle cx="14" cy="6" r="2" />
+      <circle cx="8" cy="12" r="2" />
+      <circle cx="17" cy="18" r="2" />
+    </>
+  ),
+  candado: (
+    <>
+      <rect x="5" y="11" width="14" height="10" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </>
+  ),
+  telefono: <path d="M5 4h4l2 5l-2.5 1.5a11 11 0 0 0 5 5l1.5-2.5l5 2v4a2 2 0 0 1-2 2a16 16 0 0 1-15-15a2 2 0 0 1 2-2" />,
+  info: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8h.01M11 12h1v4h1" />
+    </>
+  ),
 }
 
 export type NombreIcono = keyof typeof trazos

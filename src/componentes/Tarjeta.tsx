@@ -1,4 +1,6 @@
+import { useNavigate } from 'react-router'
 import type { Persona } from '../datos/consultas.ts'
+import { useContactos } from '../datos/contactos.ts'
 import { diaLargo, diasEntre, estadia, hoyEnCalifornia, indiceEnElViaje, rango, rangoLargo, VIAJE } from '../datos/fechas.ts'
 import { tieneFechas, type ConFechas } from '../datos/grupo.ts'
 import { carreraCorta, primerNombre } from '../datos/nombres.ts'
@@ -86,9 +88,13 @@ function EstadiaComparada({ persona, yo, hoy }: { persona: ConFechas; yo: ConFec
 // Si mira otra persona (yo), la estadía se compara con la suya.
 export function DetallePersona({ persona, yo }: { persona: Persona; yo?: Persona }) {
   const textos = useTextos()
+  const navigate = useNavigate()
+  const { data: contactos } = useContactos()
   const t = textos.persona
   const otra = yo && yo.id !== persona.id ? yo : null
   const hoy = hoyEnCalifornia()
+  // Así se coordina sin preguntar: qué contactos lleva cada uno y en qué van
+  const aCargo = (contactos ?? []).filter((c) => c.responsable === persona.id)
 
   const comparacion = (p: ConFechas, mia: ConFechas) => {
     const estado = hoy < p.llega ? t.llegaEl(diaLargo(p.llega)) : hoy > p.vuelve ? t.volvioEl(diaLargo(p.vuelve)) : t.allaAhora
@@ -122,6 +128,25 @@ export function DetallePersona({ persona, yo }: { persona: Persona; yo?: Persona
           <div className={estilos.rango}>{rangoLargo(persona.llega, persona.vuelve)}</div>
           <div className={estilos.dias}>{otra && tieneFechas(otra) ? comparacion(persona, otra) : textos.fechas.dias(diasEntre(persona.llega, persona.vuelve))}</div>
           {otra && tieneFechas(otra) && <EstadiaComparada persona={persona} yo={otra} hoy={hoy} />}
+        </div>
+      )}
+      {aCargo.length > 0 && (
+        <div className={estilos.bloque}>
+          <div className={estilos.cargoTitulo}>
+            <span>{t.aSuCargo}</span>
+            <span>{aCargo.length}</span>
+          </div>
+          <div className={estilos.cargo}>
+            {aCargo.map((c) => (
+              <button key={c.id} type="button" className={estilos.cargoFila} onClick={() => navigate(`/contactos/${c.id}`)}>
+                <span className={estilos.cargoQuien}>
+                  <span className={estilos.cargoNombre}>{c.nombre}</span>
+                  {c.organizacion && <span className={estilos.cargoOrg}>{c.organizacion}</span>}
+                </span>
+                <span className={estilos.cargoEtapa}>{textos.contactos.etapas[c.etapa]}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </>

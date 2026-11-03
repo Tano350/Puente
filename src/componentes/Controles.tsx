@@ -190,6 +190,14 @@ export function Hoja({ abierta, etiqueta, onCerrar, alerta = false, children }: 
     window.addEventListener('keydown', alPresionar)
     return () => window.removeEventListener('keydown', alPresionar)
   }, [abierta, onCerrar])
+  // Al cerrar, el foco vuelve a lo que abrió la hoja
+  useEffect(() => {
+    if (!abierta) return
+    const antes = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    return () => {
+      if (antes?.isConnected) antes.focus({ preventScroll: true })
+    }
+  }, [abierta])
   if (!abierta) return null
   return (
     <div className={estilos.hojaFondo}>
@@ -206,11 +214,12 @@ export function TituloHoja({ children }: { children: ReactNode }) {
   return <h2 className={estilos.tituloHoja}>{children}</h2>
 }
 
-// Aviso abajo, sobre la barra de secciones (o sobre el botón fijo de la pantalla, si tiene uno)
-export function Aviso({ texto, onDeshacer, sobrePie = false }: { texto: string | null; onDeshacer?: () => void; sobrePie?: boolean }) {
+// Aviso abajo, sobre la barra de secciones (o sobre el botón fijo de la pantalla, si tiene uno).
+// En el computador, con un panel encima abierto, se centra en lo que queda a la vista.
+export function Aviso({ texto, onDeshacer, sobrePie = false, conPanel = false }: { texto: string | null; onDeshacer?: () => void; sobrePie?: boolean; conPanel?: boolean }) {
   if (!texto) return null
   return (
-    <div role="status" className={`${estilos.aviso} ${sobrePie ? estilos.avisoSobrePie : ''}`}>
+    <div role="status" className={`${estilos.aviso} ${sobrePie ? estilos.avisoSobrePie : ''} ${conPanel ? estilos.avisoConPanel : ''}`}>
       <span className={estilos.avisoTexto}>{texto}</span>
       {onDeshacer && (
         <button type="button" className={estilos.deshacer} onClick={onDeshacer}>

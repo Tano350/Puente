@@ -1,0 +1,239 @@
+/* ---------- Celular: "Contactos" y "Editar" arriba ---------- */
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: -8px;
+}
+
+.editar,
+.editarPc {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  margin-right: -8px;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.editarPc {
+  height: 40px;
+  margin-right: 0;
+  margin-left: -8px;
+}
+
+/* ---------- La tarjeta, como la de una persona ---------- */
+.tarjeta {
+  position: relative;
+  margin-top: 18px;
+  padding: 24px 18px 14px;
+  border: 1px solid var(--regla);
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+.tarjeta[data-cinta='false'] {
+  padding-top: 16px;
+}
+
+/* Cinta de papel con la organización */
+.cinta {
+  position: absolute;
+  top: -12px;
+  left: 14px;
+  max-width: calc(100% - 28px);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding: 3px 10px;
+  background: var(--cinta);
+  color: var(--cinta-texto);
+  font-family: var(--letra-titulo);
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 20px;
+  transform: rotate(-1.5deg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.nombre {
+  margin: 0;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 34px;
+  overflow-wrap: anywhere;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--regla);
+  border-radius: 12px;
+  font-size: 13px;
+  color: var(--sec-tarjeta);
+}
+
+.canal {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1.5px dashed var(--regla);
+}
+
+.canalIcono {
+  display: flex;
+  color: var(--sec);
+}
+
+.canalTexto {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.canalNombre {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec);
+}
+
+.canalDato {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.canalBoton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: none;
+  height: 40px;
+  padding: 0 14px;
+  border: 2px solid var(--tinta);
+  border-radius: 6px;
+  color: var(--tinta);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+/* Se ve de 40 px, pero se toca en 44 */
+.canalBoton::before {
+  content: '';
+  position: absolute;
+  inset: -4px -2px;
+}
+
+/* ---------- Responsable ---------- */
+.responsable {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 57px;
+  margin-top: 18px;
+  padding: 6px 0;
+  border: none;
+  border-top: 1px solid var(--borde);
+  border-bottom: 1px solid var(--borde);
+  background: transparent;
+  text-align: left;
+}
+
+button.responsable {
+  cursor: pointer;
+}
+
+.filaIcono {
+  display: flex;
+  color: var(--sec);
+}
+
+.filaTexto {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.filaEtiqueta {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec);
+}
+
+.filaValor {
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.filaValor[data-tu='true'] {
+  font-weight: 500;
+  color: var(--acento);
+}
+
+.descartar {
+  height: 44px;
+  margin-top: 12px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--sec);
+  font-size: 15px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* Abajo, en vez del botón, si no lo puedes cambiar */
+.soloPuede {
+  display: flex;
+  align-items: center;
+  min-height: 50px;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--sec);
+}
+
+.avisoPc {
+  display: contents;
+}
+
+/* ---------- Computador ---------- */
+@media (min-width: 1024px) {
+  .responsable {
+    min-height: 56px;
+    margin-top: 16px;
+  }
+
+  .descartar {
+    height: 40px;
+    margin-top: 10px;
+  }
+
+  .soloPuede {
+    min-height: 44px;
+  }
+}

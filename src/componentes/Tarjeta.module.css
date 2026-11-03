@@ -232,3 +232,57 @@
 .compTramo[data-tu='true'] {
   background: var(--acento);
 }
+
+/* Contactos a su cargo */
+.cargoTitulo {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.cargo {
+  margin-top: 6px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.cargoFila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 0;
+  border: none;
+  border-top: 1px solid var(--borde);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cargoQuien {
+  min-width: 0;
+}
+
+.cargoNombre {
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 22px;
+}
+
+.cargoOrg {
+  display: block;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec);
+}
+
+.cargoEtapa {
+  flex: none;
+  font-size: 13px;
+  color: var(--sec-tarjeta);
+}

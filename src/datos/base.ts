@@ -14,6 +14,115 @@ export type Database = {
   }
   public: {
     Tables: {
+      contactos: {
+        Row: {
+          asignado_por: string | null
+          canal: Database["public"]["Enums"]["canal"] | null
+          creado_en: string
+          creado_por: string
+          dato: string | null
+          etapa: Database["public"]["Enums"]["etapa"]
+          etapa_en: string
+          id: string
+          nombre: string
+          organizacion: string | null
+          personal: boolean
+          responsable: string
+        }
+        Insert: {
+          asignado_por?: string | null
+          canal?: Database["public"]["Enums"]["canal"] | null
+          creado_en?: string
+          creado_por?: string
+          dato?: string | null
+          etapa?: Database["public"]["Enums"]["etapa"]
+          etapa_en?: string
+          id?: string
+          nombre: string
+          organizacion?: string | null
+          personal?: boolean
+          responsable: string
+        }
+        Update: {
+          asignado_por?: string | null
+          canal?: Database["public"]["Enums"]["canal"] | null
+          creado_en?: string
+          creado_por?: string
+          dato?: string | null
+          etapa?: Database["public"]["Enums"]["etapa"]
+          etapa_en?: string
+          id?: string
+          nombre?: string
+          organizacion?: string | null
+          personal?: boolean
+          responsable?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contactos_asignado_por_fkey"
+            columns: ["asignado_por"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contactos_creado_por_fkey"
+            columns: ["creado_por"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contactos_responsable_fkey"
+            columns: ["responsable"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notas: {
+        Row: {
+          autor: string
+          contacto: string
+          creada_en: string
+          id: string
+          personal: boolean
+          texto: string
+        }
+        Insert: {
+          autor?: string
+          contacto: string
+          creada_en?: string
+          id?: string
+          personal?: boolean
+          texto: string
+        }
+        Update: {
+          autor?: string
+          contacto?: string
+          creada_en?: string
+          id?: string
+          personal?: boolean
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notas_autor_fkey"
+            columns: ["autor"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_contacto_fkey"
+            columns: ["contacto"]
+            isOneToOne: false
+            referencedRelation: "contactos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       personas: {
         Row: {
           administra: boolean
@@ -163,10 +272,18 @@ export type Database = {
         }
       }
       mi_persona: { Args: never; Returns: string }
+      pulso: { Args: never; Returns: string }
       sacar: { Args: { persona: string }; Returns: undefined }
     }
     Enums: {
-      [_ in never]: never
+      canal: "correo" | "linkedin" | "telefono"
+      etapa:
+        | "por_contactar"
+        | "contactado"
+        | "respondio"
+        | "reunion_agendada"
+        | "reunion_hecha"
+        | "descartado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -293,6 +410,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      canal: ["correo", "linkedin", "telefono"],
+      etapa: [
+        "por_contactar",
+        "contactado",
+        "respondio",
+        "reunion_agendada",
+        "reunion_hecha",
+        "descartado",
+      ],
+    },
   },
 } as const

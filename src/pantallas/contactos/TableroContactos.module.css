@@ -1,0 +1,201 @@
+.tablero {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(0, 0.9fr);
+  grid-template-rows: minmax(0, 1fr);
+  column-gap: 14px;
+  padding: 0 32px;
+}
+
+.columna {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Descartado queda fuera de la línea */
+.columna[data-descartado='true'] {
+  padding-left: 14px;
+  border-left: 1px dashed var(--regla);
+}
+
+.riel {
+  position: relative;
+  flex: none;
+  height: 18px;
+}
+
+/* La línea cruza el espacio hasta la tuerca de la columna siguiente */
+.tramo {
+  position: absolute;
+  left: 9px;
+  right: -14px;
+  top: 7px;
+  height: 4px;
+  background: var(--regla);
+}
+
+.tuerca {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 18px;
+  height: 18px;
+  background: var(--tinta);
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+}
+
+.tuerca::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--fondo);
+}
+
+[data-descartado='true'] .tuerca {
+  background: var(--regla);
+}
+
+[data-descartado='true'] .tuerca::after {
+  left: 3px;
+  top: 3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 0;
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+}
+
+.titulo {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex: none;
+  min-width: 0;
+  margin: 8px 0 0;
+  font-size: inherit;
+}
+
+[data-descartado='true'] .titulo {
+  color: var(--sec);
+}
+
+.etapa {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 17px;
+}
+
+.cuenta {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--sec);
+}
+
+.tarjetas {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  margin-top: 12px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 2px 2px 20px;
+  border-radius: 8px;
+}
+
+/* La columna donde se va a soltar la tarjeta */
+.tarjetas[data-soltar='true'] {
+  outline: 2px dashed var(--acento);
+  outline-offset: -1px;
+}
+
+.tarjeta {
+  display: block;
+  flex: none;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  background: var(--panel);
+  text-align: left;
+  cursor: pointer;
+}
+
+.tarjeta:hover {
+  border-color: var(--regla);
+}
+
+.tarjeta[aria-pressed='true'] {
+  border-color: var(--acento);
+  box-shadow: 0 0 0 1px var(--acento);
+}
+
+.tarjeta[data-arrastrado='true'] {
+  opacity: 0.45;
+}
+
+[data-descartado='true'] .tarjeta {
+  background: transparent;
+}
+
+.nombreFila {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.nombre {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+[data-descartado='true'] .nombre {
+  color: var(--sec);
+}
+
+.candado {
+  display: flex;
+  flex: none;
+  color: var(--sec);
+}
+
+.org {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec);
+}
+
+.responsable {
+  display: block;
+  margin-top: 6px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec);
+}
+
+.responsable[data-tu='true'] {
+  font-weight: 500;
+  color: var(--acento);
+}

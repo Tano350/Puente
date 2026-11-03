@@ -1,0 +1,64 @@
+.buscador {
+  margin-top: 14px;
+}
+
+.lista {
+  max-height: min(52vh, 460px);
+  margin-top: 8px;
+  overflow-y: auto;
+}
+
+.persona {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 6px 0;
+  border: none;
+  border-top: 1px solid var(--borde);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.persona svg {
+  color: var(--acento);
+}
+
+.tuAvatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--acento);
+  color: var(--sobre);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.nombre {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.nombre[data-tu='true'] {
+  font-weight: 500;
+  color: var(--acento);
+}
+
+.nadie {
+  padding: 16px 0 4px;
+  font-size: 15px;
+  line-height: 22px;
+  text-align: center;
+  color: var(--sec);
+}
