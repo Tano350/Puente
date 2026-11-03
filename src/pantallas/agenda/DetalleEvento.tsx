@@ -32,8 +32,9 @@ import { EventoNotas, type Borrador } from './EventoNotas.tsx'
 import { EventoQuienes } from './EventoQuienes.tsx'
 import estilos from './DetalleEvento.module.css'
 
-// "atras" nombra a dónde vuelve (Agenda si no se dice); "conNota" abre directo la nota, si fuiste y ya pasó
-type Props = { evento: Evento; computador: boolean; atras?: string; conNota?: boolean; onCerrar: () => void }
+// "atras" nombra a dónde vuelve (Agenda si no se dice); "conNota" abre directo la nota, si fuiste y ya pasó.
+// Con "onEditar" (quien organiza o administra) va "Editar" arriba.
+type Props = { evento: Evento; computador: boolean; atras?: string; conNota?: boolean; onCerrar: () => void; onEditar?: () => void }
 
 // Tu estado en el evento: lo que dicen el talón y la barra de abajo
 type Estado =
@@ -95,7 +96,7 @@ export function DetalleEvento(props: Props) {
   return <Boleto key={props.evento.id} {...props} />
 }
 
-function Boleto({ evento, computador, atras, conNota, onCerrar }: Props) {
+function Boleto({ evento, computador, atras, conNota, onCerrar, onEditar }: Props) {
   const textos = useTextos()
   const sesion = useSesion()
   const { data: asistentes } = useAsistentes()
@@ -385,10 +386,19 @@ function Boleto({ evento, computador, atras, conNota, onCerrar }: Props) {
     </>
   )
 
+  // En el celular, arriba a la derecha; en el computador, arriba de la columna
+  const editar = onEditar && (
+    <button type="button" className={computador ? estilos.editarPc : estilos.editar} onClick={onEditar}>
+      <Icono nombre="lapiz" medida={18} trazo={2} />
+      {textos.agenda.editar.editar}
+    </button>
+  )
+
   // ---------- Computador ----------
   if (computador) {
     return (
       <div className={estilos.pc}>
+        {editar}
         {cuerpo}
         {(accion || pregunta) && (
           <div ref={acciones} className={estilos.acciones}>
@@ -432,6 +442,7 @@ function Boleto({ evento, computador, atras, conNota, onCerrar }: Props) {
     <PantallaConPie pie={accion}>
       <div className={estilos.cabecera}>
         <Atras texto={atras ?? textos.agenda.titulo} onClick={onCerrar} />
+        {editar}
       </div>
       {cuerpo}
       <Hoja abierta={pregunta !== null} etiqueta={pregunta?.titulo ?? ''} alerta onCerrar={() => setConfirmar(null)}>

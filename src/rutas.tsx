@@ -20,8 +20,8 @@ export const rutas = createBrowserRouter([
         children: [
           { index: true, element: <Navigate to="/hoy" replace /> },
           { path: 'hoy', element: <Hoy /> },
-          // /agenda, /agenda/nuevo y /agenda/:id: una sola ruta, para no perder la vista ni la semana
-          { path: 'agenda/:id?', element: <Agenda /> },
+          // /agenda, /agenda/nuevo, /agenda/:id y /agenda/:id/editar: una sola ruta, para no perder la vista ni la semana
+          { path: 'agenda/:id?/:accion?', element: <Agenda /> },
           // /contactos, /contactos/nuevo, /contactos/:id y /contactos/:id/editar: una sola ruta, para no perder la búsqueda
           { path: 'contactos/:id?/:accion?', element: <Contactos /> },
           { path: 'gastos', element: <SeccionVacia clave="gastos" /> },

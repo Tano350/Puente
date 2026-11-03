@@ -1,0 +1,34 @@
+/* El foco entra aquí al abrir la hoja: no es un control, así que va sin marco */
+.contenido:focus {
+  outline: none;
+}
+
+.cuando {
+  margin-top: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.chile {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec-tarjeta);
+}
+
+.solo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.botones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}

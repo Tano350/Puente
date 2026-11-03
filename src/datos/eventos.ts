@@ -35,7 +35,11 @@ function consulta<K extends 'eventos' | 'asistentes' | 'ocupados' | 'notasReunio
   return {
     queryKey: [clave],
     queryFn: async (): Promise<Maqueta[K]> => {
-      if (import.meta.env.DEV && modoMaqueta) return datosDeMaqueta()[deMaqueta]
+      if (import.meta.env.DEV && modoMaqueta) {
+        const datos = datosDeMaqueta()
+        // Como en la base: los eventos cancelados no se ven
+        return (deMaqueta === 'eventos' ? datos.eventos.filter((e) => !e.cancelado_en) : datos[deMaqueta]) as Maqueta[K]
+      }
       const { data, error } = await buscar()
       if (error) throw error
       return data ?? ([] as Maqueta[K])
@@ -210,7 +214,8 @@ export async function cambiarEvento(id: string, cambios: TablesUpdate<'eventos'>
     if (error) throw error
     cambiado = data
   }
-  await recargar('eventos')
+  // Cambiar el modo o los cupos mueve la lista de espera
+  await recargar('eventos', 'asistentes')
   return cambiado
 }
 
@@ -237,7 +242,7 @@ export async function libres(desde: string, hasta: string): Promise<{ alla: numb
     const datos = datosDeMaqueta()
     const alla = datos.personas.filter((p) => !p.sacada_en && estaAllaEse(p, desde))
     const ocupada = (persona: string) =>
-      datos.asistentes.some((a) => a.persona === persona && a.estado === 'va' && datos.eventos.some((e) => e.id === a.evento && e.inicio < hasta && e.fin > desde)) ||
+      datos.asistentes.some((a) => a.persona === persona && a.estado === 'va' && datos.eventos.some((e) => e.id === a.evento && !e.cancelado_en && e.inicio < hasta && e.fin > desde)) ||
       datos.ocupados.some((o) => o.persona === persona && o.inicio < hasta && o.fin > desde)
     return { alla: alla.length, libres: alla.filter((p) => !ocupada(p.id)).length }
   }

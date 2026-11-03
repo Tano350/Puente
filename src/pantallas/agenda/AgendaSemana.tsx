@@ -1,8 +1,9 @@
-import type { CSSProperties } from 'react'
-import type { Evento } from '../../datos/eventos.ts'
+import { useState, type CSSProperties } from 'react'
+import type { Evento, Ocupado } from '../../datos/eventos.ts'
 import { CHILE, conMayuscula, diaLargo, hora, momento } from '../../datos/fechas.ts'
 import { useTextos } from '../../textos.ts'
 import { acomodar, enElViaje, horasDe, lugarYCiudad, type Pieza } from './AgendaDatos.ts'
+import { AgendaRato } from './AgendaRato.tsx'
 import estilos from './AgendaSemana.module.css'
 
 type Props = {
@@ -18,9 +19,11 @@ type Props = {
 }
 
 // Las 7 columnas con horas. Lo tuyo va lleno, lo de los demás con borde y lo siguiente a lo que vas en acento.
-// Tocar un día lo abre en la vista Día.
+// Tocar un día lo abre en la vista Día; tocar un rato ocupado abre su hoja.
 export function AgendaSemana({ dias, piezas, computador, chile, hoy, ahora, elegido, onAbrir, onDia }: Props) {
-  const tv = useTextos().agenda.vista
+  const textos = useTextos()
+  const tv = textos.agenda.vista
+  const [rato, setRato] = useState<Ocupado | null>(null)
   // Px por hora: en el celular la semana entera cabe en la pantalla
   const alto = computador ? 42 : 30
   const [primera, ultima] = horasDe(dias.flatMap((d) => piezas.get(d) ?? []))
@@ -43,14 +46,23 @@ export function AgendaSemana({ dias, piezas, computador, chile, hoy, ahora, eleg
     const desde = hora(p.inicio)
     if (p.tipo === 'ocupado')
       return (
-        <div key={p.id} role="img" aria-label={tv.ocupadoDe(desde, hora(p.fin))} className={estilos.ocupado} style={lugar} data-pasada={p.pasada}>
+        <button
+          key={p.id}
+          type="button"
+          className={estilos.ocupado}
+          style={lugar}
+          aria-label={textos.agenda.rato.ocupadoDe(p.titulo, desde, hora(p.fin))}
+          aria-haspopup="dialog"
+          data-pasada={p.pasada}
+          onClick={() => setRato(p.ocupado)}
+        >
           {computador && (
             <>
               <span className={estilos.bloqueHora}>{desde}</span>
               <span className={estilos.bloqueTitulo}>{p.titulo}</span>
             </>
           )}
-        </div>
+        </button>
       )
     const sitio = computador && largo >= 80 ? lugarYCiudad(p.evento) : ''
     // En el celular el nombre va solo si cabe bajo la hora
@@ -80,42 +92,45 @@ export function AgendaSemana({ dias, piezas, computador, chile, hoy, ahora, eleg
   }
 
   return (
-    <div className={computador ? estilos.semanaPc : estilos.semana} style={{ '--hora': `${alto}px` } as CSSProperties}>
-      <div className={estilos.esquina} />
-      {dias.map((dia, i) => {
-        const esHoy = dia === hoy
-        return (
-          <button
-            key={dia}
-            type="button"
-            className={estilos.cabeza}
-            aria-label={esHoy ? tv.hoyEs(diaLargo(dia)) : conMayuscula(diaLargo(dia))}
-            aria-current={esHoy ? 'date' : undefined}
-            data-pasado={dia < hoy}
-            disabled={!enElViaje(dia)}
-            onClick={() => onDia(dia)}
-          >
-            <span className={estilos.cabezaDia}>{esHoy ? tv.hoy : tv.diasCortos[i]}</span>
-            <span className={estilos.cabezaNumero}>{Number(dia.slice(8))}</span>
-          </button>
-        )
-      })}
-      <div className={estilos.horas} aria-hidden="true" style={{ height: horas.length * alto }}>
-        {horas
-          .filter((h) => computador || (h - primera) % 2 === 0)
-          .map((h) => (
-            <span key={h} className={estilos.hora} style={{ top: y(h * 60) + 2 }}>
-              {h}
-              {computador && chile && <span className={estilos.horaChile}>{enChile(h)}</span>}
-            </span>
-          ))}
-      </div>
-      {dias.map((dia) => (
-        <div key={dia} className={estilos.columna} data-hoy={dia === hoy}>
-          {acomodar(piezas.get(dia) ?? []).map(({ pieza, columna, columnas }) => bloque(pieza, columna, columnas))}
-          {dia === hoy && ahoraMin >= primera * 60 && ahoraMin <= ultima * 60 && <span aria-hidden="true" className={estilos.ahora} style={{ top: y(ahoraMin) }} />}
+    <>
+      <div className={computador ? estilos.semanaPc : estilos.semana} style={{ '--hora': `${alto}px` } as CSSProperties}>
+        <div className={estilos.esquina} />
+        {dias.map((dia, i) => {
+          const esHoy = dia === hoy
+          return (
+            <button
+              key={dia}
+              type="button"
+              className={estilos.cabeza}
+              aria-label={esHoy ? tv.hoyEs(diaLargo(dia)) : conMayuscula(diaLargo(dia))}
+              aria-current={esHoy ? 'date' : undefined}
+              data-pasado={dia < hoy}
+              disabled={!enElViaje(dia)}
+              onClick={() => onDia(dia)}
+            >
+              <span className={estilos.cabezaDia}>{esHoy ? tv.hoy : tv.diasCortos[i]}</span>
+              <span className={estilos.cabezaNumero}>{Number(dia.slice(8))}</span>
+            </button>
+          )
+        })}
+        <div className={estilos.horas} aria-hidden="true" style={{ height: horas.length * alto }}>
+          {horas
+            .filter((h) => computador || (h - primera) % 2 === 0)
+            .map((h) => (
+              <span key={h} className={estilos.hora} style={{ top: y(h * 60) + 2 }}>
+                {h}
+                {computador && chile && <span className={estilos.horaChile}>{enChile(h)}</span>}
+              </span>
+            ))}
         </div>
-      ))}
-    </div>
+        {dias.map((dia) => (
+          <div key={dia} className={estilos.columna} data-hoy={dia === hoy}>
+            {acomodar(piezas.get(dia) ?? []).map(({ pieza, columna, columnas }) => bloque(pieza, columna, columnas))}
+            {dia === hoy && ahoraMin >= primera * 60 && ahoraMin <= ultima * 60 && <span aria-hidden="true" className={estilos.ahora} style={{ top: y(ahoraMin) }} />}
+          </div>
+        ))}
+      </div>
+      <AgendaRato rato={rato} computador={computador} onCerrar={() => setRato(null)} />
+    </>
   )
 }

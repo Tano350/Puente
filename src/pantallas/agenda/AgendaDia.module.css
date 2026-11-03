@@ -211,7 +211,7 @@
   gap: 8px;
 }
 
-/* El nombre abre el evento, y su área cubre toda la fila */
+/* El nombre abre el evento (o el rato ocupado), y su área cubre toda la fila */
 button.nombre {
   padding: 0;
   border: none;
@@ -316,7 +316,7 @@ button.nombre:focus-visible::after {
   color: var(--sec);
 }
 
-/* ---------- Computador: cada fila es un botón que elige el evento ---------- */
+/* ---------- Computador: cada fila es un botón que elige el evento (o abre el rato) ---------- */
 .filaPc {
   display: grid;
   grid-template-columns: 64px 28px minmax(0, 1fr) auto;

@@ -35,12 +35,14 @@ type Props = {
   errores: Errores
   computador: boolean
   enfocar: boolean
+  editando?: boolean
   onCambio: (cambios: Partial<Borrador>) => void
 }
 
 // El mismo boleto del detalle, con cada línea por llenar y el talón con el modo.
 // Día, horas y tipo usan los selectores del dispositivo, invisibles encima de cada línea.
-export function CrearBoleto({ borrador, errores, computador, enfocar, onCambio }: Props) {
+// Al editar uno cerrado, el talón no cuenta personas: esas se cambian en el evento.
+export function CrearBoleto({ borrador, errores, computador, enfocar, editando = false, onCambio }: Props) {
   const textos = useTextos()
   const t = textos.agenda.crear
   const caja = useRef<HTMLDivElement>(null)
@@ -115,7 +117,7 @@ export function CrearBoleto({ borrador, errores, computador, enfocar, onCambio }
   ) : (
     <>
       <Icono nombre="candado" medida={30} trazo={2} />
-      <span className={`${estilos.talonTexto} ${estilos.bajoIcono}`}>{t.personas(borrador.elegidos.length)}</span>
+      <span className={`${estilos.talonTexto} ${estilos.bajoIcono}`}>{editando ? t.modos.cerrado : t.personas(borrador.elegidos.length)}</span>
     </>
   )
 

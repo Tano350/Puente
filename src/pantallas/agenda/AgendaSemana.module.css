@@ -70,11 +70,11 @@
   border: 1.5px solid var(--sec);
   color: var(--tinta);
   text-align: left;
+  cursor: pointer;
 }
 
 .bloque {
   background: var(--panel);
-  cursor: pointer;
 }
 
 .bloque[data-mio='true'] {
@@ -284,9 +284,27 @@
   opacity: 0.5;
 }
 
+/* Un rato corto se ve chico, pero se toca en 44 px de alto. Va debajo de los eventos,
+   así el área de más no les quita toques; la columna recorta lo que se sale arriba y abajo. */
+.semana .columna {
+  isolation: isolate;
+  overflow-y: clip;
+}
+
 .semana .ocupado {
+  z-index: -1;
+  overflow: visible;
   border: 1px solid var(--tinta);
   background: repeating-linear-gradient(135deg, var(--tinta) 0 1.5px, transparent 1.5px 5px);
+}
+
+.semana .ocupado::before {
+  content: '';
+  position: absolute;
+  top: min(0px, calc(50% - 22px));
+  bottom: min(0px, calc(50% - 22px));
+  left: calc(-1px - var(--margen));
+  right: calc(-1px - var(--margen));
 }
 
 .semana .bloqueHora {

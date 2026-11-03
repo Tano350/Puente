@@ -5,9 +5,10 @@ import { InterruptorHoraDeChile, useHoraDeChile } from '../../componentes/HoraDe
 import { Icono } from '../../componentes/Icono.tsx'
 import { useAviso } from '../../componentes/useAviso.ts'
 import { useEsComputador } from '../../componentes/useEsComputador.ts'
+import type { TablesUpdate } from '../../datos/base.ts'
 import { consultas, usePersonas } from '../../datos/consultas.ts'
 import { cambiarContacto, useContactos, type Contacto } from '../../datos/contactos.ts'
-import { borrarEvento, ErrorDeEvento, ir as irAlEvento, noIr, useAsistentes, useEventos, useOcupados, type Evento } from '../../datos/eventos.ts'
+import { borrarEvento, cambiarEvento, ErrorDeEvento, ir as irAlEvento, noIr, useAsistentes, useEventos, useOcupados, type Evento } from '../../datos/eventos.ts'
 import { conMayuscula, diaEn, diaLargo, rango } from '../../datos/fechas.ts'
 import { primerNombre } from '../../datos/nombres.ts'
 import { useSesion } from '../../datos/sesion.tsx'
@@ -24,15 +25,17 @@ import estilos from './Agenda.module.css'
 const VISTAS: Vista[] = ['dia', 'semana', 'mes']
 
 // Agenda: Día, Semana y Mes, con "Todo" o "A los que voy".
-// Rutas: /agenda, /agenda/nuevo (con { contacto } en el estado si sale de un contacto) y /agenda/:id.
-// En el celular el evento y "Nuevo" ocupan la pantalla; en el computador van en la columna al lado de la vista.
+// Rutas: /agenda, /agenda/nuevo (con { contacto } en el estado si sale de un contacto), /agenda/:id y
+// /agenda/:id/editar (solo quien organiza o administra).
+// En el celular el evento, "Nuevo" y "Editar evento" ocupan la pantalla; en el computador van en la columna al lado de la vista.
 export function Agenda() {
   const textos = useTextos()
   const tv = textos.agenda.vista
+  const te = textos.agenda.editar
   const sesion = useSesion()
   const navigate = useNavigate()
   const location = useLocation()
-  const { id } = useParams()
+  const { id, accion } = useParams()
   const esComputador = useEsComputador()
   const eventos = useEventos()
   const { data: asistentes } = useAsistentes()
@@ -68,10 +71,13 @@ export function Agenda() {
   const lista = eventos.data
   const abierto = id && id !== 'nuevo' ? lista?.find((e) => e.id === id) : undefined
   const desdeContacto = contactos?.find((c) => c.id === estado?.contacto)
+  // Editan quien organiza y quien administra
+  const puedeEditar = (evento: Evento) => evento.organizador === yo.id || yo.administra
+  const editando = abierto && accion === 'editar' && puedeEditar(abierto) ? abierto : undefined
 
-  // Un evento que se abre fuera de lo que se ve lleva la agenda a su día
-  if (abierto && abierto.id !== siguiendo) {
-    setSiguiendo(abierto.id)
+  // Un evento que se abre fuera de lo que se ve (o que se cambió a otro día) lleva la agenda a su día
+  if (abierto && `${abierto.id} ${abierto.inicio}` !== siguiendo) {
+    setSiguiendo(`${abierto.id} ${abierto.inicio}`)
     const suDia = diaEn(abierto.inicio)
     if (!diasDe(vista, dia).includes(suDia)) setAncla(suDia)
   }
@@ -81,6 +87,8 @@ export function Agenda() {
 
   // Un evento que ya no está (deshecho o cancelado) lleva a la agenda
   if (lista && id && id !== 'nuevo' && !abierto) return <Navigate to="/agenda" replace />
+  // Quien no puede editarlo vuelve al evento
+  if (abierto && accion && !editando) return <Navigate to={`/agenda/${abierto.id}`} replace state={estado} />
 
   // ---------- Navegación ----------
   // Abrir agrega una entrada al historial; cerrar vuelve atrás si se abrió desde aquí, así el "atrás" del teléfono hace lo mismo
@@ -93,6 +101,9 @@ export function Agenda() {
   const abrir = (evento: Evento) => {
     if (id !== evento.id) ir(`/agenda/${evento.id}`, esComputador && Boolean(id))
   }
+  // Editar vuelve al evento: atrás si estaba abierto; si era el boleto sugerido del computador, lo deja abierto
+  const editar = (evento: Evento) => navigate(`/agenda/${evento.id}/editar`, { state: { desdeAqui: id === evento.id } })
+  const cerrarEdicion = () => (desdeAqui ? navigate(-1) : navigate(`/agenda/${id}`, { replace: true }))
   const elegirDia = (otro: string) => {
     setAncla(otro)
     setVista('dia')
@@ -121,6 +132,21 @@ export function Agenda() {
     const antes = contactoAntes
     navigate(`/agenda/${evento.id}`, { replace: true, state: antes ? { desde: 'contactos' } : { desdeAqui } })
     aviso.mostrar(tv.creaste(evento.titulo), () => void deshacerCreado(evento, antes))
+  }
+  // Después de guardar se vuelve al evento; "Deshacer" le devuelve lo que tenía (si se puede)
+  const alGuardar = (evento: Evento, antes: TablesUpdate<'eventos'> | null) => {
+    cerrarEdicion()
+    aviso.mostrar(te.guardaste, antes ? () => void deshacer(() => cambiarEvento(evento.id, antes)) : undefined)
+  }
+  // Cancelado, el evento desaparece de la agenda; "Deshacer" lo trae de vuelta y, si no hay otro abierto, lo abre
+  const alCancelar = (evento: Evento) => {
+    navigate('/agenda', { replace: true })
+    aviso.mostrar(te.cancelaste(evento.titulo), () =>
+      void deshacer(async () => {
+        await cambiarEvento(evento.id, { cancelado_en: null })
+        if (!actual.current.id) ir(`/agenda/${evento.id}`)
+      }),
+    )
   }
   // "Tomar cupo" y "Voy" desde la lista del día (celular)
   const irAl = async (pieza: PiezaEvento) => {
@@ -154,10 +180,12 @@ export function Agenda() {
   const nuevo = id === 'nuevo' && (
     <CrearEvento computador={esComputador} desdeContacto={desdeContacto} dia={!estado?.contacto && vista === 'dia' ? dia : undefined} onCerrar={cerrarNuevo} onCreado={alCrear} />
   )
+  const edicion = editando && <CrearEvento computador={esComputador} editando={editando} onCerrar={cerrarEdicion} onGuardado={alGuardar} onCancelado={alCancelar} />
 
-  // ---------- Celular: el evento y "Nuevo" ocupan la pantalla ----------
+  // ---------- Celular: el evento, "Nuevo" y "Editar evento" ocupan la pantalla ----------
   if (!esComputador) {
     if (nuevo) return nuevo
+    if (edicion) return edicion
     if (abierto)
       return (
         <>
@@ -167,6 +195,7 @@ export function Agenda() {
             atras={estado?.desde === 'hoy' ? textos.hoy.titulo : estado?.desde === 'contactos' ? textos.contactos.titulo : undefined}
             conNota={estado?.abrir === 'nota'}
             onCerrar={cerrar}
+            onEditar={puedeEditar(abierto) ? () => editar(abierto) : undefined}
           />
           <Aviso texto={aviso.texto} onDeshacer={aviso.deshacer} sobrePie />
         </>
@@ -297,10 +326,17 @@ export function Agenda() {
               {vista === 'dia' && <VistaFranja dias={semana} elegido={dia} hoy={hoy} computador onElegir={setAncla} />}
               {contenido}
             </div>
-            <aside key={nuevo ? 'nuevo' : elegido?.id} aria-label={nuevo ? tv.nuevo : elegido?.titulo} className={estilos.lado}>
+            <aside key={nuevo ? 'nuevo' : edicion ? 'editar' : elegido?.id} aria-label={nuevo ? tv.nuevo : edicion ? te.titulo : elegido?.titulo} className={estilos.lado}>
               {nuevo ||
+                edicion ||
                 (elegido ? (
-                  <DetalleEvento evento={elegido} computador conNota={estado?.abrir === 'nota' && elegido.id === id} onCerrar={cerrar} />
+                  <DetalleEvento
+                    evento={elegido}
+                    computador
+                    conNota={estado?.abrir === 'nota' && elegido.id === id}
+                    onCerrar={cerrar}
+                    onEditar={puedeEditar(elegido) ? () => editar(elegido) : undefined}
+                  />
                 ) : (
                   !cargando && <p className={estilos.ladoVacio}>{(soloVoy ? tv.sinLosTuyos : tv.sinEventos)[vista]}</p>
                 ))}

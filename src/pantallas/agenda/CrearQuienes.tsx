@@ -14,10 +14,11 @@ const MODOS = ['para_todos', 'con_cupo', 'cerrado'] as const satisfies readonly 
 // Fichas a mano en uno cerrado (de los que están allá ese día, si ya se eligió); el resto, en "Ver los 13"
 const FICHAS = 6
 
-type Props = { computador: boolean; dia: string | null; modo: ModoEvento; elegidos: string[]; onModo: (modo: ModoEvento) => void; onElegidos: (elegidos: string[]) => void }
+type Props = { computador: boolean; dia: string | null; modo: ModoEvento; elegidos: string[]; editando?: boolean; onModo: (modo: ModoEvento) => void; onElegidos: (elegidos: string[]) => void }
 
-// Quiénes pueden ir: para todos, con cupo o cerrado (con las personas que van)
-export function CrearQuienes({ computador, dia, modo, elegidos, onModo, onElegidos }: Props) {
+// Quiénes pueden ir: para todos, con cupo o cerrado (con las personas que van).
+// Al editar no hay fichas: en uno cerrado, la gente se suma y se saca en el evento.
+export function CrearQuienes({ computador, dia, modo, elegidos, editando = false, onModo, onElegidos }: Props) {
   const textos = useTextos()
   const sesion = useSesion()
   const { data: personas } = usePersonas()
@@ -55,10 +56,10 @@ export function CrearQuienes({ computador, dia, modo, elegidos, onModo, onElegid
         ))}
       </div>
       <div id="crear-quienes-explica" className={estilos.explica}>
-        {t.explicaModo[modo]}
+        {editando && modo === 'cerrado' ? textos.agenda.editar.cerrado : t.explicaModo[modo]}
       </div>
 
-      {modo === 'cerrado' && (
+      {modo === 'cerrado' && !editando && (
         <div role="group" aria-labelledby="crear-quienes-explica" className={estilos.fichas}>
           {fichas.map((p) => {
             const va = elegidos.includes(p.id)

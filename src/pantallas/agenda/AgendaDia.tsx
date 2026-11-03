@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { Icono } from '../../componentes/Icono.tsx'
-import type { Evento } from '../../datos/eventos.ts'
+import type { Evento, Ocupado } from '../../datos/eventos.ts'
 import { CHILE, conMayuscula, hora } from '../../datos/fechas.ts'
 import { useTextos } from '../../textos.ts'
 import { ciudad, lugarYCiudad, type Pieza, type PiezaEvento } from './AgendaDatos.ts'
+import { AgendaRato } from './AgendaRato.tsx'
 import estilos from './AgendaDia.module.css'
 
 type Props = {
@@ -33,10 +35,20 @@ function Asientos({ tomados, total }: { tomados: number; total: number }) {
 }
 
 // El día como línea de estaciones, igual que Hoy: lo que pasó en gris, "ahora" y lo que sigue.
+// Un evento se abre en su boleto; un rato ocupado, en su hoja.
 export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy, nombres, elegido, pendiente, onAbrir, onIr }: Props) {
   const textos = useTextos()
   const tv = textos.agenda.vista
-  if (piezas.length === 0) return <p className={computador ? estilos.vacioPc : estilos.vacio}>{soloVoy ? tv.noVasNada : tv.libre}</p>
+  const [rato, setRato] = useState<Ocupado | null>(null)
+  // La hoja va también con el día vacío: así queda el aviso al borrar lo último del día
+  const hoja = <AgendaRato rato={rato} computador={computador} onCerrar={() => setRato(null)} />
+  if (piezas.length === 0)
+    return (
+      <>
+        <p className={computador ? estilos.vacioPc : estilos.vacio}>{soloVoy ? tv.noVasNada : tv.libre}</p>
+        {hoja}
+      </>
+    )
 
   const ahoraMs = Date.parse(ahora)
   // "ahora" va después de lo que ya empezó; solo hoy
@@ -114,7 +126,7 @@ export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy,
     return null
   }
 
-  // Computador: toda la fila elige el evento y el estado va como texto
+  // Computador: toda la fila elige el evento (o abre el rato) y el estado va como texto
   const chip = (p: Pieza) => {
     const texto = p.tipo === 'ocupado' ? tv.ocupado : tv.estados[p.estado]
     const tipo = p.tipo === 'evento' && p.estado === 'vas' ? 'vas' : p.tipo === 'evento' && (p.estado === 'tomar' || p.estado === 'voy') ? 'accion' : 'apagado'
@@ -127,6 +139,8 @@ export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy,
   }
 
   const tuerca = (p: Pieza) => (p.tipo === 'evento' && p.proxima ? 'proxima' : p.pasada ? 'pasada' : p.tipo === 'ocupado' || p.mio ? 'mia' : 'ajena')
+  const abrir = (p: Pieza) => (p.tipo === 'evento' ? onAbrir(p.evento) : setRato(p.ocupado))
+  const aria = (p: Pieza) => (p.tipo === 'ocupado' ? { 'aria-label': textos.agenda.rato.ocupadoDe(p.titulo, hora(p.inicio), hora(p.fin)), 'aria-haspopup': 'dialog' as const } : {})
 
   const filas = piezas.map((p, k) => {
     const via = (
@@ -160,15 +174,9 @@ export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy,
       )
       return (
         <li key={p.id}>
-          {p.tipo === 'evento' ? (
-            <button type="button" className={estilos.filaPc} aria-pressed={elegido === p.id} onClick={() => onAbrir(p.evento)} {...comun}>
-              {contenido}
-            </button>
-          ) : (
-            <div className={estilos.filaPc} {...comun}>
-              {contenido}
-            </div>
-          )}
+          <button type="button" className={estilos.filaPc} aria-pressed={p.tipo === 'evento' ? elegido === p.id : undefined} onClick={() => abrir(p)} {...aria(p)} {...comun}>
+            {contenido}
+          </button>
         </li>
       )
     }
@@ -180,13 +188,9 @@ export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy,
         {via}
         <div className={estilos.texto}>
           <div className={estilos.renglon}>
-            {p.tipo === 'evento' ? (
-              <button type="button" className={estilos.nombre} onClick={() => onAbrir(p.evento)}>
-                {p.titulo}
-              </button>
-            ) : (
-              <span className={estilos.nombre}>{p.titulo}</span>
-            )}
+            <button type="button" className={estilos.nombre} onClick={() => abrir(p)} {...aria(p)}>
+              {p.titulo}
+            </button>
             {derecha(p)}
           </div>
           {!p.pasada && <div className={estilos.lugar}>{lugar(p)}</div>}
@@ -211,5 +215,10 @@ export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy,
       </li>,
     )
 
-  return <ol className={computador ? estilos.listaPc : estilos.lista}>{filas}</ol>
+  return (
+    <>
+      <ol className={computador ? estilos.listaPc : estilos.lista}>{filas}</ol>
+      {hoja}
+    </>
+  )
 }

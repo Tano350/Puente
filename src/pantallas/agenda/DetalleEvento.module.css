@@ -1,8 +1,32 @@
-/* ---------- Celular: "Agenda" arriba y el boleto un poco más ancho que el resto ---------- */
+/* ---------- Celular: "Agenda" y "Editar" arriba, y el boleto un poco más ancho que el resto ---------- */
 .cabecera {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   margin-top: -4px;
+}
+
+/* "Editar", como en un contacto: arriba a la derecha en el celular y arriba de la columna en el computador */
+.editar,
+.editarPc {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  margin-right: -8px;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.editarPc {
+  display: flex;
+  width: fit-content;
+  height: 40px;
+  margin: 0 0 4px -8px;
 }
 
 .boleto {

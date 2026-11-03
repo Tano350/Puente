@@ -202,6 +202,40 @@
   color: var(--sec);
 }
 
+/* ---------- Al editar: cancelar el evento, abajo y discreto, con una hoja que pregunta ---------- */
+.cancelarEvento {
+  display: block;
+  height: 44px;
+  margin-top: 12px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--sec);
+  font-size: 15px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.formulario[data-computador='true'] .cancelarEvento {
+  height: 40px;
+  margin-top: 10px;
+}
+
+.explica {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--sec-tarjeta);
+}
+
+.hojaBotones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+}
+
 /* En pantallas táctiles los campos van de 16 px: con menos, el iPhone acerca la pantalla al escribir */
 @media (pointer: coarse) {
   .notas {

@@ -161,7 +161,6 @@ const es = {
       hasta: (hora: string) => (hora.startsWith('01:') ? `hasta la ${hora}` : `hasta las ${hora}`),
       estados: { vas: 'Vas', voy: 'Voy', tomar: 'Tomar cupo', lleno: 'Lleno', cerrada: 'Cerrada', espera: 'En espera', pasado: 'Ya pasó', afuera: 'No estás allá' },
       ocupado: 'Ocupado',
-      ocupadoDe: (desde: string, hasta: string) => `Ocupado de ${desde} a ${hasta}`,
       cupos: (n: number, total: number) => `${n} de ${total} cupos`,
       paraTodos: (n: number) => (n === 0 ? 'Para todos' : n === 1 ? 'Para todos, va 1' : `Para todos, van ${n}`),
       cerrada: (nombres: string, varios: boolean) => `Cerrada, ${varios ? 'van' : 'va'} ${nombres}`,
@@ -330,6 +329,29 @@ const es = {
       faltaFin: 'Elige a qué hora termina.',
       alReves: 'Tiene que terminar después de empezar.',
       marcaste: 'Marcaste ese rato como ocupado.',
+    },
+    // Editar o cancelar un evento: quien organiza o quien administra
+    editar: {
+      editar: 'Editar',
+      titulo: 'Editar evento',
+      guardar: 'Guardar cambios',
+      // En uno cerrado, la gente se suma y se saca en el evento
+      cerrado: 'Solo van los que agregues en el evento.',
+      cancelarEvento: 'Cancelar evento',
+      cancelarPregunta: (titulo: string) => `¿Cancelar ${titulo}?`,
+      desaparece: 'Desaparece de la Agenda de todos.',
+      guardaste: 'Guardaste los cambios.',
+      cancelaste: (titulo: string) => `Cancelaste ${titulo}.`,
+    },
+    // Un rato ocupado abierto desde el Día o la Semana
+    rato: {
+      ocupadoDe: (titulo: string, desde: string, hasta: string) => `${titulo}, ocupado de ${desde} a ${hasta}`,
+      cuando: (dia: string, horario: string) => `${dia}, ${horario}`,
+      horario: (desde: string, hasta: string) => `${desde} a ${hasta}`,
+      delDia: (horario: string, dia: string) => `${horario} del ${dia}`,
+      soloTu: 'Solo tú lo ves.',
+      borrar: 'Borrar rato ocupado',
+      borraste: (titulo: string) => `Borraste ${titulo}.`,
     },
   },
   contactos: {
