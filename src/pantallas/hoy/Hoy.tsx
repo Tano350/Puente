@@ -10,10 +10,14 @@ import { usePersonas } from '../../datos/consultas.ts'
 import { useContactos } from '../../datos/contactos.ts'
 import { ErrorDeEvento, ir, noIr, useAsistentes, useEventos, useNotasReunion, type Evento } from '../../datos/eventos.ts'
 import { conMayuscula, diaEn, diaLargo, diasEntre, hora, hoyAqui, hoyEnCalifornia } from '../../datos/fechas.ts'
+import { comoSaldar, conmigo, plata, saldos, useGastos, usePagos, usePartes } from '../../datos/gastos.ts'
 import { estaAlla } from '../../datos/grupo.ts'
+import { primerNombre } from '../../datos/nombres.ts'
 import { useSesion, type Persona } from '../../datos/sesion.tsx'
 import { useTextos, type Textos } from '../../textos.ts'
 import { DetalleEvento } from '../agenda/DetalleEvento.tsx'
+import { ResumenRendicion } from '../gastos/Rendicion.tsx'
+import { TarjetaSaldo } from '../gastos/Saldos.tsx'
 import { loProximo, momentoDelViaje, porConfirmar, reunionesSinNota, tambienHoy, tuDia, useAhora, type Parada } from './HoyDatos.ts'
 import { TambienHoy } from './HoyGrupo.tsx'
 import { armarEstaciones, Linea, Paradas, type MarcaAhora } from './HoyLinea.tsx'
@@ -47,6 +51,9 @@ export function Hoy() {
   const { data: asistentes } = useAsistentes()
   const { data: notas } = useNotasReunion()
   const { data: personas } = usePersonas()
+  const { data: gastos } = useGastos()
+  const { data: partes } = usePartes()
+  const { data: pagos } = usePagos()
   const [elegido, setElegido] = useState<string | null>(null)
   const [cierreElegido, setCierreElegido] = useState<Cierre['id']>('notas')
   const [hoja, setHoja] = useState<'pendientes' | 'reuniones' | null>(null)
@@ -79,8 +86,21 @@ export function Hoy() {
   const pendientes = pendientesDe(persona, contactos ?? [], sinConfirmar, textos, navigate)
   const sinNota = momento === 'despues' ? reunionesSinNota(lista, van, notas ?? [], persona.id, ahora) : []
 
-  // Para cerrar tu viaje: por ahora las notas que faltan (Gastos suma aquí lo suyo)
-  const cierres: Cierre[] = sinNota.length > 0 ? [{ id: 'notas', icono: 'lapiz', texto: v.escribeNotas(sinNota.length) }] : []
+  // Para cerrar tu viaje: las notas que faltan, lo que debes transferir y elegir qué gastos rindes
+  const cierres: Cierre[] = []
+  if (momento === 'despues') {
+    if (sinNota.length > 0) cierres.push({ id: 'notas', icono: 'lapiz', texto: v.escribeNotas(sinNota.length) })
+    const grupo = (personas ?? []).filter((p) => !p.sacada_en).map((p) => p.id)
+    const debes = gastos && partes && pagos ? comoSaldar(saldos(gastos, partes, pagos, grupo)).filter((x) => x.de === persona.id) : []
+    if (debes.length === 1) {
+      const a = (personas ?? []).find((p) => p.id === debes[0].a)
+      cierres.push({ id: 'pago', icono: 'transferir', texto: v.transfiere(plata(debes[0].monto), a ? primerNombre(a) : '') })
+    } else if (debes.length > 1) {
+      cierres.push({ id: 'pago', icono: 'transferir', texto: v.transfiereVarios(plata(debes.reduce((suma, x) => suma + x.monto, 0)), debes.length) })
+    }
+    if ((gastos ?? []).some((g) => conmigo(g, partes ?? [], persona.id).tipo !== 'noparticipas')) cierres.push({ id: 'rendir', icono: 'gastos', texto: v.eligeRendir })
+  }
+  const cierre = cierres.find((c) => c.id === cierreElegido)?.id ?? (computador && cierreElegido === 'pago' ? 'pago' : cierres[0]?.id)
 
   // Allá hoy: los que siguen allá y los eventos del día en California
   const diaAlla = hoyEnCalifornia()
@@ -98,7 +118,9 @@ export function Hoy() {
   const escribirNota = (id: string) => navigate(`/agenda/${id}`, { state: { desde: 'hoy', abrir: 'nota' } })
   const abrirCierre = (id: Cierre['id']) => {
     if (computador) setCierreElegido(id)
-    else if (id === 'notas' && sinNota.length === 1) escribirNota(sinNota[0].id)
+    else if (id === 'pago') navigate('/gastos', { state: { ver: 'saldos' } })
+    else if (id === 'rendir') navigate('/gastos', { state: { ver: 'rendicion' } })
+    else if (sinNota.length === 1) escribirNota(sinNota[0].id)
     else setHoja('reuniones')
   }
   const sumarme = async (evento: Evento) => {
@@ -161,7 +183,7 @@ export function Hoy() {
   const seccionCerrar = cierres.length > 0 && (
     <section className={estilos.seccion} aria-labelledby="hoy-cerrar">
       {computador ? <div className={estilos.cabecera}>{tituloCerrar}</div> : tituloCerrar}
-      <ParaCerrar cierres={cierres} computador={computador} elegido={cierreElegido} onElegir={abrirCierre} />
+      <ParaCerrar cierres={cierres} computador={computador} elegido={cierre ?? 'notas'} onElegir={abrirCierre} />
     </section>
   )
   const seccionAlla = momento === 'despues' && siguen > 0 && (
@@ -233,7 +255,13 @@ export function Hoy() {
   if (computador) {
     const lado =
       momento === 'despues' ? (
-        cierreElegido === 'notas' && sinNota.length > 0 && <BoletosSinNota reuniones={sinNota} contactos={contactos ?? []} onNota={escribirNota} />
+        cierre === 'notas' ? (
+          <BoletosSinNota reuniones={sinNota} contactos={contactos ?? []} onNota={escribirNota} />
+        ) : cierre === 'pago' ? (
+          <TarjetaSaldo computador />
+        ) : cierre === 'rendir' ? (
+          <ResumenRendicion onPreparar={() => navigate('/gastos', { state: { ver: 'rendicion' } })} />
+        ) : null
       ) : eventoElegido ? (
         <DetalleEvento evento={eventoElegido} computador onCerrar={() => setElegido(null)} />
       ) : null

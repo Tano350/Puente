@@ -1,0 +1,157 @@
+/* ---------- Celular ---------- */
+.titulo {
+  margin: 0;
+  padding: 14px 0 2px;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.dia:first-child .titulo {
+  padding-top: 18px;
+}
+
+.fila {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 9px 0;
+  border: none;
+  background: transparent;
+  color: var(--tinta);
+  text-align: left;
+  cursor: pointer;
+}
+
+.icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+.texto {
+  flex: 1;
+  min-width: 0;
+}
+
+.nombreFila {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.nombre {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 22px;
+}
+
+.candado {
+  display: flex;
+  flex: none;
+  color: var(--sec);
+}
+
+.quien {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec);
+}
+
+/* Prestaste en verde, te prestaron en naranja; "no participas" y "solo tuyo" en gris */
+.conmigo {
+  flex: none;
+  text-align: right;
+  color: var(--sec);
+}
+
+.conmigo[data-tipo='prestaste'] {
+  color: var(--a-favor);
+}
+
+.conmigo[data-tipo='teprestaron'] {
+  color: var(--en-contra);
+}
+
+.etiqueta {
+  display: block;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.monto {
+  display: block;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Computador ---------- */
+.pc .dia + .dia {
+  margin-top: 16px;
+}
+
+.pc .titulo,
+.pc .dia:first-child .titulo {
+  padding: 0 0 6px 12px;
+}
+
+.pc .fila {
+  gap: 14px;
+  min-height: 62px;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.pc .fila[aria-pressed='true'] {
+  background: var(--panel);
+  box-shadow: inset 0 0 0 2px var(--acento);
+}
+
+@media (hover: hover) {
+  .pc .fila:not([aria-pressed='true']):hover {
+    background: var(--panel);
+  }
+}
+
+.pc .icono {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--borde);
+}
+
+.pc .nombreFila {
+  gap: 6px;
+}
+
+.pc .nombre {
+  font-size: 17px;
+  line-height: 24px;
+}
+
+.pc .quien {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.pc .monto {
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 22px;
+}

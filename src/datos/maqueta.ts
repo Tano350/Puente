@@ -2,6 +2,7 @@ import type { Persona } from './consultas.ts'
 import type { Contacto, Nota } from './contactos.ts'
 import type { Calendario, Sincronizacion } from './calendario.ts'
 import type { Asistente, Evento, NotaReunion, Ocupado } from './eventos.ts'
+import type { Gasto, Pago, Parte, Rendicion } from './gastos.ts'
 import { momento, sumarDias, VIAJE } from './fechas.ts'
 
 // Solo en desarrollo: personas de ejemplo del lienzo, para revisar pantallas sin entrar con Google.
@@ -239,4 +240,52 @@ export function sincronizacionDeMaqueta(): Sincronizacion {
 
 export function cambiarSincronizacionDeMaqueta(activa: boolean) {
   sincroniza = activa
+}
+
+// ---------- Gastos ----------
+// Los 7 gastos del lienzo (del 10 al 12 de enero) y el Airbnb de la primera semana entre los 14, para que "Tú"
+// (Josefa) deba US$ 84,00 como en el diseño. El supermercado tiene foto de la boleta; Josefa rinde el café con Laura.
+export type DatosGastos = { gastos: Gasto[]; partes: Parte[]; pagos: Pago[]; rendiciones: Rendicion[] }
+let cuentas: DatosGastos | null = null
+
+export function gastosDeMaqueta(): DatosGastos {
+  if (cuentas) return cuentas
+  const todos = personasDeMaqueta()
+    .filter((p) => !p.sacada_en)
+    .map((p) => p.id)
+  // Partes iguales: los centavos que sobran van a los primeros
+  const igual = (monto: number, quienes: string[]): [string, number][] =>
+    quienes.map((persona, i) => [persona, Math.floor(monto / quienes.length) + (i < monto % quienes.length ? 1 : 0)])
+  const ejemplos: [id: string, fecha: string, titulo: string, categoria: string, monto: number, pago: string, division: string, partes: [string, number][], boleta?: string][] = [
+    ['uber', '2027-01-12', 'Uber al Plug and Play', 'auto', 3840, YO, 'iguales', igual(3840, [YO, CATALINA, DIEGO, MARTINA])],
+    ['cafe-laura', '2027-01-12', 'Café con Laura Chen', 'cafe', 1450, YO, 'solo', [[YO, 1450]]],
+    ['cena', '2027-01-11', 'Cena en Palo Alto', 'comida', 31200, MARTINA, 'exactos', [[YO, 4100], [CATALINA, 3500], [DIEGO, 4400], [IGNACIO, 3800], [JOAQUIN, 3600], [MARTINA, 4000], [PAULA, 3000], [SOFIA, 4800]]],
+    ['super', '2027-01-11', 'Supermercado', 'super', 12680, DIEGO, 'iguales', igual(12680, [DIEGO, CATALINA, YO, MARTINA, PAULA, SOFIA]), 'super/boleta.jpg'],
+    ['museo', '2027-01-11', 'Entradas al Computer History Museum', 'entrada', 9000, JOAQUIN, 'iguales', igual(9000, [JOAQUIN, IGNACIO, VICENTE, ANDRES, BENJAMIN, FLORENCIA])],
+    ['caltrain', '2027-01-10', 'Caltrain a San Francisco', 'tren', 2800, CATALINA, 'iguales', igual(2800, [YO, CATALINA, DIEGO, MARTINA])],
+    ['bicis', '2027-01-10', 'Arriendo de bicicletas', 'bici', 4500, YO, 'iguales', igual(4500, [YO, MARTINA, SOFIA])],
+    ['airbnb', '2027-01-05', 'Airbnb de la primera semana', 'otro', 7367 * todos.length, DIEGO, 'iguales', igual(7367 * todos.length, todos)],
+  ]
+  cuentas = {
+    // Dentro de un día, el primero de la lista es el último anotado
+    gastos: ejemplos.map(([id, fecha, titulo, categoria, monto, pago, division, , boleta], i) => {
+      const cuando = `${fecha}T${String(23 - i).padStart(2, '0')}:00:00Z`
+      return { id, titulo, categoria, monto, fecha, pagado_por: pago, division, boleta: boleta ?? null, creado_por: pago, creado_en: cuando, cambiado_en: cuando, borrado_en: null }
+    }),
+    partes: ejemplos.flatMap(([gasto, , , , , , , partes]) => partes.map(([persona, monto]) => ({ gasto, persona, monto }))),
+    pagos: [],
+    rendiciones: [{ gasto: 'cafe-laura', persona: YO, marcado_en: '2027-01-12T21:00:00Z' }],
+  }
+  return cuentas
+}
+
+export function cambiarGastosDeMaqueta(cambiar: (datos: DatosGastos) => DatosGastos) {
+  cuentas = cambiar(gastosDeMaqueta())
+}
+
+// Una boleta dibujada, para ver la foto sin subir nada
+export function boletaDeMaqueta(): string {
+  const lineas = ['Leche', 'Pan', 'Frutas', 'Café', 'Agua', 'Huevos'].map((cosa, i) => `<text x="24" y="${118 + i * 26}">${cosa}</text><text x="216" y="${118 + i * 26}" text-anchor="end">${(8.5 + i * 3.7).toFixed(2)}</text>`)
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="380" font-family="monospace" font-size="15" fill="#222"><rect width="240" height="380" fill="#fbfaf6"/><text x="120" y="44" text-anchor="middle" font-size="19" font-weight="bold">SUPERMERCADO</text><text x="120" y="70" text-anchor="middle">Palo Alto, CA</text>${lineas.join('')}<text x="24" y="300" font-weight="bold">TOTAL</text><text x="216" y="300" text-anchor="end" font-weight="bold">126.80</text><text x="120" y="344" text-anchor="middle">Gracias</text></svg>`
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
 }

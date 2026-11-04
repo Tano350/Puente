@@ -22,5 +22,7 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  // Las pruebas corren con node --test, que entiende TypeScript solo
+  "exclude": ["src/**/*.test.ts"]
 }

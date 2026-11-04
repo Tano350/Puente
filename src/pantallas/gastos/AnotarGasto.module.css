@@ -1,0 +1,278 @@
+/* Anotar un gasto: qué fue con su ícono, el monto grande y "Pagado por … y dividido …" */
+
+/* ---------- Cabecera del celular ---------- */
+.cabeza {
+  margin: -24px -20px 0;
+  padding: 20px 20px 14px;
+  border-bottom: 1px solid var(--regla);
+  background: var(--panel);
+}
+
+.cabezaFila {
+  display: flex;
+  align-items: center;
+  height: 44px;
+}
+
+.cancelar {
+  height: 44px;
+  margin-left: -8px;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.titulo {
+  margin: 4px 0 0;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 34px;
+  line-height: 38px;
+}
+
+.tituloPanel {
+  margin: 0;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 32px;
+}
+
+/* ---------- Qué fue ---------- */
+.queFue {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.ancla {
+  position: relative;
+  flex: none;
+}
+
+.categoria {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1.5px solid var(--regla);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--tinta);
+  cursor: pointer;
+}
+
+/* Se escribe sobre la línea; el relleno de arriba agranda el toque y el margen lo compensa, sin mover el texto */
+.descripcion {
+  flex: 1;
+  min-width: 0;
+  margin-top: -12px;
+  padding: 12px 0 6px;
+  border: none;
+  border-bottom: 1.5px solid var(--regla);
+  border-radius: 0;
+  background: transparent;
+  color: var(--tinta);
+  font: inherit;
+  font-size: 20px;
+  line-height: 28px;
+  text-overflow: ellipsis;
+  appearance: none;
+}
+
+/* ---------- Monto ---------- */
+.monto {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.moneda {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--sec);
+}
+
+.montoCampo {
+  flex: 1;
+  min-width: 0;
+  padding: 0 0 2px;
+  border: none;
+  border-bottom: 1.5px solid var(--regla);
+  border-radius: 0;
+  background: transparent;
+  color: var(--tinta);
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 48px;
+  line-height: 54px;
+  font-variant-numeric: tabular-nums;
+  appearance: none;
+}
+
+.descripcion::placeholder,
+.montoCampo::placeholder {
+  color: var(--sec);
+  opacity: 1;
+}
+
+.descripcion:focus-visible,
+.montoCampo:focus-visible {
+  outline: none;
+  border-bottom-color: var(--acento);
+}
+
+.descripcion[aria-invalid='true'],
+.montoCampo[aria-invalid='true'] {
+  border-bottom-color: var(--error);
+}
+
+/* ---------- Errores ---------- */
+.error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--error);
+}
+
+/* Bajo el campo, no bajo el ícono */
+.sangria {
+  margin-left: 60px;
+}
+
+.formulario[data-computador='true'] .sangria {
+  margin-left: 62px;
+}
+
+/* ---------- Pagado por … y dividido … ---------- */
+.frase {
+  margin-top: 16px;
+  font-size: 17px;
+  line-height: 42px;
+}
+
+.fraseBoton {
+  position: relative;
+  height: 34px;
+  padding: 0 12px;
+  border: 1.5px solid var(--regla);
+  border-radius: 17px;
+  background: var(--panel);
+  color: var(--tinta);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 20px;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+/* Se ve de 34 px y se toca en 44 */
+.fraseBoton::after {
+  content: '';
+  position: absolute;
+  inset: -5px -2px;
+}
+
+.fraseBoton[aria-disabled='true'] {
+  cursor: default;
+}
+
+/* El botón y el punto final van juntos */
+.juntos {
+  white-space: nowrap;
+}
+
+/* ---------- Pie ---------- */
+.fallo {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 18px;
+  text-align: center;
+  color: var(--sec);
+}
+
+.piePanel > button {
+  height: 48px;
+}
+
+/* ---------- Computador: el panel del diseño, con todo un poco más chico ---------- */
+.formulario[data-computador='true'] .categoria {
+  width: 50px;
+  height: 50px;
+  border: 1px solid var(--borde);
+}
+
+.formulario[data-computador='true'] .descripcion {
+  font-size: 18px;
+  line-height: 26px;
+}
+
+.formulario[data-computador='true'] .monto {
+  align-items: baseline;
+  gap: 14px;
+  margin-top: 18px;
+  border-bottom: 1.5px solid var(--regla);
+}
+
+.formulario[data-computador='true'] .monto:focus-within {
+  border-bottom-color: var(--acento);
+}
+
+.formulario[data-computador='true'] .monto:has([aria-invalid='true']) {
+  border-bottom-color: var(--error);
+}
+
+.formulario[data-computador='true'] .moneda {
+  display: block;
+  width: auto;
+  height: auto;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.formulario[data-computador='true'] .montoCampo {
+  padding: 0 0 6px;
+  border-bottom: none;
+  font-size: 44px;
+  line-height: 48px;
+}
+
+.formulario[data-computador='true'] .frase {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.formulario[data-computador='true'] .fraseBoton {
+  background: transparent;
+  font-size: 15px;
+}
+
+.formulario[data-computador='true'] .fraseBoton[aria-expanded='true'] {
+  background: var(--panel);
+}
+
+.formulario[data-computador='true'] .juntos {
+  display: inline-flex;
+  align-items: center;
+}

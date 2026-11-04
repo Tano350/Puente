@@ -1,0 +1,138 @@
+/* "Saldar" (hoja en el celular, panel en el computador): todo centrado salvo el título.
+   El foco entra aquí al abrirse: no es un control, así que va sin marco */
+.contenido {
+  text-align: center;
+}
+
+.contenido:focus {
+  outline: none;
+}
+
+.contenido > h2 {
+  text-align: left;
+}
+
+/* Si le debes a más de una persona: a quién le pagas */
+.quienes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.quien {
+  height: 44px;
+  padding: 0 16px;
+  border: 1.5px solid var(--regla);
+  border-radius: 22px;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.quien[aria-pressed='true'] {
+  border-color: var(--tinta);
+  background: var(--tinta);
+  color: var(--panel);
+}
+
+.flujo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 16px;
+  color: var(--sec);
+}
+
+.tu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--acento);
+  color: var(--sobre);
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.lePagas {
+  margin-top: 10px;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--sec);
+}
+
+.monto {
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 42px;
+  line-height: 48px;
+  font-variant-numeric: tabular-nums;
+}
+
+.explica {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec);
+}
+
+.marcar {
+  margin-top: 20px;
+}
+
+.cancelar {
+  height: 44px;
+  margin-top: 4px;
+  padding: 0 12px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.cancelarBorde {
+  margin-top: 10px;
+}
+
+/* ---------- En el computador: el panel encima, con más aire y el monto más grande y en naranja ---------- */
+.tituloPanel {
+  margin: 0;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.contenido[data-computador='true'] .flujo {
+  margin-top: 28px;
+}
+
+.contenido[data-computador='true'] .lePagas {
+  margin-top: 16px;
+  font-size: 16px;
+  color: var(--tinta);
+}
+
+.contenido[data-computador='true'] .monto {
+  font-size: 48px;
+  line-height: 54px;
+  color: var(--en-contra);
+}
+
+.contenido[data-computador='true'] .explica {
+  margin-top: 10px;
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.contenido[data-computador='true'] .marcar {
+  margin-top: 22px;
+}
