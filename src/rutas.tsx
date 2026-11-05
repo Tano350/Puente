@@ -2,10 +2,16 @@ import { createBrowserRouter, Navigate } from 'react-router'
 import { Marco } from './componentes/Marco.tsx'
 import { Puerta } from './componentes/Puerta.tsx'
 
+// Mientras se carga la primera sección al abrir la app (un instante: ya está guardada en el dispositivo) no se muestra nada
+function Nada() {
+  return null
+}
+
 export const rutas = createBrowserRouter([
-  { path: 'privacidad', lazy: () => import('./pantallas/Privacidad.tsx').then((m) => ({ Component: m.Privacidad })) },
+  { path: 'privacidad', HydrateFallback: Nada, lazy: () => import('./pantallas/Privacidad.tsx').then((m) => ({ Component: m.Privacidad })) },
   {
     element: <Puerta />,
+    HydrateFallback: Nada,
     children: [
       {
         element: <Marco />,

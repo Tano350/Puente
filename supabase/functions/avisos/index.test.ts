@@ -16,11 +16,14 @@ const base = {
   dispositivos: [] as { endpoint: string; persona: string; p256dh: string; auth: string }[],
   escrituras: [] as Escritura[],
   lecturas: [] as string[],
+  // La última consulta que reclamó avisos, entera
+  reclamo: '',
 }
 
 function responder(sql: string, valores: unknown[]): unknown[] {
   base.lecturas.push(sql.split(' ').slice(0, 2).join(' '))
   if (sql.startsWith('with reclamados')) {
+    base.reclamo = sql
     const tanda = base.tanda
     base.tanda = []
     return tanda
@@ -109,6 +112,7 @@ function pago(cambios: Partial<Fila> = {}): Fila {
     cancelado_en: null,
     estado: null,
     van: null,
+    suma: null,
     contacto_id: null,
     contacto_nombre: null,
     organizacion: null,
@@ -197,6 +201,34 @@ test('El recordatorio sale urgente y en el idioma de quien lo recibe', async () 
   assert.match(aviso.titulo, /^At \d\d:\d\d: Visita de prueba$/)
   assert.equal(llegada.headers.Urgency, 'high')
   assert.ok(Number(llegada.headers.TTL) <= 3600)
+})
+
+test('"Te sumó": la consulta trae quién te sumó y usa el interruptor de cambios; el aviso abre el evento', async () => {
+  const inicio = new Date(ahora + 2 * 86400_000)
+  await preparar([
+    pago({
+      tipo: 'sumado',
+      datos: { quien: 'diego' },
+      pago_id: null,
+      monto: null,
+      paga: null,
+      evento_id: 'e2',
+      titulo: 'Visita a Stripe',
+      lugar: null,
+      inicio,
+      fin: new Date(inicio.getTime() + 3600_000),
+      modo: 'cerrado',
+      estado: 'va',
+      suma: 'Diego Soto',
+    }),
+  ])
+  base.dispositivos = base.dispositivos.slice(0, 1)
+  assert.deepEqual(await correr(), { estado: 200, cuerpo: { enviados: 1, descartados: 0, fallidos: 0, dispositivosBorrados: 0 } })
+  assert.match(base.reclamo, /case when r\.tipo = 'sumado' then 'cambios' else r\.tipo end/)
+  assert.match(base.reclamo, /r\.datos ->> 'quien'.* as suma/)
+  const aviso = JSON.parse(await descifrar(servicio.llegadas[0].body, celular))
+  assert.deepEqual({ ...aviso, cuerpo: undefined }, { titulo: 'Diego te sumó a Visita a Stripe', cuerpo: undefined, url: '/agenda/e2', etiqueta: 'evento-e2' })
+  assert.match(aviso.cuerpo, /, \d\d:\d\d\.$/)
 })
 
 test('Lo que ya no tiene sentido se descarta sin mandar nada', async () => {

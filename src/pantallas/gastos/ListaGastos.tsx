@@ -52,7 +52,7 @@ export function ListaGastos({ gastos, partes, yo, nombres, hoy, computador, eleg
                 <span className={estilos.texto}>
                   <span className={estilos.nombreFila}>
                     <span className={estilos.nombre}>{g.titulo}</span>
-                    {c.tipo === 'solotuyo' && (
+                    {g.division === 'solo' && (
                       <span className={estilos.candado}>
                         <Icono nombre="candado" medida={13} trazo={computador ? 2 : 2.25} />
                       </span>

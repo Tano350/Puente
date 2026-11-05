@@ -1,5 +1,5 @@
 -- Prueba de los avisos push: qué queda encolado en public.avisos en cada caso (evento nuevo, cambio y cancelación,
--- lista de espera, recordatorio, contacto y pago) y a quién nunca le llega (quien hace la acción, quien apagó ese
+-- lista de espera, recordatorio, contacto, pago y "te sumó") y a quién nunca le llega (quien hace la acción, quien apagó ese
 -- tipo, quien no tiene dispositivos, quien fue sacado del grupo).
 -- Corre en una sola transacción que termina con un error a propósito: si todo está bien, el mensaje es
 -- "PRUEBAS-OK" y no queda nada guardado (tampoco sale ningún pedido a la función: pg_net solo manda lo que se guarda).
@@ -19,6 +19,7 @@ declare
   f uuid;
   g uuid;
   h uuid;
+  i uuid;
   e1 uuid;
   e2 uuid;
   e3 uuid;
@@ -26,6 +27,9 @@ declare
   e5 uuid;
   e6 uuid;
   e7 uuid;
+  e8 uuid;
+  e9 uuid;
+  e10 uuid;
   k1 uuid;
   k2 uuid;
   k3 uuid;
@@ -39,7 +43,8 @@ declare
 begin
   -- A, B y H son miembros y están allá; C administra y está allá; D llega después; E fue sacada; F apagó los avisos
   -- de eventos nuevos; G no activó los avisos en ningún dispositivo. H apagó los de pagos (los demás tipos le faltan:
-  -- cuentan como encendidos). D apagó los recordatorios.
+  -- cuentan como encendidos). D apagó los recordatorios. I apagó los cambios (también apaga "te sumó") y llega
+  -- después, como D, para no cruzarse con los avisos de eventos nuevos.
   insert into public.personas (correo, llega, vuelve) values ('prueba.a@example.com', '2030-01-05', '2030-01-30') returning id into a;
   insert into public.personas (correo, llega, vuelve) values ('prueba.b@example.com', '2030-01-05', '2030-01-30') returning id into b;
   insert into public.personas (correo, administra, llega, vuelve) values ('prueba.c@example.com', true, '2030-01-05', '2030-01-30') returning id into c;
@@ -48,6 +53,7 @@ begin
   insert into public.personas (correo, llega, vuelve, avisos) values ('prueba.f@example.com', '2030-01-05', '2030-01-30', '{"eventos": false, "cambios": true}') returning id into f;
   insert into public.personas (correo, llega, vuelve) values ('prueba.g@example.com', '2030-01-05', '2030-01-30') returning id into g;
   insert into public.personas (correo, llega, vuelve, avisos) values ('prueba.h@example.com', '2030-01-05', '2030-01-30', '{"pago": false}') returning id into h;
+  insert into public.personas (correo, llega, vuelve, avisos) values ('prueba.i@example.com', '2030-02-01', '2030-02-20', '{"cambios": false}') returning id into i;
   insert into auth.users (id, email, aud, role) values
     (ua, 'prueba.a@example.com', 'authenticated', 'authenticated'),
     (ub, 'prueba.b@example.com', 'authenticated', 'authenticated'),
@@ -56,7 +62,7 @@ begin
   -- Todos menos G tienen un dispositivo con los avisos activados
   insert into public.suscripciones (endpoint, persona, p256dh, auth)
   select 'https://push.example.com/' || x.id, x.id, 'llave-de-prueba', 'secreto-de-prueba'
-    from unnest(array[a, b, c, d, e, f, h]) as x(id);
+    from unnest(array[a, b, c, d, e, f, h, i]) as x(id);
 
   -- Evento nuevo con cupos: les llega a B, C y H. No a A (lo creó), D (no está allá), E (sacada), F (los apagó) ni G.
   execute como_usuario using ua;
@@ -237,9 +243,64 @@ begin
   perform public.reloj_de_avisos();
   select count(*) into n from public.avisos v where v.evento = e5 and v.tipo = 'recordatorio';
   if n <> 3 then raise exception 'El reloj repitió recordatorios: hay % (esperaba 3)', n; end if;
-  -- Sumar gente a un evento no la saca de ninguna lista: no es un aviso de lista de espera
-  select count(*) into n from public.avisos v where v.evento = e5 and v.tipo <> 'recordatorio' and v.persona in (a, b, c, d, e, f, g, h);
-  if n <> 0 then raise exception 'Sumar gente a un evento dejó % avisos que no son recordatorios', n; end if;
+  -- Sumar gente a un evento no la saca de ninguna lista: no es un aviso de lista de espera. Sí les avisa que A los
+  -- sumó: a B, D y F; no a E (sacada) ni a G (sin dispositivos).
+  select count(*) into n from public.avisos v where v.evento = e5 and v.tipo not in ('recordatorio', 'sumado') and v.persona in (a, b, c, d, e, f, g, h);
+  if n <> 0 then raise exception 'Sumar gente a un evento dejó % avisos que no son recordatorios ni de "te sumó"', n; end if;
+  select array_agg(v.persona order by v.persona) into quienes from public.avisos v where v.evento = e5 and v.tipo = 'sumado';
+  select array_agg(x order by x) into esperados from unnest(array[b, d, f]) as x;
+  if quienes is distinct from esperados then raise exception 'El "te sumó" del evento pronto llegó a % (esperaba B, D y F)', quienes; end if;
+
+  -- "Te sumó": A crea un evento cerrado (quedar en su propio evento no le avisa nada) y suma a B y a I. A B le llega
+  -- un aviso que dice que fue A; a I no (apagó los cambios).
+  execute como_usuario using ua;
+  execute 'set local role authenticated';
+  insert into public.eventos (titulo, inicio, fin, modo, organizador)
+  values ('Cerrado con gente', '2030-01-15 18:00Z', '2030-01-15 19:00Z', 'cerrado', a) returning id into e8;
+  perform public.sumar_a_evento(e8, b);
+  perform public.sumar_a_evento(e8, i);
+  execute 'reset role';
+  select count(*) into n from public.avisos v where v.evento = e8 and v.persona = a;
+  if n <> 0 then raise exception 'Al crear su evento, A recibió % avisos', n; end if;
+  select count(*) into n from public.avisos v where v.evento = e8 and v.persona = b and v.tipo = 'sumado' and v.datos ->> 'quien' = a::text;
+  if n <> 1 then raise exception 'B recibió % avisos de que A lo sumó (esperaba 1, con A en datos)', n; end if;
+  select * into aviso from public.avisos v where v.evento = e8 and v.persona = b and v.tipo = 'sumado';
+  if aviso.sale_en <= aviso.creado_en or aviso.enviado_en is not null then
+    raise exception 'El aviso de "te sumó" no quedó esperando sus segundos para "Deshacer"';
+  end if;
+  select count(*) into n from public.avisos v where v.evento = e8 and v.persona = i;
+  if n <> 0 then raise exception 'I apagó los cambios y recibió % avisos de que la sumaron', n; end if;
+  -- Sumarlo otra vez no repite; sacarlo ("Deshacer") y volver a sumarlo antes de que salga deja uno solo
+  execute como_usuario using ua;
+  execute 'set local role authenticated';
+  perform public.sumar_a_evento(e8, b);
+  perform public.sacar_de_evento(e8, b);
+  perform public.sumar_a_evento(e8, b);
+  execute 'reset role';
+  select count(*) into n from public.avisos v where v.evento = e8 and v.persona = b and v.tipo = 'sumado';
+  if n <> 1 then raise exception 'Sumar a B de nuevo dejó % avisos de "te sumó" (esperaba 1)', n; end if;
+  -- B se suma solo a un evento para todos: no le llega nada
+  execute como_usuario using ua;
+  execute 'set local role authenticated';
+  insert into public.eventos (titulo, inicio, fin, organizador)
+  values ('Abierto para sumarse', '2030-01-16 18:00Z', '2030-01-16 19:00Z', a) returning id into e9;
+  execute 'reset role';
+  execute como_usuario using ub;
+  execute 'set local role authenticated';
+  perform public.ir(e9);
+  execute 'reset role';
+  select count(*) into n from public.avisos v where v.evento = e9 and v.tipo = 'sumado';
+  if n <> 0 then raise exception 'Sumarse solo dejó % avisos de "te sumó"', n; end if;
+  -- A un evento cancelado no se avisa
+  execute como_usuario using ua;
+  execute 'set local role authenticated';
+  insert into public.eventos (titulo, inicio, fin, modo, organizador)
+  values ('Cerrado cancelado', '2030-01-17 18:00Z', '2030-01-17 19:00Z', 'cerrado', a) returning id into e10;
+  update public.eventos set cancelado_en = now() where id = e10;
+  perform public.sumar_a_evento(e10, b);
+  execute 'reset role';
+  select count(*) into n from public.avisos v where v.evento = e10 and v.tipo = 'sumado';
+  if n <> 0 then raise exception 'Se avisó que sumaron a alguien a un evento cancelado'; end if;
 
   -- Nunca a quien fue sacada ni a quien no tiene dispositivos
   select count(*) into n from public.avisos v where v.persona in (e, g);

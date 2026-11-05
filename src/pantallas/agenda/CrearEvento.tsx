@@ -6,8 +6,8 @@ import { SinConexion } from '../../componentes/SinConexion.tsx'
 import { useConectado } from '../../datos/conexion.ts'
 import { PantallaConPie } from '../../componentes/Paneles.tsx'
 import type { TablesUpdate } from '../../datos/base.ts'
-import { cambiarContacto, puedeCambiar, seAgenda, type Contacto } from '../../datos/contactos.ts'
-import { asistentesDe, borrarOcupado, cambiarEvento, cancelarEvento, crearEvento, libres, marcarOcupado, sumarAEvento, useAsistentes, type Evento } from '../../datos/eventos.ts'
+import { cambiarContacto, puedeCambiar, seAgenda, useContactos, type Contacto } from '../../datos/contactos.ts'
+import { asistentesDe, borrarOcupado, cambiarEvento, cancelarEvento, crearEvento, libres, marcarOcupado, sumarAEvento, useAsistentes, useEventos, type Evento } from '../../datos/eventos.ts'
 import { ahora } from '../../datos/fechas.ts'
 import { useSesion } from '../../datos/sesion.tsx'
 import { useTextos } from '../../textos.ts'
@@ -56,6 +56,8 @@ function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCrea
   const textos = useTextos()
   const sesion = useSesion()
   const { data: asistentes } = useAsistentes()
+  const { data: contactos } = useContactos()
+  const { data: eventos } = useEventos()
   const sinRed = !useConectado()
   const t = textos.agenda.crear
   const te = textos.agenda.editar
@@ -78,6 +80,12 @@ function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCrea
 
   // El contacto pasa a "Reunión agendada" si viene de antes y quien crea puede cambiarlo
   const contacto = desdeContacto && seAgenda(desdeContacto.etapa, 'reunion_agendada') && puedeCambiar(desdeContacto, yo) ? desdeContacto : undefined
+
+  // Al cancelar una reunión, su contacto vuelve a "Respondió" si no le queda otra reunión vigente (lo hace la base)
+  const vuelve =
+    editando?.contacto && !(eventos ?? []).some((e) => e.id !== editando.id && e.contacto === editando.contacto && Date.parse(e.fin) >= Date.parse(ahora()))
+      ? contactos?.find((c) => c.id === editando.contacto && c.etapa === 'reunion_agendada')
+      : undefined
 
   const cambiar = (cambios: Partial<Borrador>) => {
     const nuevo = { ...borrador, ...cambios }
@@ -216,6 +224,7 @@ function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCrea
       <Hoja abierta={cancelando} etiqueta={te.cancelarPregunta(editando.titulo)} alerta onCerrar={() => setCancelando(false)}>
         <TituloHoja>{te.cancelarPregunta(editando.titulo)}</TituloHoja>
         <p className={estilos.explica}>{te.desaparece}</p>
+        {vuelve && <p className={estilos.explica}>{te.contactoVuelve(vuelve.nombre, textos.contactos.etapas.respondio)}</p>}
         <div className={estilos.hojaBotones}>
           <BotonPrincipal peligro apagado={sinRed} ocupado={guardando} onClick={() => void cancelar()}>
             {te.cancelarEvento}

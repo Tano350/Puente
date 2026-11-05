@@ -82,10 +82,13 @@ async function reclamar(sql: Sql): Promise<Fila[]> {
       returning v.id, v.tipo, v.persona, v.datos, v.creado_en, v.evento, v.contacto, v.pago
     )
     select r.id, r.tipo, r.persona, r.datos, r.creado_en,
-           p.idioma, p.sacada_en is not null as sacada, (p.avisos -> r.tipo) is distinct from 'false'::jsonb as quiere,
+           p.idioma, p.sacada_en is not null as sacada,
+           -- 'sumado' se apaga con el interruptor de 'cambios'
+           (p.avisos -> case when r.tipo = 'sumado' then 'cambios' else r.tipo end) is distinct from 'false'::jsonb as quiere,
            e.id as evento_id, e.titulo, e.lugar, e.direccion, e.inicio, e.fin, e.modo, e.cupos, e.cancelado_en,
            (select a.estado from public.asistentes a where a.evento = e.id and a.persona = r.persona) as estado,
            (select count(*)::int from public.asistentes a where a.evento = e.id and a.estado = 'va') as van,
+           (select q.nombre from public.personas q where r.tipo = 'sumado' and q.id = (r.datos ->> 'quien')::uuid) as suma,
            c.id as contacto_id, c.nombre as contacto_nombre, c.organizacion, c.responsable, asigna.nombre as asigna,
            g.id as pago_id, g.monto, g.borrado_en, de.nombre as paga
       from reclamados r

@@ -2,7 +2,7 @@
 // mandarlo, si un aviso ya no tiene sentido (se deshizo lo que lo causó, el evento ya empezó, apagaste ese tipo…).
 // Es puro: no lee la base ni la hora del sistema, así se prueba solo.
 
-export type Tipo = 'eventos' | 'cambios' | 'espera' | 'recordatorio' | 'contacto' | 'pago'
+export type Tipo = 'eventos' | 'cambios' | 'espera' | 'recordatorio' | 'contacto' | 'pago' | 'sumado'
 export type Idioma = 'es' | 'en'
 export type Urgencia = 'normal' | 'high'
 
@@ -15,11 +15,12 @@ export type Fila = {
   tipo: Tipo
   persona: string
   creado_en: Date
-  datos: { antes?: Antes | string | null } | null
+  datos: { antes?: Antes | string | null; quien?: string | null } | null
   idioma: string
   sacada: boolean
+  // Si no apagó este tipo ('sumado' sigue a 'cambios')
   quiere: boolean
-  // El evento (eventos, cambios, espera y recordatorio)
+  // El evento (eventos, cambios, espera, recordatorio y sumado)
   evento_id: string | null
   titulo: string | null
   lugar: string | null
@@ -33,6 +34,8 @@ export type Fila = {
   estado: 'va' | 'espera' | null
   // Cuántos van
   van: number | null
+  // Quién te sumó (sumado)
+  suma: string | null
   // El contacto
   contacto_id: string | null
   contacto_nombre: string | null
@@ -146,6 +149,7 @@ const TEXTOS = {
     teAsigno: (quien: string | null) => (quien ? `${quien} te asignó un contacto` : 'Te asignaron un contacto'),
     tePago: (quien: string | null, monto: string) => `${quien ?? 'Alguien'} te pagó ${monto}`,
     saldos: 'Tus saldos ya están al día.',
+    teSumo: (quien: string | null, t: string) => (quien ? `${quien} te sumó a ${t}` : `Te sumaron a ${t}`),
   },
   en: {
     nuevo: (t: string) => `New event: ${t}`,
@@ -166,6 +170,7 @@ const TEXTOS = {
     teAsigno: (quien: string | null) => (quien ? `${quien} assigned you a contact` : 'You have a new contact'),
     tePago: (quien: string | null, monto: string) => `${quien ?? 'Someone'} paid you ${monto}`,
     saldos: 'Your balances are up to date.',
+    teSumo: (quien: string | null, t: string) => (quien ? `${quien} added you to ${t}` : `You were added to ${t}`),
   },
 }
 
@@ -251,6 +256,15 @@ export function armar(f: Fila, ahora: Date): Resultado {
       // Dura hasta que empieza: después no sirve
       const ttl = Math.max(60, Math.min(HORA_S, Math.round((f.inicio.getTime() - ahora.getTime()) / 1000)))
       return deEvento(f, t.aLas(hora(f.inicio), titulo), dondeEs(f.lugar, f.direccion) || t.sinDireccion, ttl, 'high')
+    }
+
+    case 'sumado': {
+      if (f.cancelado_en) return { descartar: 'Se canceló el evento.' }
+      if (empezo) return { descartar: 'El evento ya empezó.' }
+      // Quien organiza lo deshizo o te sacó
+      if (f.estado !== 'va') return { descartar: 'Ya no está en el evento.' }
+      const cuerpo = [cuando(f.inicio, ahora, idioma), dondeEs(f.lugar, null)].filter(Boolean).join(' · ') + '.'
+      return deEvento(f, t.teSumo(pila(f.suma), titulo), cuerpo)
     }
   }
 }

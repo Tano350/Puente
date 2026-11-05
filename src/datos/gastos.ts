@@ -159,6 +159,8 @@ export type Conmigo = { tipo: 'prestaste' | 'teprestaron' | 'noparticipas' | 'so
 export function conmigo(gasto: Gasto, partes: Parte[], yo: string): Conmigo {
   if (gasto.division === 'solo') return { tipo: 'solotuyo', monto: gasto.monto }
   const mia = partesDe(gasto.id, partes).find((p) => p.persona === yo)?.monto ?? 0
+  // Pagado por ti y entero tuyo sin ser "Solo mío" (por ejemplo, montos exactos solo para ti): no prestaste nada
+  if (gasto.pagado_por === yo && mia === gasto.monto) return { tipo: 'solotuyo', monto: gasto.monto }
   if (gasto.pagado_por === yo) return { tipo: 'prestaste', monto: gasto.monto - mia }
   return mia > 0 ? { tipo: 'teprestaron', monto: mia } : { tipo: 'noparticipas', monto: 0 }
 }

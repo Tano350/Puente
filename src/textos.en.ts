@@ -355,6 +355,7 @@ export const en: Textos = {
       cancelarEvento: 'Cancel event',
       cancelarPregunta: (titulo: string) => `Cancel ${titulo}?`,
       desaparece: 'It disappears from everyone’s Schedule.',
+      contactoVuelve: (nombre: string, etapa: string) => `${nombre} goes back to ${etapa}.`,
       guardaste: 'You saved your changes.',
       cancelaste: (titulo: string) => `You canceled ${titulo}.`,
       sinRedGuardar: 'You need a connection to save the changes. What you wrote isn’t lost.',
@@ -589,7 +590,7 @@ export const en: Textos = {
     eligeCorto: 'Choose what we notify you about.',
     tipos: {
       eventos: 'New events you can join',
-      cambios: 'Changes to events you’re going to',
+      cambios: 'Changes to your events, and when you’re added to one',
       espera: 'You got a spot from the waitlist',
       recordatorio: 'An hour before each event, with the address',
       contacto: 'A contact was assigned to you',
@@ -607,6 +608,7 @@ export const en: Textos = {
     pestanas: { gastos: 'Expenses', saldos: 'Balances', rendicion: 'Report' },
     tu: 'You',
     ti: 'you',
+    totales: { mios: 'My expenses', grupo: 'Total expenses' },
     lista: {
       vistas: 'Expenses view',
       anotar: 'Add expense',

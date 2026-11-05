@@ -221,6 +221,11 @@
   scrollbar-width: none;
 }
 
+/* Los totales, sobre la tarjeta de saldo (si no hay, el contenedor queda vacío y no ocupa lugar) */
+.sobreTarjeta:not(:empty) {
+  margin-bottom: 8px;
+}
+
 .bloque + .bloque {
   margin-top: 22px;
 }

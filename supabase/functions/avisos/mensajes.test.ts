@@ -31,6 +31,7 @@ function fila(cambios: Partial<Fila> = {}): Fila {
     cancelado_en: null,
     estado: null,
     van: 1,
+    suma: null,
     contacto_id: null,
     contacto_nombre: null,
     organizacion: null,
@@ -178,6 +179,37 @@ test('Recordatorio: la hora y la dirección; vence cuando empieza el evento', ()
   descarta(fila({ tipo: 'recordatorio', estado: 'va' }), INICIO)
   descarta(fila({ tipo: 'recordatorio', estado: 'espera' }), diezAntes)
   descarta(fila({ tipo: 'recordatorio', estado: 'va', cancelado_en: AHORA }), diezAntes)
+})
+
+test('Te sumaron: quién te sumó, cuándo y dónde; abre el evento', () => {
+  const sumado = (c: Partial<Fila> = {}) => fila({ tipo: 'sumado', estado: 'va', modo: 'cerrado', titulo: 'Visita a Stripe', lugar: 'Stripe', datos: { quien: 'diego' }, suma: 'Diego Soto', ...c })
+  assert.deepEqual(mensaje(sumado()), {
+    titulo: 'Diego te sumó a Visita a Stripe',
+    cuerpo: 'Mañana, 10:00 · Stripe.',
+    url: '/agenda/e1',
+    etiqueta: 'evento-e1',
+    ttl: 86400,
+    urgencia: 'normal',
+  })
+  assert.equal(mensaje(sumado({ suma: null })).titulo, 'Te sumaron a Visita a Stripe')
+  assert.deepEqual(
+    [mensaje(sumado({ idioma: 'en', lugar: null })).titulo, mensaje(sumado({ idioma: 'en', lugar: null })).cuerpo],
+    ['Diego added you to Visita a Stripe', 'Tomorrow, 10:00.'],
+  )
+  assert.equal(mensaje(sumado({ idioma: 'en', suma: null })).titulo, 'You were added to Visita a Stripe')
+  // También en un evento abierto
+  assert.equal(mensaje(sumado({ modo: 'para_todos' })).titulo, 'Diego te sumó a Visita a Stripe')
+})
+
+test('Te sumaron: no se manda si quien organiza lo deshizo, si se canceló o si ya empezó', () => {
+  const sumado = (c: Partial<Fila> = {}) => fila({ tipo: 'sumado', estado: 'va', suma: 'Diego Soto', ...c })
+  assert.equal(descarta(sumado({ estado: null })), 'Ya no está en el evento.')
+  descarta(sumado({ estado: 'espera' }))
+  assert.equal(descarta(sumado({ cancelado_en: AHORA })), 'Se canceló el evento.')
+  assert.equal(descarta(sumado({ creado_en: new Date(INICIO.getTime() - 60_000) }), INICIO), 'El evento ya empezó.')
+  // Se apaga con el interruptor de cambios: la consulta lo entrega como "quiere"
+  descarta(sumado({ quiere: false }))
+  descarta(sumado({ evento_id: null, inicio: null, fin: null }))
 })
 
 test('Contacto asignado: quién te lo asignó y a quién contactar; abre el contacto', () => {

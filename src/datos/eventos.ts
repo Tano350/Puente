@@ -3,7 +3,7 @@ import type { Enums, Tables, TablesInsert, TablesUpdate } from './base.ts'
 import { consultas, type Persona } from './consultas.ts'
 import { ahora, diaEn } from './fechas.ts'
 import { conNotaReunion } from './enEspera.ts'
-import { datosDeMaqueta, modoMaqueta, personaDeMaqueta } from './maqueta.ts'
+import { cambiarContactosDeMaqueta, datosDeMaqueta, modoMaqueta, personaDeMaqueta } from './maqueta.ts'
 import { asegurarSesion, conPendientes, escribir, registrarEscritura } from './sinSenal.ts'
 import { supabase } from './supabase.ts'
 
@@ -212,13 +212,26 @@ export async function cambiarEvento(id: string, cambios: TablesUpdate<'eventos'>
     cambiado = { ...antes, ...cambios, cambiado_en: ahora() }
     datos.eventos = datos.eventos.map((e) => (e.id === id ? cambiado : e))
     llenarCuposDeMaqueta(id)
+    // Como en la base: cancelar una reunión que salió de un contacto lo devuelve a "Respondió"; deshacer, a "Reunión agendada"
+    const contacto = antes.contacto
+    if (contacto && Boolean(antes.cancelado_en) !== Boolean(cambiado.cancelado_en)) {
+      const hay = Date.parse(ahora())
+      const otra = datos.eventos.some((e) => e.id !== id && e.contacto === contacto && !e.cancelado_en && Date.parse(e.fin) >= hay)
+      cambiarContactosDeMaqueta((lista) =>
+        lista.map((c) => {
+          if (c.id !== contacto) return c
+          if (cambiado.cancelado_en) return c.etapa === 'reunion_agendada' && !otra ? { ...c, etapa: 'respondio', etapa_en: ahora() } : c
+          return c.etapa === 'respondio' ? { ...c, etapa: 'reunion_agendada', etapa_en: antes.creado_en } : c
+        }),
+      )
+    }
   } else {
     const { data, error } = await supabase.from('eventos').update(cambios).eq('id', id).select('*').single()
     if (error) throw error
     cambiado = data
   }
-  // Cambiar el modo o los cupos mueve la lista de espera
-  await recargar('eventos', 'asistentes')
+  // Cambiar el modo o los cupos mueve la lista de espera; cancelar o deshacer mueve el contacto de la reunión
+  await recargar('eventos', 'asistentes', ...('cancelado_en' in cambios ? ['contactos'] : []))
   return cambiado
 }
 

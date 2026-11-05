@@ -18,6 +18,7 @@ import { DetalleGasto } from './DetalleGasto.tsx'
 import { ListaGastos } from './ListaGastos.tsx'
 import { ResumenRendicion, VistaRendicion } from './Rendicion.tsx'
 import { TarjetaSaldo, VistaSaldos } from './Saldos.tsx'
+import { ResumenTotales } from './Totales.tsx'
 import estilos from './Gastos.module.css'
 
 type Pestana = 'gastos' | 'saldos' | 'rendicion'
@@ -191,6 +192,9 @@ export function Gastos() {
             {/* Con un panel abierto, la columna queda tapada: no se alcanza con el teclado */}
             <aside aria-label={t.pestanas.saldos} className={estilos.ladoPc} inert={Boolean(panel)}>
               <div className={estilos.bloque}>
+                <div className={estilos.sobreTarjeta}>
+                  <ResumenTotales />
+                </div>
                 <TarjetaSaldo computador />
               </div>
               <div className={estilos.bloque}>
@@ -253,6 +257,9 @@ export function Gastos() {
           <>
             {hay && (
               <div className={estilos.arriba}>
+                <div className={estilos.sobreTarjeta}>
+                  <ResumenTotales />
+                </div>
                 <TarjetaSaldo computador={false} />
               </div>
             )}

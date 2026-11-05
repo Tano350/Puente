@@ -362,6 +362,7 @@ export const es = {
       cancelarEvento: 'Cancelar evento',
       cancelarPregunta: (titulo: string) => `¿Cancelar ${titulo}?`,
       desaparece: 'Desaparece de la Agenda de todos.',
+      contactoVuelve: (nombre: string, etapa: string) => `${nombre} vuelve a ${etapa}.`,
       guardaste: 'Guardaste los cambios.',
       cancelaste: (titulo: string) => `Cancelaste ${titulo}.`,
       sinRedGuardar: 'Necesitas conexión para guardar los cambios. Lo que escribiste no se pierde.',
@@ -601,7 +602,7 @@ export const es = {
     eligeCorto: 'Elige de qué te avisamos.',
     tipos: {
       eventos: 'Eventos nuevos a los que te puedes sumar',
-      cambios: 'Cambios en eventos a los que vas',
+      cambios: 'Cambios en tus eventos y cuando te suman a uno',
       espera: 'Saliste de la lista de espera',
       recordatorio: 'Una hora antes de cada evento, con la dirección',
       contacto: 'Te asignaron un contacto',
@@ -620,6 +621,8 @@ export const es = {
     pestanas: { gastos: 'Gastos', saldos: 'Saldos', rendicion: 'Rendición' },
     tu: 'Tú',
     ti: 'ti',
+    // Lo que gastaste tú y lo que gastó el grupo, en la pestaña Gastos
+    totales: { mios: 'Mis gastos', grupo: 'Gastos totales' },
     lista: {
       vistas: 'Vista de gastos',
       anotar: 'Anotar gasto',

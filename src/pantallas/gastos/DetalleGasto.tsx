@@ -153,7 +153,7 @@ function Detalle({ gasto, computador, onCerrar, onEditar, onEliminado }: Props) 
       )}
       {relacion && (
         <div className={estilos.resumen} data-tipo={relacion.tipo}>
-          {relacion.tipo === 'solotuyo' && <Icono nombre="candado" medida={15} trazo={2.25} />}
+          {solo && <Icono nombre="candado" medida={15} trazo={2.25} />}
           {relacion.tipo === 'prestaste'
             ? d.prestaste(plata(relacion.monto))
             : relacion.tipo === 'teprestaron'
