@@ -8,9 +8,9 @@ import { dondeCorto } from './HoyDatos.ts'
 import estilosHoy from './Hoy.module.css'
 import estilos from './HoyVolver.module.css'
 
-// Lo que queda para cerrar el viaje. Por ahora, las notas de reunión que faltan.
-// Gastos (hito 4) suma aquí 'pago' (transferir lo que debes) y 'rendir' (elegir qué gastos rindes), cada uno con su detalle al lado.
-export type Cierre = { id: 'notas'; icono: NombreIcono; texto: string }
+// Lo que queda para cerrar el viaje: las notas de reunión que faltan, transferir lo que debes y elegir qué gastos rindes.
+// En el computador, cada uno muestra su detalle al lado.
+export type Cierre = { id: 'notas' | 'pago' | 'rendir'; icono: NombreIcono; texto: string }
 
 // En el celular, filas como las de pendientes; en el computador, tarjetas que se eligen
 export function ParaCerrar({ cierres, computador, elegido, onElegir }: { cierres: Cierre[]; computador: boolean; elegido: Cierre['id']; onElegir: (id: Cierre['id']) => void }) {

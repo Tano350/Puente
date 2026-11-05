@@ -1,0 +1,289 @@
+/* ---------- Tu tarjeta: arriba de la lista en el celular, arriba de la columna de la derecha en el computador ---------- */
+.tarjeta {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--panel);
+}
+
+/* En el computador va con borde y el monto arriba */
+.tarjeta[data-computador='true'] {
+  border: 1px solid var(--regla);
+}
+
+.fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tarjeta[data-computador='true'] .fila {
+  align-items: flex-start;
+}
+
+.situacion {
+  min-width: 0;
+}
+
+.titulo {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 22px;
+}
+
+.detalle {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.monto {
+  flex: none;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 34px;
+  font-variant-numeric: tabular-nums;
+}
+
+.monto[data-tipo='debes'],
+.montoEnTitulo[data-tipo='debes'] {
+  color: var(--en-contra);
+}
+
+.monto[data-tipo='teDeben'],
+.montoEnTitulo[data-tipo='teDeben'] {
+  color: var(--a-favor);
+}
+
+.saldar {
+  display: block;
+  width: 100%;
+  height: 44px;
+  margin-top: 12px;
+  border: none;
+  border-radius: 6px;
+  background: var(--acento);
+  color: var(--sobre);
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* ---------- La tarjeta de la pestaña Saldos: una fila con ícono ---------- */
+.compacta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--panel);
+}
+
+.compacta .situacion {
+  flex: 1;
+}
+
+.icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--fondo);
+}
+
+.montoEnTitulo {
+  font-variant-numeric: tabular-nums;
+}
+
+.saldarChico {
+  position: relative;
+  flex: none;
+  height: 40px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 6px;
+  background: var(--acento);
+  color: var(--sobre);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Mide 40 px, como en el diseño, pero se puede tocar en 44 */
+.saldarChico::after {
+  content: '';
+  position: absolute;
+  inset: -2px 0;
+}
+
+/* ---------- Los saldos de todos ---------- */
+.rotulo {
+  margin: 20px 0 0;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.lista,
+.transferencias {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista {
+  padding-top: 4px;
+}
+
+.persona {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 50px;
+  border-top: 1px solid var(--borde);
+}
+
+.tuAvatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--acento);
+  color: var(--sobre);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.nombre {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.nombre[data-tu='true'] {
+  font-weight: 500;
+}
+
+.saldo {
+  flex: none;
+  font-size: 16px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--sec);
+}
+
+.saldo[data-signo='mas'] {
+  color: var(--a-favor);
+}
+
+.saldo[data-signo='menos'] {
+  color: var(--en-contra);
+}
+
+/* En la columna del computador: filas más bajas y la lista cerrada abajo */
+.columna .rotulo {
+  margin-top: 0;
+}
+
+.columna .lista {
+  margin-top: 8px;
+  padding-top: 0;
+  border-bottom: 1px solid var(--borde);
+}
+
+.columna .persona {
+  min-height: 42px;
+}
+
+.columna .tuAvatar {
+  width: 28px;
+  height: 28px;
+  font-size: 13px;
+}
+
+/* ---------- Cómo saldar ---------- */
+.nota {
+  margin: 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec);
+}
+
+.transferencias {
+  margin-top: 6px;
+}
+
+/* Las tuyas en azul; las ya pagadas, apagadas y con un check */
+.transferencia {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  border-top: 1px solid var(--borde);
+  color: var(--tinta);
+  font-size: 15px;
+  line-height: 20px;
+}
+
+.transferencia[data-tuya='true'] {
+  color: var(--acento);
+  font-weight: 500;
+}
+
+.transferencia[data-hecha='true'] {
+  color: var(--sec);
+}
+
+.quienes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.quien {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.flecha {
+  display: flex;
+  flex: none;
+  color: var(--sec);
+}
+
+.cuanto {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.marca {
+  display: flex;
+  justify-content: flex-end;
+  flex: none;
+  width: 20px;
+}
+
+.oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

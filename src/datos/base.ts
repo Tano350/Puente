@@ -234,6 +234,66 @@ export type Database = {
           },
         ]
       }
+      gastos: {
+        Row: {
+          boleta: string | null
+          borrado_en: string | null
+          cambiado_en: string
+          categoria: string
+          creado_en: string
+          creado_por: string
+          division: string
+          fecha: string
+          id: string
+          monto: number
+          pagado_por: string
+          titulo: string
+        }
+        Insert: {
+          boleta?: string | null
+          borrado_en?: string | null
+          cambiado_en?: string
+          categoria?: string
+          creado_en?: string
+          creado_por?: string
+          division: string
+          fecha: string
+          id?: string
+          monto: number
+          pagado_por: string
+          titulo: string
+        }
+        Update: {
+          boleta?: string | null
+          borrado_en?: string | null
+          cambiado_en?: string
+          categoria?: string
+          creado_en?: string
+          creado_por?: string
+          division?: string
+          fecha?: string
+          id?: string
+          monto?: number
+          pagado_por?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gastos_creado_por_fkey"
+            columns: ["creado_por"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gastos_pagado_por_fkey"
+            columns: ["pagado_por"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notas: {
         Row: {
           autor: string
@@ -373,6 +433,81 @@ export type Database = {
           },
         ]
       }
+      pagos: {
+        Row: {
+          a: string
+          borrado_en: string | null
+          creado_en: string
+          de: string
+          id: string
+          monto: number
+        }
+        Insert: {
+          a: string
+          borrado_en?: string | null
+          creado_en?: string
+          de?: string
+          id?: string
+          monto: number
+        }
+        Update: {
+          a?: string
+          borrado_en?: string | null
+          creado_en?: string
+          de?: string
+          id?: string
+          monto?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagos_a_fkey"
+            columns: ["a"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagos_de_fkey"
+            columns: ["de"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partes: {
+        Row: {
+          gasto: string
+          monto: number
+          persona: string
+        }
+        Insert: {
+          gasto: string
+          monto: number
+          persona: string
+        }
+        Update: {
+          gasto?: string
+          monto?: number
+          persona?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partes_gasto_fkey"
+            columns: ["gasto"]
+            isOneToOne: false
+            referencedRelation: "gastos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partes_persona_fkey"
+            columns: ["persona"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       personas: {
         Row: {
           administra: boolean
@@ -453,6 +588,39 @@ export type Database = {
           },
         ]
       }
+      rendiciones: {
+        Row: {
+          gasto: string
+          marcado_en: string
+          persona: string
+        }
+        Insert: {
+          gasto: string
+          marcado_en?: string
+          persona?: string
+        }
+        Update: {
+          gasto?: string
+          marcado_en?: string
+          persona?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rendiciones_gasto_fkey"
+            columns: ["gasto"]
+            isOneToOne: false
+            referencedRelation: "gastos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rendiciones_persona_fkey"
+            columns: ["persona"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sincronizacion: {
         Row: {
           activa: boolean
@@ -512,11 +680,43 @@ export type Database = {
     }
     Functions: {
       administro: { Args: never; Returns: boolean }
+      anotar_gasto: {
+        Args: {
+          categoria: string
+          division: string
+          fecha: string
+          monto: number
+          pagado_por: string
+          partes: Json
+          titulo: string
+        }
+        Returns: {
+          boleta: string | null
+          borrado_en: string | null
+          cambiado_en: string
+          categoria: string
+          creado_en: string
+          creado_por: string
+          division: string
+          fecha: string
+          id: string
+          monto: number
+          pagado_por: string
+          titulo: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "gastos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       antes_de_crear_usuario: { Args: { event: Json }; Returns: Json }
       asignar_calendario: {
         Args: { google_id: string; persona: string }
         Returns: undefined
       }
+      borrar_gasto: { Args: { gasto: string }; Returns: undefined }
       buscar_calendarios: { Args: never; Returns: undefined }
       calendario_conectado: { Args: never; Returns: boolean }
       calendarios_del_viaje: {
@@ -535,7 +735,42 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      cambiar_gasto: {
+        Args: {
+          categoria: string
+          division: string
+          fecha: string
+          gasto: string
+          monto: number
+          pagado_por: string
+          partes: Json
+          titulo: string
+        }
+        Returns: {
+          boleta: string | null
+          borrado_en: string | null
+          cambiado_en: string
+          categoria: string
+          creado_en: string
+          creado_por: string
+          division: string
+          fecha: string
+          id: string
+          monto: number
+          pagado_por: string
+          titulo: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "gastos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      cambio_gasto: { Args: { gasto: string }; Returns: boolean }
+      deshacer_pago: { Args: { pago: string }; Returns: undefined }
       devolver: { Args: { persona: string }; Returns: undefined }
+      devolver_gasto: { Args: { gasto: string }; Returns: undefined }
       esperar: { Args: { evento: string }; Returns: number }
       esta_alla: {
         Args: { momento: string; persona: string }
@@ -556,7 +791,18 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      gasto_de_ruta: { Args: { ruta: string }; Returns: string }
       guardar_acceso_google: { Args: { llave: string }; Returns: undefined }
+      guardar_partes: {
+        Args: {
+          division: string
+          gasto: string
+          monto: number
+          pagado_por: string
+          partes: Json
+        }
+        Returns: undefined
+      }
       invitar: {
         Args: { correo_nuevo: string }
         Returns: {
@@ -598,8 +844,29 @@ export type Database = {
         }[]
       }
       llenar_cupos: { Args: { evento: string }; Returns: undefined }
+      marcar_pagado: {
+        Args: { a: string; monto: number }
+        Returns: {
+          a: string
+          borrado_en: string | null
+          creado_en: string
+          de: string
+          id: string
+          monto: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "pagos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       mi_persona: { Args: never; Returns: string }
       no_ir: { Args: { evento: string }; Returns: undefined }
+      poner_boleta: {
+        Args: { gasto: string; ruta?: string }
+        Returns: undefined
+      }
       pulso: { Args: never; Returns: string }
       sacar: { Args: { persona: string }; Returns: undefined }
       sacar_de_evento: {
@@ -611,6 +878,7 @@ export type Database = {
         Args: { evento: string; persona: string }
         Returns: undefined
       }
+      veo_gasto: { Args: { gasto: string }; Returns: boolean }
     }
     Enums: {
       canal: "correo" | "linkedin" | "telefono"

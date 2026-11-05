@@ -1,0 +1,239 @@
+/* Rendición: la tarjeta "Vas a rendir" y la lista de gastos en que tienes parte, con su casilla.
+   Los márgenes de afuera los pone Gastos; en el panel encima, el espacio bajo el título va aquí. */
+.raiz[data-computador='true'] {
+  margin-top: 16px;
+}
+
+/* ---------- Vas a rendir ---------- */
+.tarjeta {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--panel);
+}
+
+.raiz[data-computador='true'] .tarjeta {
+  padding: 16px 18px;
+  border: 1px solid var(--regla);
+}
+
+.arriba {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.textos {
+  flex: 1;
+  min-width: 0;
+}
+
+.etiqueta {
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 22px;
+}
+
+.detalle {
+  display: block;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.total {
+  flex: none;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 34px;
+  font-variant-numeric: tabular-nums;
+}
+
+.faltan {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--en-contra);
+}
+
+.descargar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 44px;
+  margin-top: 12px;
+  border: none;
+  border-radius: 6px;
+  background: var(--acento);
+  color: var(--sobre);
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.descargar[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ---------- Los gastos ---------- */
+.lista {
+  margin-top: 14px;
+}
+
+.raiz[data-computador='true'] .lista {
+  border-bottom: 1px solid var(--borde);
+}
+
+.fila {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 60px;
+  padding: 8px 0;
+  border: none;
+  border-top: 1px solid var(--borde);
+  background: transparent;
+  color: var(--tinta);
+  text-align: left;
+  cursor: pointer;
+}
+
+.raiz[data-computador='true'] .fila {
+  min-height: 58px;
+  padding: 6px 0;
+}
+
+.caja {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--regla);
+  border-radius: 5px;
+  color: var(--fondo);
+}
+
+.fila[aria-checked='true'] .caja {
+  border-color: var(--tinta);
+  background: var(--tinta);
+}
+
+.titulo {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 22px;
+}
+
+.sub {
+  display: block;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec);
+}
+
+.derecha {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex: none;
+}
+
+.monto {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.foto,
+.sinFoto {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--sec);
+}
+
+.sinFoto {
+  color: var(--en-contra);
+}
+
+/* Una boleta de papel chiquita, con sus líneas */
+.boleta {
+  display: block;
+  width: 12px;
+  height: 16px;
+  border-radius: 1px;
+  background-color: var(--cinta);
+  background-image: repeating-linear-gradient(to bottom, transparent 0 3px, #9c9378 3px 4px);
+  background-size: 8px 11px;
+  background-repeat: no-repeat;
+  background-position: 2px 3px;
+}
+
+.vacio {
+  margin: 0;
+  padding-top: 32px;
+  font-size: 16px;
+  line-height: 22px;
+  text-align: center;
+  color: var(--sec);
+}
+
+/* ---------- Computador ---------- */
+.tituloPanel {
+  margin: 0;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1;
+}
+
+/* En la columna de la derecha, bajo los saldos */
+.resumen {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--regla);
+  border-radius: 12px;
+}
+
+.preparar {
+  position: relative;
+  flex: none;
+  height: 40px;
+  padding: 0 14px;
+  border: 2px solid var(--tinta);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--tinta);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Se ve de 40 px de alto, pero se toca en 44 */
+.preparar::after {
+  content: '';
+  position: absolute;
+  inset: -4px -2px;
+}

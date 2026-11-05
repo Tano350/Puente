@@ -168,6 +168,21 @@ const trazos = {
     </>
   ),
   ruta: <path d="M3 19a2 2 0 1 0 4 0a2 2 0 0 0-4 0M17 5a2 2 0 1 0 4 0a2 2 0 0 0-4 0M11 19h5.5a3.5 3.5 0 0 0 0-7h-8a3.5 3.5 0 0 1 0-7H13" />,
+  transferir: <path d="M20 10H4l5.5-6M4 14h16l-5.5 6" />,
+  camara: (
+    <>
+      <path d="M5 7h1a2 2 0 0 0 2-2a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2" />
+      <path d="M9 13a3 3 0 1 0 6 0a3 3 0 0 0-6 0" />
+    </>
+  ),
+  // Categorías de los gastos ("otro" usa el de Gastos)
+  auto: <path d="M5 17a2 2 0 1 0 4 0a2 2 0 1 0 -4 0M15 17a2 2 0 1 0 4 0a2 2 0 1 0 -4 0M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9m-6-6h15m-6 0V6" />,
+  tren: <path d="M8 3h8a3 3 0 0 1 3 3v9a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V6a3 3 0 0 1 3-3zM5 11h14M9 15h.01M15 15h.01M8 19l-2 2M16 19l2 2" />,
+  bici: <path d="M2 18a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M16 18a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M12 19v-4l-3-3l5-4l2 3h3M16 5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />,
+  comida: <path d="M19 3v12h-5c-.02-3.68.18-7.41 5-12zm0 12v6h-1v-3M8 4v17M5 4v3a3 3 0 1 0 6 0V4" />,
+  cafe: <path d="M3 10h14v5a6 6 0 0 1-6 6H9a6 6 0 0 1-6-6v-5zM16.75 16.73a3 3 0 1 0 .25-5.56M8 3a2.4 2.4 0 0 0-1 2a2.4 2.4 0 0 0 1 2M12 3a2.4 2.4 0 0 0-1 2a2.4 2.4 0 0 0 1 2" />,
+  super: <path d="M4 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0M15 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0M17 17H6V3H4M6 5l14 1l-1 7H6" />,
+  entrada: <path d="M15 5v2M15 11v2M15 17v2M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4V7a2 2 0 0 1 2-2" />,
 }
 
 export type NombreIcono = keyof typeof trazos

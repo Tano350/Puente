@@ -1,0 +1,213 @@
+/* ---------- Celular ---------- */
+/* Abajo queda espacio para "Anotar gasto", que flota sobre la lista */
+.celular {
+  padding: 28px 20px 96px;
+}
+
+.cabecera {
+  margin: -28px -20px 0;
+  padding: 28px 20px 14px;
+  border-bottom: 1px solid var(--regla);
+  background: var(--panel);
+}
+
+.titulo {
+  margin: 0;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 42px;
+  line-height: 1;
+}
+
+.pestanas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  margin-top: 14px;
+  padding: 3px;
+  border: 1px solid var(--regla);
+  border-radius: 8px;
+}
+
+.pestanas button {
+  position: relative;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sec);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Se ven de 36 px, pero se tocan en 44 */
+.pestanas button::after {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
+}
+
+.pestanas button[aria-selected='true'] {
+  background: var(--tinta);
+  color: var(--panel);
+}
+
+/* Lo primero de cada pestaña, bajo la cabecera (si la pieza trae su propio margen, se juntan en uno) */
+.arriba {
+  margin-top: 16px;
+}
+
+.anotar {
+  position: fixed;
+  right: 16px;
+  bottom: calc(92px + env(safe-area-inset-bottom));
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 52px;
+  padding: 0 20px 0 16px;
+  border: none;
+  border-radius: 26px;
+  background: var(--acento);
+  color: var(--sobre);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* ---------- Sin gastos y sin poder cargarlos (las dos formas) ---------- */
+.vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 110px 12px 0;
+  text-align: center;
+}
+
+.tuercaVacia {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  background: var(--regla);
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+}
+
+.tuercaVacia::after {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 7px;
+  width: 42px;
+  height: 42px;
+  background: var(--fondo);
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+}
+
+.vacioTexto {
+  margin-top: 18px;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.fallo {
+  padding: 56px 8px 0;
+  text-align: center;
+  font-size: 16px;
+  line-height: 22px;
+  color: var(--sec);
+}
+
+.fallo p {
+  margin: 0;
+}
+
+.reintentar {
+  height: 44px;
+  margin-top: 14px;
+  padding: 0 18px;
+  border: 2px solid var(--tinta);
+  border-radius: 6px;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* ---------- Computador ---------- */
+.cabeceraPc {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 28px 32px 0;
+}
+
+.anotarPc {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  height: 44px;
+  padding: 0 16px 0 12px;
+  border: 2px solid var(--tinta);
+  border-radius: 6px;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.anotarPc[aria-pressed='true'] {
+  background: var(--tinta);
+  color: var(--panel);
+}
+
+/* Sin relleno a los lados: el panel encima llega hasta el borde derecho */
+.cuerpoPc {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin-top: 22px;
+}
+
+.columnasPc {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-rows: minmax(0, 1fr);
+  column-gap: 40px;
+  padding: 0 32px;
+}
+
+/* La lista se desplaza sola; el margen negativo deja ver entero el borde de foco de las filas */
+.listaPc {
+  min-height: 0;
+  margin: 0 -6px;
+  padding: 4px 6px 24px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+/* La columna no se posiciona: así el panel de "Saldar" se abre encima de toda la pantalla, como los demás */
+.ladoPc {
+  min-height: 0;
+  margin: 0 -6px;
+  padding: 0 6px 24px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.bloque + .bloque {
+  margin-top: 22px;
+}
+
+.listaPc .vacio {
+  padding-top: 96px;
+}

@@ -1,0 +1,333 @@
+/* ---------- Celular: arriba, una franja del color de las tarjetas con "Gastos" y "Editar" ---------- */
+.franja {
+  margin: -24px -20px 0;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--regla);
+  background: var(--panel);
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: 44px;
+}
+
+.editar,
+.editarPc {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  margin-right: -8px;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.editarPc {
+  height: 40px;
+  margin-right: 0;
+  margin-left: -8px;
+}
+
+/* ---------- El gasto: ícono, nombre y monto grande ---------- */
+.titular {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: var(--fondo);
+}
+
+.nombres {
+  flex: 1;
+  min-width: 0;
+}
+
+.titulo {
+  margin: 0;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 30px;
+  overflow-wrap: anywhere;
+}
+
+.monto {
+  display: block;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 34px;
+  line-height: 40px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Lo que es para ti, en color: a favor si prestaste, en contra si te prestaron */
+.resumen {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 22px;
+  color: var(--sec);
+  font-variant-numeric: tabular-nums;
+}
+
+.resumen[data-tipo='prestaste'] {
+  color: var(--a-favor);
+}
+
+.resumen[data-tipo='teprestaron'] {
+  color: var(--en-contra);
+}
+
+/* ---------- Quién pagó y la parte de cada uno ---------- */
+.pago {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.fuerte {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.entre {
+  margin-top: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.partes {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 48 px más la raya, como en el lienzo */
+.parte {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 49px;
+  border-top: 1px solid var(--borde);
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.parte[data-tu='true'] {
+  font-weight: 500;
+}
+
+.parteNombre {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.parteMonto {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+/* "Tú", en vez de la foto */
+.tu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border-radius: 50%;
+  background: var(--acento);
+  color: var(--sobre);
+  font-weight: 500;
+}
+
+/* ---------- Abajo ---------- */
+.rindo {
+  margin-top: 12px;
+}
+
+.anoto,
+.ajeno {
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec);
+}
+
+.ajeno {
+  margin-top: 6px;
+}
+
+.eliminar {
+  height: 44px;
+  margin-top: 8px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--sec);
+  font-size: 15px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* La hoja que pregunta antes de eliminar */
+.hoja {
+  outline: none;
+}
+
+.explica {
+  margin: 6px 0 0;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--sec);
+}
+
+.hojaBotones {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+/* ---------- Computador ---------- */
+/* Abajo del panel, en vez de "Editar", si no lo puedes cambiar */
+.soloPuede {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--sec);
+}
+
+/* La pregunta para eliminar va en el lugar de "Eliminar gasto" y queda a la vista abajo del panel */
+.pregunta {
+  position: sticky;
+  bottom: 24px;
+  margin-top: 12px;
+  padding: 14px 16px 16px;
+  border: 1px solid var(--regla);
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: 0 -12px 24px var(--sombra);
+}
+
+.preguntaTitulo {
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 21px;
+  line-height: 25px;
+  overflow-wrap: anywhere;
+}
+
+.preguntaExplica {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sec-tarjeta);
+}
+
+.preguntaBotones {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.si,
+.no {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.si {
+  border: none;
+  background: var(--tinta);
+  color: var(--panel);
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.si[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.no {
+  border: 2px solid var(--tinta);
+  background: transparent;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+@media (min-width: 1024px) {
+  /* 52 px más el borde, como en el lienzo */
+  .icono {
+    width: 54px;
+    height: 54px;
+    border: 1px solid var(--borde);
+    background: var(--panel);
+  }
+
+  .resumen {
+    margin-top: 8px;
+  }
+
+  .reparto {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--borde);
+  }
+
+  .pago {
+    margin-top: 0;
+  }
+
+  .entre {
+    margin-top: 16px;
+  }
+
+  .parte {
+    min-height: 45px;
+  }
+
+  .anoto {
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .eliminar {
+    height: 40px;
+    margin-top: 6px;
+  }
+}

@@ -1,0 +1,91 @@
+/* "Hoy" y "Foto de la boleta", como fichas */
+.fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.ficha {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1.5px solid var(--regla);
+  border-radius: 18px;
+  background: transparent;
+  color: var(--tinta);
+  font-size: 15px;
+  line-height: 20px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* Se ve de 36 px y se toca en 44 */
+.ficha::after {
+  content: '';
+  position: absolute;
+  inset: -4px -2px;
+}
+
+.ficha:has(:focus-visible) {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+/* El calendario del dispositivo, invisible pero encima, para que se abra al tocar */
+.fechaNativa {
+  position: absolute;
+  inset: -4px -2px;
+  z-index: 1;
+  width: calc(100% + 4px);
+  height: calc(100% + 8px);
+  margin: 0;
+  padding: 0;
+  border: none;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.fechaNativa:focus-visible {
+  outline: none;
+}
+
+.conFoto {
+  gap: 8px;
+  padding: 0 8px 0 6px;
+  border-color: var(--tinta);
+}
+
+.miniatura {
+  display: block;
+  flex: none;
+  width: 20px;
+  height: 26px;
+  border-radius: 2px;
+  background: var(--cinta);
+  object-fit: cover;
+}
+
+.archivo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---------- Computador ---------- */
+.fila[data-computador='true'] .ficha {
+  height: 34px;
+  border-radius: 17px;
+  font-weight: 500;
+}
+
+.fila[data-computador='true'] .ficha::after,
+.fila[data-computador='true'] .fechaNativa {
+  inset: -5px -2px;
+  height: calc(100% + 10px);
+}
