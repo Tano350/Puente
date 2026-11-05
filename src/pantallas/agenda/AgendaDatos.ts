@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Persona } from '../../datos/consultas.ts'
 import { asistentesDe, estaAllaEse, type Asistente, type Evento, type Ocupado } from '../../datos/eventos.ts'
 import { idiomaActual } from '../../datos/idioma.ts'
-import { ahora, conMayuscula, diaEn, diasEntre, hora, sumarDias, VIAJE } from '../../datos/fechas.ts'
+import { ahora, conMayuscula, diaEn, diasEntre, hora, sumarDias, type Ventana } from '../../datos/fechas.ts'
 
 // Lo que muestran las vistas de la Agenda: eventos y ratos ocupados con su día y sus minutos en California.
 
@@ -157,27 +157,27 @@ export function diasDelMes(dia: string): string[] {
   return Array.from({ length: diasEntre(desde, sumarDias(lunesDe(ultimo), 6)) }, (_, i) => sumarDias(desde, i))
 }
 
-export function enElViaje(dia: string): boolean {
-  return dia >= VIAJE.desde && dia <= VIAJE.hasta
+export function enElViaje(dia: string, viaje: Ventana): boolean {
+  return dia >= viaje.desde && dia <= viaje.hasta
 }
 
-const dentroDelViaje = (dia: string) => (dia < VIAJE.desde ? VIAJE.desde : dia > VIAJE.hasta ? VIAJE.hasta : dia)
+const dentroDelViaje = (dia: string, viaje: Ventana) => (dia < viaje.desde ? viaje.desde : dia > viaje.hasta ? viaje.hasta : dia)
 
 // Se abre en hoy; antes del viaje, en el día que llegas; después, en el que volviste
-export function diaInicial(yo: Pick<Persona, 'llega' | 'vuelve'>, hoy: string): string {
-  if (hoy < VIAJE.desde) return dentroDelViaje(yo.llega ?? VIAJE.desde)
-  if (hoy > VIAJE.hasta) return dentroDelViaje(yo.vuelve ?? VIAJE.hasta)
+export function diaInicial(yo: Pick<Persona, 'llega' | 'vuelve'>, hoy: string, viaje: Ventana): string {
+  if (hoy < viaje.desde) return dentroDelViaje(yo.llega ?? viaje.desde, viaje)
+  if (hoy > viaje.hasta) return dentroDelViaje(yo.vuelve ?? viaje.hasta, viaje)
   return hoy
 }
 
-export function mover(vista: Vista, dia: string, paso: number): string {
-  return dentroDelViaje(vista === 'dia' ? sumarDias(dia, paso) : vista === 'semana' ? sumarDias(dia, 7 * paso) : sumarMeses(dia, paso))
+export function mover(vista: Vista, dia: string, paso: number, viaje: Ventana): string {
+  return dentroDelViaje(vista === 'dia' ? sumarDias(dia, paso) : vista === 'semana' ? sumarDias(dia, 7 * paso) : sumarMeses(dia, paso), viaje)
 }
 
-export function puedeMover(vista: Vista, dia: string, paso: number): boolean {
-  if (vista === 'dia') return paso < 0 ? dia > VIAJE.desde : dia < VIAJE.hasta
-  if (vista === 'semana') return paso < 0 ? lunesDe(dia) > VIAJE.desde : sumarDias(lunesDe(dia), 6) < VIAJE.hasta
-  return paso < 0 ? dia.slice(0, 7) > VIAJE.desde.slice(0, 7) : dia.slice(0, 7) < VIAJE.hasta.slice(0, 7)
+export function puedeMover(vista: Vista, dia: string, paso: number, viaje: Ventana): boolean {
+  if (vista === 'dia') return paso < 0 ? dia > viaje.desde : dia < viaje.hasta
+  if (vista === 'semana') return paso < 0 ? lunesDe(dia) > viaje.desde : sumarDias(lunesDe(dia), 6) < viaje.hasta
+  return paso < 0 ? dia.slice(0, 7) > viaje.desde.slice(0, 7) : dia.slice(0, 7) < viaje.hasta.slice(0, 7)
 }
 
 // Los días que se ven en cada vista

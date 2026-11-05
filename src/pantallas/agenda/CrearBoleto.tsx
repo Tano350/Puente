@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState, type MouseEvent } from 'react'
 import { BotonPrincipal, CampoTexto, Etiqueta, Hoja, TituloHoja } from '../../componentes/Controles.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
 import type { TipoEvento } from '../../datos/eventos.ts'
-import { conMayuscula, diaLargo, VIAJE } from '../../datos/fechas.ts'
+import { conMayuscula, diaLargo, type Ventana } from '../../datos/fechas.ts'
 import { useTextos } from '../../textos.ts'
 import { CUPOS, conInicio, type Borrador, type Errores } from './CrearBorrador.ts'
 import estilos from './CrearBoleto.module.css'
@@ -36,13 +36,14 @@ type Props = {
   computador: boolean
   enfocar: boolean
   editando?: boolean
+  viaje: Ventana
   onCambio: (cambios: Partial<Borrador>) => void
 }
 
 // El mismo boleto del detalle, con cada línea por llenar y el talón con el modo.
 // Día, horas y tipo usan los selectores del dispositivo, invisibles encima de cada línea.
 // Al editar uno cerrado, el talón no cuenta personas: esas se cambian en el evento.
-export function CrearBoleto({ borrador, errores, computador, enfocar, editando = false, onCambio }: Props) {
+export function CrearBoleto({ borrador, errores, computador, enfocar, editando = false, viaje, onCambio }: Props) {
   const textos = useTextos()
   const t = textos.agenda.crear
   const caja = useRef<HTMLDivElement>(null)
@@ -170,8 +171,8 @@ export function CrearBoleto({ borrador, errores, computador, enfocar, editando =
                 type="date"
                 className={estilos.nativo}
                 aria-label={t.dia}
-                min={VIAJE.desde}
-                max={VIAJE.hasta}
+                min={viaje.desde}
+                max={viaje.hasta}
                 value={dia ?? ''}
                 aria-invalid={Boolean(errores.dia)}
                 aria-describedby={errores.dia ? 'crear-dia-error' : undefined}

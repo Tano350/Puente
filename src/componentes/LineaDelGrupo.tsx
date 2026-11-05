@@ -1,16 +1,15 @@
 import type { Persona } from '../datos/consultas.ts'
-import { indiceEnElViaje, VIAJE } from '../datos/fechas.ts'
+import { indiceEnElViaje, mesesDe, type Ventana } from '../datos/fechas.ts'
 import { tieneFechas } from '../datos/grupo.ts'
 import { primerNombre } from '../datos/nombres.ts'
 import { useTextos } from '../textos.ts'
 import { Avatar } from './Avatar.tsx'
 import estilos from './LineaDelGrupo.module.css'
 
-const enElViaje = (i: number) => Math.min(Math.max(i, 0), VIAJE.dias - 1)
-const porcentaje = (dias: number) => `${(dias / VIAJE.dias) * 100}%`
-
 type Props = {
   gente: Persona[]
+  // Los días que cubre el gráfico: enero y febrero, estirados si alguien llega antes o se va después
+  ventana: Ventana
   yo: string
   hoy: string
   // En el computador cada fila se elige y el perfil se ve al lado
@@ -21,14 +20,16 @@ type Props = {
 }
 
 // Enero y febrero del grupo: arriba cuántos están allá cada día, abajo la estadía de cada uno y una raya en hoy
-export function LineaDelGrupo({ gente, yo, hoy, computador = false, visibles = gente, elegida = null, onElegir }: Props) {
+export function LineaDelGrupo({ gente, ventana: viaje, yo, hoy, computador = false, visibles = gente, elegida = null, onElegir }: Props) {
   const textos = useTextos()
   const t = textos.grupo
-  const tramos = new Map(gente.filter(tieneFechas).map((p) => [p.id, [enElViaje(indiceEnElViaje(p.llega)), enElViaje(indiceEnElViaje(p.vuelve))]]))
-  const cuantos = Array.from({ length: VIAJE.dias }, (_, i) => [...tramos.values()].filter(([a, b]) => a <= i && i <= b).length)
+  const enElViaje = (i: number) => Math.min(Math.max(i, 0), viaje.dias - 1)
+  const porcentaje = (dias: number) => `${(dias / viaje.dias) * 100}%`
+  const tramos = new Map(gente.filter(tieneFechas).map((p) => [p.id, [enElViaje(indiceEnElViaje(p.llega, viaje)), enElViaje(indiceEnElViaje(p.vuelve, viaje))]]))
+  const cuantos = Array.from({ length: viaje.dias }, (_, i) => [...tramos.values()].filter(([a, b]) => a <= i && i <= b).length)
   const escala = Math.max(gente.length, 1)
-  const hoyEnLaLinea = indiceEnElViaje(hoy)
-  const verHoy = hoyEnLaLinea >= 0 && hoyEnLaLinea < VIAJE.dias
+  const hoyEnLaLinea = indiceEnElViaje(hoy, viaje)
+  const verHoy = hoyEnLaLinea >= 0 && hoyEnLaLinea < viaje.dias
   const nombre = (p: Persona) => (p.id === yo ? t.tu : p.entro_en ? primerNombre(p) : p.correo.split('@')[0])
 
   const pista = (p: Persona) => {
@@ -77,11 +78,12 @@ export function LineaDelGrupo({ gente, yo, hoy, computador = false, visibles = g
   return (
     <div className={estilos.linea} data-computador={computador}>
       <div className={estilos.meses}>
-        <span style={{ flex: 31 }}>{textos.fechas.enero}</span>
-        <span style={{ flex: 28 }}>{textos.fechas.febrero}</span>
+        {mesesDe(viaje).map((mes) => (
+          <span key={mes.nombre} style={{ flex: mes.dias }}>{mes.dias < 7 ? '' : mes.dias < 20 ? mes.nombre.slice(0, 3) : mes.nombre}</span>
+        ))}
       </div>
       <div className={estilos.cuerpo}>
-        {verHoy && <div className={estilos.hoy} aria-hidden="true" style={{ left: `calc(var(--etiqueta) + (100% - var(--etiqueta)) * ${(hoyEnLaLinea + 0.5) / VIAJE.dias})` }} />}
+        {verHoy && <div className={estilos.hoy} aria-hidden="true" style={{ left: `calc(var(--etiqueta) + (100% - var(--etiqueta)) * ${(hoyEnLaLinea + 0.5) / viaje.dias})` }} />}
         <div role="img" aria-label={t.grafico} className={estilos.barras}>
           {cuantos.map((n, i) => (
             <span key={i} className={estilos.barra} data-hoy={i === hoyEnLaLinea} style={{ height: Math.max(computador ? 2 : 1, Math.round((n / escala) * 40)) }} />

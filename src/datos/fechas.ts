@@ -30,14 +30,47 @@ const ESTADIA = {
   en: { llega: 'Arrives', volvio: 'Back', alla: 'There' },
 }
 
-// Enero y febrero de 2027: el rango que muestran los gráficos y que aceptan las fechas
-export const VIAJE = { desde: '2027-01-01', hasta: '2027-02-28', dias: 59 }
+// Un tramo de días (los dos bordes cuentan)
+export type Ventana = { desde: string; hasta: string; dias: number }
+
+// Enero y febrero de 2027: lo mínimo que muestran los gráficos y la Agenda. Las fechas de estadía son libres: si
+// alguien llega antes o se va después, la ventana del viaje se estira para cubrirlo (ventanaDelViaje).
+export const VIAJE: Ventana = { desde: '2027-01-01', hasta: '2027-02-28', dias: 59 }
 
 const DIA_MS = 86_400_000
 const aFecha = (iso: string) => new Date(`${iso}T00:00:00Z`)
 
 // Solo en desarrollo: ?hoy=2027-01-12 hace como si fuera ese día, para revisar las pantallas del viaje
-const hoyDePrueba = import.meta.env.DEV ? new URLSearchParams(window.location.search).get('hoy') : null
+// (import.meta.env no existe al correr las pruebas con node)
+const hoyDePrueba = import.meta.env?.DEV ? new URLSearchParams(window.location.search).get('hoy') : null
+
+// Enero y febrero, estirados para cubrir las estadías de todos (también una que tenga solo llegada o solo vuelta)
+export function ventanaDelViaje(estadias: { llega: string | null; vuelve: string | null }[]): Ventana {
+  let desde = VIAJE.desde
+  let hasta = VIAJE.hasta
+  for (const { llega, vuelve } of estadias) {
+    for (const dia of [llega, vuelve]) {
+      if (!dia) continue
+      if (dia < desde) desde = dia
+      if (dia > hasta) hasta = dia
+    }
+  }
+  return { desde, hasta, dias: diasEntre(desde, hasta) }
+}
+
+// Los meses que cubre una ventana, con cuántos de sus días caen dentro: los rótulos de los gráficos ("Enero", "Febrero"…)
+export function mesesDe(ventana: Ventana, idioma: Idioma = idiomaActual()): { nombre: string; dias: number }[] {
+  const meses: { nombre: string; dias: number }[] = []
+  let dia = ventana.desde
+  while (dia <= ventana.hasta) {
+    const f = aFecha(dia)
+    const finDeMes = new Date(Date.UTC(f.getUTCFullYear(), f.getUTCMonth() + 1, 0)).toISOString().slice(0, 10)
+    const fin = finDeMes < ventana.hasta ? finDeMes : ventana.hasta
+    meses.push({ nombre: conMayuscula(NOMBRES[idioma].meses[f.getUTCMonth()]), dias: diasEntre(dia, fin) })
+    dia = sumarDias(fin, 1)
+  }
+  return meses
+}
 
 export function sumarDias(iso: string, dias: number): string {
   return new Date(aFecha(iso).getTime() + dias * DIA_MS).toISOString().slice(0, 10)
@@ -48,9 +81,9 @@ export function diasEntre(a: string, b: string): number {
   return Math.round((aFecha(b).getTime() - aFecha(a).getTime()) / DIA_MS) + 1
 }
 
-// Posición del día dentro de enero y febrero (0 = 1 de enero)
-export function indiceEnElViaje(iso: string): number {
-  return diasEntre(VIAJE.desde, iso) - 1
+// Posición del día dentro de la ventana del viaje (0 = su primer día; por omisión, el 1 de enero)
+export function indiceEnElViaje(iso: string, ventana: Ventana = VIAJE): number {
+  return diasEntre(ventana.desde, iso) - 1
 }
 
 // "16 ene" o "Jan 16"

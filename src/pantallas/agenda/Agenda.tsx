@@ -10,6 +10,7 @@ import { consultas, usePersonas } from '../../datos/consultas.ts'
 import { cambiarContacto, useContactos, type Contacto } from '../../datos/contactos.ts'
 import { borrarEvento, cambiarEvento, ErrorDeEvento, ir as irAlEvento, noIr, useAsistentes, useEventos, useOcupados, type Evento } from '../../datos/eventos.ts'
 import { conMayuscula, diaEn, diaLargo, rango } from '../../datos/fechas.ts'
+import { useViaje } from '../../datos/grupo.ts'
 import { primerNombre } from '../../datos/nombres.ts'
 import { useSesion } from '../../datos/sesion.tsx'
 import { useTextos } from '../../textos.ts'
@@ -45,6 +46,7 @@ export function Agenda() {
   const aviso = useAviso()
   const [chile, setChile] = useHoraDeChile()
   const ahora = useAhora()
+  const viaje = useViaje()
   // Sin elegir, el celular abre en Día y el computador en Semana
   const [vistaElegida, setVista] = useState<Vista | null>(null)
   const [soloVoy, setSoloVoy] = useState(false)
@@ -67,7 +69,7 @@ export function Agenda() {
 
   const hoy = diaEn(ahora)
   const vista = vistaElegida ?? (esComputador ? 'semana' : 'dia')
-  const dia = ancla ?? diaInicial(yo, hoy)
+  const dia = ancla ?? diaInicial(yo, hoy, viaje)
   const lista = eventos.data
   const abierto = id && id !== 'nuevo' ? lista?.find((e) => e.id === id) : undefined
   const desdeContacto = contactos?.find((c) => c.id === estado?.contacto)
@@ -251,9 +253,9 @@ export function Agenda() {
       type="button"
       className={estilos.flecha}
       aria-label={paso < 0 ? tv.anterior[vista] : tv.siguiente[vista]}
-      aria-disabled={!puedeMover(vista, dia, paso)}
+      aria-disabled={!puedeMover(vista, dia, paso, viaje)}
       onClick={() => {
-        if (puedeMover(vista, dia, paso)) setAncla(mover(vista, dia, paso))
+        if (puedeMover(vista, dia, paso, viaje)) setAncla(mover(vista, dia, paso, viaje))
       }}
     >
       <Icono nombre={paso < 0 ? 'izquierda' : 'derecha'} medida={20} trazo={2} />
@@ -289,9 +291,9 @@ export function Agenda() {
         onIr={(pieza) => void irAl(pieza)}
       />
     ) : vista === 'semana' ? (
-      <AgendaSemana dias={semana} piezas={porDias} computador={esComputador} chile={chile} hoy={hoy} ahora={ahora} elegido={elegido?.id} onAbrir={abrir} onDia={elegirDia} />
+      <AgendaSemana dias={semana} piezas={porDias} computador={esComputador} chile={chile} hoy={hoy} ahora={ahora} viaje={viaje} elegido={elegido?.id} onAbrir={abrir} onDia={elegirDia} />
     ) : (
-      <AgendaMes dia={dia} piezas={porDias} computador={esComputador} hoy={hoy} yo={yo} soloVoy={soloVoy} onDia={elegirDia} />
+      <AgendaMes dia={dia} piezas={porDias} computador={esComputador} hoy={hoy} yo={yo} soloVoy={soloVoy} viaje={viaje} onDia={elegirDia} />
     )
 
   // ---------- Computador: la vista y, al lado, el boleto o "Nuevo" ----------
@@ -323,7 +325,7 @@ export function Agenda() {
         <div className={estilos.cuerpoPc}>
           <div className={estilos.columnasPc}>
             <div id="agenda-vista" role="tabpanel" aria-labelledby={`agenda-${vista}`} className={estilos.vistaPc}>
-              {vista === 'dia' && <VistaFranja dias={semana} elegido={dia} hoy={hoy} computador onElegir={setAncla} />}
+              {vista === 'dia' && <VistaFranja dias={semana} elegido={dia} hoy={hoy} computador viaje={viaje} onElegir={setAncla} />}
               {contenido}
             </div>
             <aside key={nuevo ? 'nuevo' : edicion ? 'editar' : elegido?.id} aria-label={nuevo ? tv.nuevo : edicion ? te.titulo : elegido?.titulo} className={estilos.lado}>
@@ -365,9 +367,10 @@ export function Agenda() {
             elegido={dia}
             hoy={hoy}
             computador={false}
+            viaje={viaje}
             onElegir={setAncla}
             onSemana={(paso) => {
-              if (puedeMover('semana', dia, paso)) setAncla(mover('semana', dia, paso))
+              if (puedeMover('semana', dia, paso, viaje)) setAncla(mover('semana', dia, paso, viaje))
             }}
           />
         ) : (

@@ -177,6 +177,9 @@
 }
 
 .compMeses span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
   padding-left: 3px;
   border-left: 1px solid var(--regla);
 }

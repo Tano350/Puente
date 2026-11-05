@@ -1,6 +1,19 @@
-import type { Persona } from './consultas.ts'
+import { useMemo } from 'react'
+import { usePersonas, type Persona } from './consultas.ts'
+import { ventanaDelViaje, type Ventana } from './fechas.ts'
+import { useSesion } from './sesion.tsx'
 
 // Lo que comparten Grupo e Invitados: quiénes siguen en Puente, en qué orden y cómo se buscan.
+
+// La ventana del viaje según las estadías de quienes siguen en Puente: enero y febrero, estirada si alguien llega
+// antes o se va después. La usan los gráficos de Grupo y la Agenda. Tus fechas salen de la sesión, que tiene las
+// recién guardadas aunque la lista del grupo todavía no se recargue.
+export function useViaje(): Ventana {
+  const { data: personas } = usePersonas()
+  const sesion = useSesion()
+  const yo = sesion.tipo === 'dentro' ? sesion.persona : null
+  return useMemo(() => ventanaDelViaje([...(personas ?? []).filter((p) => !p.sacada_en), ...(yo ? [yo] : [])]), [personas, yo])
+}
 
 export type ConFechas = Persona & { llega: string; vuelve: string }
 

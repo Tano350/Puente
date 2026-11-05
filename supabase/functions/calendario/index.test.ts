@@ -33,6 +33,7 @@ function responder(sql: string, valores: unknown[]): Fila[] {
   if (sql.startsWith('select a.evento')) return base.van
   if (sql.startsWith('select persona, google_id')) return base.calendarios.filter((c) => c.persona)
   if (sql.startsWith('select persona, inicio, fin')) return []
+  if (sql.startsWith('select to_char(min(llega)')) return [{ llega: null, vuelve: null }]
   assert.ok(!sql.startsWith('select'), `lectura inesperada: ${sql}`)
   base.escrituras.push({ sql, valores })
   return []
@@ -101,7 +102,7 @@ function preparar(activa: boolean) {
     lista: [
       { id: 'cal-martina', summary: 'Martina: The Bridge', accessRole: 'writer' },
       { id: 'cal-ignacio', summary: 'Ignacio: The bridge', accessRole: 'reader' },
-      { id: 'personal', summary: 'tano@example.com', accessRole: 'owner' },
+      { id: 'personal', summary: 'vicente@example.com', accessRole: 'owner' },
     ],
   })
 }

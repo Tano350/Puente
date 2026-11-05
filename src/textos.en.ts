@@ -567,8 +567,6 @@ export const en: Textos = {
     dias: (n: number) => (n === 1 ? '1 day there.' : `${n} days there.`),
     grupo: 'Group',
     tu: 'You',
-    enero: 'January',
-    febrero: 'February',
     grafico: 'How many in the group are there each day',
     faltaLlegada: 'Choose when you arrive.',
     faltaVuelta: 'Choose when you return.',

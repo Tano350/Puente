@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router'
 import type { Persona } from '../datos/consultas.ts'
 import { useContactos } from '../datos/contactos.ts'
-import { diaLargo, diasEntre, estadia, hoyEnCalifornia, indiceEnElViaje, rango, rangoLargo, VIAJE } from '../datos/fechas.ts'
-import { tieneFechas, type ConFechas } from '../datos/grupo.ts'
+import { diaLargo, diasEntre, estadia, hoyEnCalifornia, indiceEnElViaje, mesesDe, rango, rangoLargo, ventanaDelViaje } from '../datos/fechas.ts'
+import { tieneFechas, useViaje, type ConFechas } from '../datos/grupo.ts'
 import { carreraCorta, primerNombre } from '../datos/nombres.ts'
 import { useTextos } from '../textos.ts'
 import { Avatar } from './Avatar.tsx'
@@ -50,15 +50,17 @@ export function Tarjeta({ persona }: { persona: Persona }) {
   )
 }
 
-const porcentaje = (dias: number) => `${(dias / VIAJE.dias) * 100}%`
-
 // Las dos estadías, una sobre otra, con la raya de hoy
 function EstadiaComparada({ persona, yo, hoy }: { persona: ConFechas; yo: ConFechas; hoy: string }) {
   const textos = useTextos()
-  const hoyEnLaLinea = indiceEnElViaje(hoy)
+  // La del grupo, y si alguna de las dos estadías se sale de ella, se estira
+  const grupo = useViaje()
+  const viaje = ventanaDelViaje([{ llega: grupo.desde, vuelve: grupo.hasta }, persona, yo])
+  const porcentaje = (dias: number) => `${(dias / viaje.dias) * 100}%`
+  const hoyEnLaLinea = indiceEnElViaje(hoy, viaje)
   const fila = (quien: ConFechas, tu: boolean) => {
-    const a = Math.max(indiceEnElViaje(quien.llega), 0)
-    const b = Math.min(indiceEnElViaje(quien.vuelve), VIAJE.dias - 1)
+    const a = Math.max(indiceEnElViaje(quien.llega, viaje), 0)
+    const b = Math.min(indiceEnElViaje(quien.vuelve, viaje), viaje.dias - 1)
     return (
       <div className={estilos.compFila}>
         <span className={estilos.compNombre} data-tu={tu}>{tu ? textos.grupo.tu : primerNombre(quien)}</span>
@@ -71,12 +73,13 @@ function EstadiaComparada({ persona, yo, hoy }: { persona: ConFechas; yo: ConFec
   return (
     <div className={estilos.comparada}>
       <div className={estilos.compMeses}>
-        <span style={{ flex: 31 }}>{textos.fechas.enero}</span>
-        <span style={{ flex: 28 }}>{textos.fechas.febrero}</span>
+        {mesesDe(viaje).map((mes) => (
+          <span key={mes.nombre} style={{ flex: mes.dias }}>{mes.dias < 7 ? '' : mes.dias < 20 ? mes.nombre.slice(0, 3) : mes.nombre}</span>
+        ))}
       </div>
       <div className={estilos.compCuerpo}>
-        {hoyEnLaLinea >= 0 && hoyEnLaLinea < VIAJE.dias && (
-          <div className={estilos.compHoy} aria-hidden="true" style={{ left: `calc(var(--etiqueta) + (100% - var(--etiqueta)) * ${(hoyEnLaLinea + 0.5) / VIAJE.dias})` }} />
+        {hoyEnLaLinea >= 0 && hoyEnLaLinea < viaje.dias && (
+          <div className={estilos.compHoy} aria-hidden="true" style={{ left: `calc(var(--etiqueta) + (100% - var(--etiqueta)) * ${(hoyEnLaLinea + 0.5) / viaje.dias})` }} />
         )}
         {fila(persona, false)}
         {fila(yo, true)}

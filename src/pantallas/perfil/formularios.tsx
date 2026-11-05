@@ -6,7 +6,7 @@ import { Tuerca } from '../../componentes/Tuerca.tsx'
 import type { Json } from '../../datos/base.ts'
 import type { Persona } from '../../datos/consultas.ts'
 import { avisosActivos, esIPhone, estaInstalada, sePuedePedirInstalar } from '../../datos/dispositivo.ts'
-import { diasEntre, VIAJE } from '../../datos/fechas.ts'
+import { diasEntre, ventanaDelViaje } from '../../datos/fechas.ts'
 import { limpiarFotos, subirFoto } from '../../datos/fotos.ts'
 import type { CambiosDePersona } from '../../datos/sesion.tsx'
 import { useTextos } from '../../textos.ts'
@@ -124,11 +124,11 @@ export function FormularioFechas({ borrador, onCambio, errores, otros }: { borra
   return (
     <>
       <div className={estilos.fechas}>
-        <CampoFecha id="fecha-llega" etiqueta={textos.llegas} valor={borrador.llega} min={VIAJE.desde} max={VIAJE.hasta} onCambio={(llega) => onCambio({ ...borrador, llega })} error={errores.llega} />
-        <CampoFecha id="fecha-vuelve" etiqueta={textos.vuelves} valor={borrador.vuelve} min={borrador.llega ?? VIAJE.desde} max={VIAJE.hasta} onCambio={(vuelve) => onCambio({ ...borrador, vuelve })} error={errores.vuelve} />
+        <CampoFecha id="fecha-llega" etiqueta={textos.llegas} valor={borrador.llega} onCambio={(llega) => onCambio({ ...borrador, llega })} error={errores.llega} />
+        <CampoFecha id="fecha-vuelve" etiqueta={textos.vuelves} valor={borrador.vuelve} min={borrador.llega ?? undefined} onCambio={(vuelve) => onCambio({ ...borrador, vuelve })} error={errores.vuelve} />
       </div>
       {dias && <div className={estilos.dias}>{textos.dias(dias)}</div>}
-      <Histograma otros={otros} llega={borrador.llega} vuelve={borrador.vuelve} />
+      <Histograma otros={otros} llega={borrador.llega} vuelve={borrador.vuelve} ventana={ventanaDelViaje([...otros, borrador])} />
     </>
   )
 }

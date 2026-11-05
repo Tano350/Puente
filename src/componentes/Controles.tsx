@@ -122,7 +122,7 @@ export function CampoTexto({ id, valor, onCambio, error, multilinea = false, pla
 }
 
 // Fecha con el formato del diseño ("Sáb 16 ene"); al tocarla se abre el calendario del dispositivo
-export function CampoFecha({ id, etiqueta, valor, min, max, onCambio, error }: { id: string; etiqueta: string; valor: string | null; min: string; max: string; onCambio: (valor: string | null) => void; error?: string | null }) {
+export function CampoFecha({ id, etiqueta, valor, min, max, onCambio, error }: { id: string; etiqueta: string; valor: string | null; min?: string; max?: string; onCambio: (valor: string | null) => void; error?: string | null }) {
   const textos = useTextos()
   return (
     <div>

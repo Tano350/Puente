@@ -6,7 +6,7 @@
 //    administra puede hacer cambios ahí) y guarda cuándo está ocupado. Apagada, no lee ni escribe en el de nadie.
 // 3. Anota la vuelta en public.sincronizacion y responde cuántas operaciones hizo de cada tipo.
 import postgres from 'npm:postgres@3.4.9'
-import { cruzar, cruzarCalendarios, DESDE, HASTA, seLee, type CalendarioDe, type CalendarioGuardado, type Evento, type Operacion, type Va } from './cruce.ts'
+import { cruzar, cruzarCalendarios, seLee, ventanaDeCruce, type CalendarioDe, type CalendarioGuardado, type Evento, type Operacion, type Va } from './cruce.ts'
 import { ErrorGoogle, google, pedirToken, RECONECTAR, type EventoGoogle, type Google } from './google.ts'
 
 type Sql = ReturnType<typeof postgres>
@@ -81,20 +81,25 @@ async function anotarCalendarios(sql: Sql, g: Google): Promise<number> {
 // Copias de los eventos en el calendario de cada uno y sus ratos ocupados, para los calendarios asignados
 async function sincronizarEventos(sql: Sql, g: Google, conteo: Conteo, fallo: Fallo): Promise<void> {
   const { eventos, van, calendarios, ocupados } = await leerPuente(sql)
+  // La ventana cubre también las estadías de quienes siguen en Puente
+  const [estadias] = await sql<{ llega: string | null; vuelve: string | null }[]>`
+    select to_char(min(llega), 'YYYY-MM-DD') as llega, to_char(max(vuelve), 'YYYY-MM-DD') as vuelve
+      from public.personas where sacada_en is null`
+  const ventana = ventanaDeCruce(estadias?.llega, estadias?.vuelve)
   // Cada calendario se lee por separado: si uno no se puede leer, ese queda como estaba y los demás siguen.
   // Los de "solo libre u ocupado" no se leen.
   const listas = new Map<string, EventoGoogle[]>()
   await Promise.all(
     calendarios.filter((c) => seLee(c.permiso)).map(async ({ google_id }) => {
       try {
-        listas.set(google_id, await g.listar(google_id, DESDE, HASTA))
+        listas.set(google_id, await g.listar(google_id, ventana.desde, ventana.hasta))
       } catch (error) {
         fallo(`leer ${google_id}`, error)
       }
     }),
   )
   // De a una: si una falla (por ejemplo, alguien no dio permiso para cambiar eventos), las demás siguen
-  for (const op of cruzar({ eventos, van, calendarios, ocupados, listas })) {
+  for (const op of cruzar({ eventos, van, calendarios, ocupados, listas, ventana })) {
     try {
       await aplicar(op, sql, g)
       conteo[op.tipo]++

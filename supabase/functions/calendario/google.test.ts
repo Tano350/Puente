@@ -18,7 +18,7 @@ function falso(respuestas: [number, unknown][]) {
   return { pedir, llamadas }
 }
 
-const acceso = { client_id: 'cliente.apps.googleusercontent.com', client_secret: 'secreto-del-cliente', refresh_token: '1//permiso-de-tano' }
+const acceso = { client_id: 'cliente.apps.googleusercontent.com', client_secret: 'secreto-del-cliente', refresh_token: '1//permiso-de-vicente' }
 const CALENDARIO = 'c_abc123@group.calendar.google.com'
 const EVENTOS = 'https://www.googleapis.com/calendar/v3/calendars/c_abc123%40group.calendar.google.com/events'
 const cuerpo: CuerpoGoogle = {
@@ -43,7 +43,7 @@ test('pedirToken cambia el permiso guardado por un token de acceso', async () =>
     grant_type: 'refresh_token',
     client_id: 'cliente.apps.googleusercontent.com',
     client_secret: 'secreto-del-cliente',
-    refresh_token: '1//permiso-de-tano',
+    refresh_token: '1//permiso-de-vicente',
   })
 })
 
@@ -60,14 +60,14 @@ test('Si Google ya no acepta el permiso, hay que volver a conectar (sin mostrar 
   await assert.rejects(pedirToken(acceso, otro.pedir), (error: unknown) => {
     assert.ok(error instanceof ErrorGoogle)
     assert.equal(error.message, 'Google no dio acceso (401: Unauthorized)')
-    assert.ok(!error.message.includes('secreto-del-cliente') && !error.message.includes('permiso-de-tano'))
+    assert.ok(!error.message.includes('secreto-del-cliente') && !error.message.includes('permiso-de-vicente'))
     return true
   })
 })
 
 test('calendarios lista todos los calendarios de quien administra, también los escondidos, página por página', async () => {
   const { pedir, llamadas } = falso([
-    [200, { items: [{ id: 'a', summary: 'The Bridge: Tano' }], nextPageToken: 'pagina2' }],
+    [200, { items: [{ id: 'a', summary: 'The Bridge: Vicente' }], nextPageToken: 'pagina2' }],
     [200, { items: [{ id: 'b', summary: 'The Bridge: Coti' }] }],
   ])
   const lista = await google('ya29.de-prueba', pedir).calendarios()

@@ -8,6 +8,20 @@ import type { CalendarioGoogle, CuerpoGoogle, EventoGoogle, HoraGoogle } from '.
 export const DESDE = '2026-12-01T00:00:00Z'
 export const HASTA = '2027-04-01T00:00:00Z'
 export const ZONA = 'America/Los_Angeles'
+export type Ventana = { desde: string; hasta: string }
+const DIA = 86_400_000
+
+// La ventana que cubre DESDE–HASTA y también las estadías de todos. llegaMin y vuelveMax son días 'AAAA-MM-DD' (o null):
+// la llegada más temprana y la vuelta más tardía. Se abre un día antes de la llegada y dos después de la vuelta, en UTC,
+// para que ningún día de California quede afuera. Sin fechas (o con una inválida), queda DESDE–HASTA.
+export function ventanaDeCruce(llegaMin: string | null | undefined, vuelveMax: string | null | undefined): Ventana {
+  const dia = (fecha: string | null | undefined) => (fecha && /^\d{4}-\d{2}-\d{2}$/.test(fecha) ? Date.parse(`${fecha}T00:00:00Z`) : NaN)
+  const llega = dia(llegaMin)
+  const vuelve = dia(vuelveMax)
+  const desde = Number.isNaN(llega) ? DESDE : new Date(Math.min(Date.parse(DESDE), llega - DIA)).toISOString().replace('.000Z', 'Z')
+  const hasta = Number.isNaN(vuelve) ? HASTA : new Date(Math.max(Date.parse(HASTA), vuelve + 2 * DIA)).toISOString().replace('.000Z', 'Z')
+  return { desde, hasta }
+}
 const AGENDA = 'https://puente-2027.vercel.app/agenda/'
 // Los calendarios del viaje se llaman como "Josefa: The Bridge" (el nombre puede ir antes o después, con cualquier mayúscula)
 const DEL_VIAJE = /the\s*bridge/i
@@ -44,6 +58,7 @@ export type Entrada = {
   calendarios: CalendarioDe[]
   ocupados: Ocupado[] // lo que ya está en public.ocupados_google
   listas: Map<string, EventoGoogle[]> // lo leído de cada calendario; si falta uno, no se pudo leer y queda como estaba
+  ventana?: Ventana // lo que se cruza; sin ella, DESDE–HASTA
 }
 
 // Con permiso de dueño o para hacer cambios, Puente pone ahí las copias; con permiso solo para ver, únicamente lee cuándo
@@ -51,9 +66,9 @@ export type Entrada = {
 export const seLee = (permiso: string) => permiso === 'owner' || permiso === 'writer' || permiso === 'reader'
 export const seEscribe = (permiso: string) => permiso === 'owner' || permiso === 'writer'
 
-export function cruzar({ eventos, van, calendarios, ocupados, listas }: Entrada): Operacion[] {
+export function cruzar({ eventos, van, calendarios, ocupados, listas, ventana = { desde: DESDE, hasta: HASTA } }: Entrada): Operacion[] {
   const ops: Operacion[] = []
-  const vigentes = new Map(eventos.filter(enVentana).map((e) => [e.id, e]))
+  const vigentes = new Map(eventos.filter((e) => enVentana(e, ventana)).map((e) => [e.id, e]))
   for (const { persona, google_id: calendario, permiso } of calendarios) {
     const lista = listas.get(calendario)
     if (!lista || !seLee(permiso)) continue
@@ -186,7 +201,7 @@ const activo = (g: EventoGoogle) => g.status !== 'cancelled'
 const marca = (g: EventoGoogle) => g.extendedProperties?.private?.puente
 const segundos = (momento: string) => Math.floor(Date.parse(momento) / 1000)
 const iso = (momento: string) => new Date(segundos(momento) * 1000).toISOString().replace('.000Z', 'Z')
-const enVentana = (e: Evento) => segundos(e.fin) > segundos(DESDE) && segundos(e.inicio) < segundos(HASTA)
+const enVentana = (e: Evento, v: Ventana) => segundos(e.fin) > segundos(v.desde) && segundos(e.inicio) < segundos(v.hasta)
 const texto = (s: string | undefined) => (s ?? '').replace(/\r\n?/g, '\n').trim()
 
 function limpio(s: string | null | undefined): string | null {

@@ -1,6 +1,6 @@
 import { useState, type CSSProperties } from 'react'
 import type { Evento, Ocupado } from '../../datos/eventos.ts'
-import { CHILE, conMayuscula, diaLargo, hora, momento } from '../../datos/fechas.ts'
+import { CHILE, conMayuscula, diaLargo, hora, momento, type Ventana } from '../../datos/fechas.ts'
 import { useTextos } from '../../textos.ts'
 import { acomodar, enElViaje, horasDe, lugarYCiudad, type Pieza } from './AgendaDatos.ts'
 import { AgendaRato } from './AgendaRato.tsx'
@@ -13,6 +13,7 @@ type Props = {
   chile: boolean
   hoy: string
   ahora: string
+  viaje: Ventana
   elegido?: string
   onAbrir: (evento: Evento) => void
   onDia: (dia: string) => void
@@ -20,7 +21,7 @@ type Props = {
 
 // Las 7 columnas con horas. Lo tuyo va lleno, lo de los demás con borde y lo siguiente a lo que vas en acento.
 // Tocar un día lo abre en la vista Día; tocar un rato ocupado abre su hoja.
-export function AgendaSemana({ dias, piezas, computador, chile, hoy, ahora, elegido, onAbrir, onDia }: Props) {
+export function AgendaSemana({ dias, piezas, computador, chile, hoy, ahora, viaje, elegido, onAbrir, onDia }: Props) {
   const textos = useTextos()
   const tv = textos.agenda.vista
   const [rato, setRato] = useState<Ocupado | null>(null)
@@ -105,7 +106,7 @@ export function AgendaSemana({ dias, piezas, computador, chile, hoy, ahora, eleg
               aria-label={esHoy ? tv.hoyEs(diaLargo(dia)) : conMayuscula(diaLargo(dia))}
               aria-current={esHoy ? 'date' : undefined}
               data-pasado={dia < hoy}
-              disabled={!enElViaje(dia)}
+              disabled={!enElViaje(dia, viaje)}
               onClick={() => onDia(dia)}
             >
               <span className={estilos.cabezaDia}>{esHoy ? tv.hoy : tv.diasCortos[i]}</span>

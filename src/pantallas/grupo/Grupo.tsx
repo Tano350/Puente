@@ -9,7 +9,7 @@ import { DetallePersona, Tarjeta } from '../../componentes/Tarjeta.tsx'
 import { useEsComputador } from '../../componentes/useEsComputador.ts'
 import escritorio from '../../componentes/Escritorio.module.css'
 import { usePersonas, type Persona } from '../../datos/consultas.ts'
-import { diaCorto, diaDeLaSemana, diaLargo, hoyEnCalifornia, rangoCorto, sumarDias } from '../../datos/fechas.ts'
+import { diaCorto, diaDeLaSemana, diaLargo, hoyEnCalifornia, rangoCorto, sumarDias, ventanaDelViaje } from '../../datos/fechas.ts'
 import { coincide, estaAlla, integrantes, porLlegada, tieneFechas } from '../../datos/grupo.ts'
 import { carreraCorta, primerNombre } from '../../datos/nombres.ts'
 import { useSesion } from '../../datos/sesion.tsx'
@@ -106,6 +106,7 @@ export function Grupo() {
   // Tu fila sale de la sesión, que tiene lo último que guardaste
   const gente = integrantes([yo, ...(personas ?? []).filter((p) => p.id !== yo.id)], yo.id)
   const hoy = hoyEnCalifornia()
+  const ventana = ventanaDelViaje(gente)
   const [linea1, linea2] = resumen(gente, yo.id, hoy, textos)
   const visibles = gente.filter((p) => coincide(p, busqueda))
   const nadie = visibles.length === 0 ? textos.nadieCoincide(busqueda.trim()) : null
@@ -128,6 +129,7 @@ export function Grupo() {
             <div className={escritorio.columna}>
               <LineaDelGrupo
                 gente={gente}
+                ventana={ventana}
                 visibles={visibles}
                 yo={yo.id}
                 hoy={hoy}
@@ -176,7 +178,7 @@ export function Grupo() {
         <div className={estilos.linea1}>{linea1}</div>
         {linea2 && <div className={estilos.linea2}>{linea2}</div>}
       </div>
-      <LineaDelGrupo gente={gente} yo={yo.id} hoy={hoy} />
+      <LineaDelGrupo gente={gente} ventana={ventana} yo={yo.id} hoy={hoy} />
       <div className={estilos.integrantes}>
         <span>{t.integrantes}</span>
         <span className={estilos.cuenta}>{gente.length}</span>

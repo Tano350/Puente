@@ -9,6 +9,7 @@ import type { TablesUpdate } from '../../datos/base.ts'
 import { cambiarContacto, puedeCambiar, seAgenda, useContactos, type Contacto } from '../../datos/contactos.ts'
 import { asistentesDe, borrarOcupado, cambiarEvento, cancelarEvento, crearEvento, libres, marcarOcupado, sumarAEvento, useAsistentes, useEventos, type Evento } from '../../datos/eventos.ts'
 import { ahora } from '../../datos/fechas.ts'
+import { useViaje } from '../../datos/grupo.ts'
 import { useSesion } from '../../datos/sesion.tsx'
 import { useTextos } from '../../textos.ts'
 import { avisarAlCerrar } from './CrearAviso.tsx'
@@ -54,6 +55,7 @@ export function CrearEvento(props: Props) {
 
 function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCreado, onGuardado, onCancelado }: Props) {
   const textos = useTextos()
+  const viaje = useViaje()
   const sesion = useSesion()
   const { data: asistentes } = useAsistentes()
   const { data: contactos } = useContactos()
@@ -106,7 +108,7 @@ function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCrea
 
   const guardar = async () => {
     if (enviando.current) return
-    const nuevos = validar(borrador, t)
+    const nuevos = validar(borrador, t, viaje)
     setErrores(nuevos)
     const rango = rangoDe(borrador)
     if (nuevos.titulo || nuevos.dia || nuevos.hora || !rango) {
@@ -243,7 +245,7 @@ function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCrea
           {t.pasara(contacto.nombre, textos.contactos.etapas.reunion_agendada)}
         </div>
       )}
-      <CrearBoleto borrador={borrador} errores={errores} computador={computador} enfocar={computador && !desdeContacto && !editando} editando={Boolean(editando)} onCambio={cambiar} />
+      <CrearBoleto borrador={borrador} errores={errores} computador={computador} enfocar={computador && !desdeContacto && !editando} editando={Boolean(editando)} viaje={viaje} onCambio={cambiar} />
       {hayErrores && (
         <div className={estilos.errores} role="alert">
           {CAMPOS.map(

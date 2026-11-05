@@ -579,8 +579,6 @@ export const es = {
     dias: (n: number) => (n === 1 ? '1 día allá.' : `${n} días allá.`),
     grupo: 'Grupo',
     tu: 'Tú',
-    enero: 'Enero',
-    febrero: 'Febrero',
     grafico: 'Cuántos del grupo están allá cada día',
     faltaLlegada: 'Elige cuándo llegas.',
     faltaVuelta: 'Elige cuándo vuelves.',
