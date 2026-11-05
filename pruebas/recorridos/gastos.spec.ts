@@ -4,6 +4,8 @@ import { abrir, es, esCelular } from './ayuda.ts'
 const g = es.gastos
 const an = g.anotar
 const GASTOS = '/gastos?maqueta=lista&hoy=2027-01-12'
+// La misma Josefa sin administrar: lo que puede o no con un gasto ajeno se ve solo así (administrando, cambia todo)
+const MIEMBRO = '/gastos?maqueta=miembro&hoy=2027-01-12'
 
 // Un gasto de la lista, por su título
 const gasto = (page: Page, titulo: string) => page.getByRole('main').getByRole('button', { name: new RegExp(`^${titulo}`) })
@@ -119,6 +121,37 @@ test.describe('Gastos', () => {
     await expect(p.getByRole('button', { name: an.verFoto })).toBeVisible()
     await p.getByRole('button', { name: an.quitarFoto }).click()
     await expect(p.getByRole('button', { name: an.fotoBoleta })).toBeVisible()
+  })
+
+  test('con parte en un gasto que pagó otro, agrego la foto de la boleta y puedo deshacerla', async ({ page }) => {
+    await abrir(page, MIEMBRO)
+    // Lo pagó Catalina y no tiene foto: Tú no lo puedes editar, pero sí agregar la foto
+    await gasto(page, 'Caltrain a San Francisco').click()
+    const p = panel(page, 'Caltrain a San Francisco')
+    await expect(p.getByRole('button', { name: g.detalle.editar })).toHaveCount(0)
+    await page.locator('input[type="file"]').last().setInputFiles(FOTO)
+    await expect(p.getByRole('button', { name: g.detalle.verBoleta })).toBeVisible()
+    const aviso = page.getByRole('status').filter({ hasText: g.detalle.agregasteFoto })
+    await expect(aviso).toBeVisible()
+    // La foto es mía: Deshacer la quita y vuelve el botón de agregar
+    await aviso.getByRole('button', { name: es.deshacer }).click()
+    await expect(p.getByRole('button', { name: g.detalle.agregarFoto })).toBeVisible()
+    await expect(p.getByRole('button', { name: g.detalle.verBoleta })).toHaveCount(0)
+  })
+
+  test('la foto que puso otro la puedo ver, pero no quitarla ni cambiarla', async ({ page }) => {
+    await abrir(page, MIEMBRO)
+    // Diego pagó el supermercado y puso la foto; Tú tienes parte
+    await gasto(page, 'Supermercado').click()
+    const p = panel(page, 'Supermercado')
+    await expect(p.getByRole('button', { name: g.detalle.agregarFoto })).toHaveCount(0)
+    await expect(p.getByRole('button', { name: g.detalle.editar })).toHaveCount(0)
+    await p.getByRole('button', { name: g.detalle.verBoleta }).click()
+    const visor = page.getByRole('dialog', { name: g.detalle.boletaDe('Supermercado') })
+    await expect(visor.getByRole('img')).toBeVisible()
+    await expect(visor.getByRole('button', { name: es.cerrar })).toBeVisible()
+    await expect(page.getByRole('button', { name: an.quitarFoto })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: g.detalle.agregarFoto })).toHaveCount(0)
   })
 
   test('sin señal se edita y se elimina un gasto que todavía no sube', async ({ page }) => {

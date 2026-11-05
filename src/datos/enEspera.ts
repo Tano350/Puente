@@ -35,8 +35,10 @@ export function conPartes(lista: Parte[], partes: Parte[]): Parte[] {
   return !gasto || lista.some((p) => p.gasto === gasto) ? lista : [...lista, ...partes]
 }
 
-export function conBoleta(lista: Gasto[], gasto: string, ruta: string | null): Gasto[] {
-  return lista.map((g) => (g.id === gasto && g.boleta !== ruta ? { ...g, boleta: ruta } : g))
+// "por" es quién puso la foto: sin foto no hay quien la puso, así que quitarla lo deja en null
+export function conBoleta(lista: Gasto[], gasto: string, ruta: string | null, por: string | null = null): Gasto[] {
+  const quien = ruta ? por : null
+  return lista.map((g) => (g.id === gasto && (g.boleta !== ruta || (g.boleta_por ?? null) !== quien) ? { ...g, boleta: ruta, boleta_por: quien } : g))
 }
 
 export function conRendicion(lista: Rendicion[], cambio: { gasto: string; si: boolean; persona: string; marcado_en: string }): Rendicion[] {

@@ -8,7 +8,7 @@ import { useAviso } from '../../componentes/useAviso.ts'
 import { useConectado } from '../../datos/conexion.ts'
 import { usePersonas } from '../../datos/consultas.ts'
 import { diaLargo, diaLocal } from '../../datos/fechas.ts'
-import { borrarGasto, conmigo, partesDe, plata, puedeCambiarGasto, rendir, usePartes, useRendiciones, type Gasto } from '../../datos/gastos.ts'
+import { borrarGasto, conmigo, partesDe, plata, puedeCambiarBoleta, puedeCambiarGasto, rendir, usePartes, useRendiciones, type Gasto } from '../../datos/gastos.ts'
 import { primerNombre } from '../../datos/nombres.ts'
 import { useSesion } from '../../datos/sesion.tsx'
 import { useSinSubir } from '../../datos/sinSenal.ts'
@@ -65,6 +65,8 @@ function Detalle({ gasto, computador, onCerrar, onEditar, onEliminado }: Props) 
   // Uno "solo" no necesita las partes para decir que es tuyo
   const relacion = solo || partes ? conmigo(gasto, partes ?? [], yo.id) : null
   const tengoParte = solo || (suyas?.some((p) => p.persona === yo.id && p.monto > 0) ?? false)
+  // La foto de la boleta la puede agregar cualquiera con parte, aunque no pueda cambiar el gasto
+  const puedeFoto = puedeCambiarBoleta(gasto, yo, tengoParte)
   const rindo = rindiendo ?? (rendiciones?.some((r) => r.gasto === gasto.id && r.persona === yo.id) ?? false)
 
   const persona = (id: string) => personas?.find((p) => p.id === id)
@@ -192,7 +194,7 @@ function Detalle({ gasto, computador, onCerrar, onEditar, onEliminado }: Props) 
   const cuerpo = (
     <>
       {reparto}
-      <DetalleBoleta gasto={gasto} puede={puede} libre={libre} computador={computador} aviso={aviso} />
+      <DetalleBoleta gasto={gasto} puede={puedeFoto} libre={libre} computador={computador} aviso={aviso} />
       {tengoParte && (
         <div className={estilos.rindo}>
           <Interruptor etiqueta={d.rindo} activo={rindo} onCambio={(si) => void cambiarRindo(si)} ultimo />

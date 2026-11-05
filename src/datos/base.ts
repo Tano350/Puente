@@ -317,6 +317,7 @@ export type Database = {
       gastos: {
         Row: {
           boleta: string | null
+          boleta_por: string | null
           borrado_en: string | null
           cambiado_en: string
           categoria: string
@@ -331,6 +332,7 @@ export type Database = {
         }
         Insert: {
           boleta?: string | null
+          boleta_por?: string | null
           borrado_en?: string | null
           cambiado_en?: string
           categoria?: string
@@ -345,6 +347,7 @@ export type Database = {
         }
         Update: {
           boleta?: string | null
+          boleta_por?: string | null
           borrado_en?: string | null
           cambiado_en?: string
           categoria?: string
@@ -358,6 +361,13 @@ export type Database = {
           titulo?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "gastos_boleta_por_fkey"
+            columns: ["boleta_por"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "gastos_creado_por_fkey"
             columns: ["creado_por"]
@@ -773,6 +783,7 @@ export type Database = {
         }
         Returns: {
           boleta: string | null
+          boleta_por: string | null
           borrado_en: string | null
           cambiado_en: string
           categoria: string
@@ -830,6 +841,7 @@ export type Database = {
         }
         Returns: {
           boleta: string | null
+          boleta_por: string | null
           borrado_en: string | null
           cambiado_en: string
           categoria: string
@@ -849,6 +861,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      cambio_boleta: { Args: { gasto: string }; Returns: boolean }
       cambio_gasto: { Args: { gasto: string }; Returns: boolean }
       deshacer_pago: { Args: { pago: string }; Returns: undefined }
       despertar_avisos: { Args: never; Returns: undefined }

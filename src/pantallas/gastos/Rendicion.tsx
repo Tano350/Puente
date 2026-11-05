@@ -5,7 +5,7 @@ import { PanelEncima } from '../../componentes/Paneles.tsx'
 import { useAviso } from '../../componentes/useAviso.ts'
 import { estaConectado, useConectado } from '../../datos/conexion.ts'
 import { consultas } from '../../datos/consultas.ts'
-import { plata, prepararBoleta, puedeCambiarGasto, quitarBoleta, rendir, subirBoleta, type Gasto } from '../../datos/gastos.ts'
+import { plata, prepararBoleta, puedeCambiarBoleta, quitarBoleta, rendir, subirBoleta, type Gasto } from '../../datos/gastos.ts'
 import { nombreCompleto } from '../../datos/nombres.ts'
 import { useSesion } from '../../datos/sesion.tsx'
 import { useTextos } from '../../textos.ts'
@@ -54,6 +54,7 @@ export function VistaRendicion({ computador, onCerrar }: { computador: boolean; 
     })
   }
 
+  // Cada fila es un gasto en que tengo parte: por eso basta decir que sí a "tengoParte" en la regla de la foto.
   // "Sin foto" abre la cámara o los archivos; la foto se achica y se sube al tiro, con aviso y Deshacer
   const agregarFoto = (gasto: Gasto) => {
     if (subiendo) return
@@ -138,7 +139,7 @@ export function VistaRendicion({ computador, onCerrar }: { computador: boolean; 
               fila={x}
               subiendo={subiendo === x.gasto.id}
               onAlternar={() => void alternar(x)}
-              onAgregarFoto={sesion.tipo === 'dentro' && puedeCambiarGasto(x.gasto, sesion.persona) ? () => agregarFoto(x.gasto) : undefined}
+              onAgregarFoto={sesion.tipo === 'dentro' && puedeCambiarBoleta(x.gasto, sesion.persona, true) ? () => agregarFoto(x.gasto) : undefined}
             />
           ))}
         </div>

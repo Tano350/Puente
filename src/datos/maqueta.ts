@@ -270,7 +270,7 @@ export function gastosDeMaqueta(): DatosGastos {
     // Dentro de un día, el primero de la lista es el último anotado
     gastos: ejemplos.map(([id, fecha, titulo, categoria, monto, pago, division, , boleta], i) => {
       const cuando = `${fecha}T${String(23 - i).padStart(2, '0')}:00:00Z`
-      return { id, titulo, categoria, monto, fecha, pagado_por: pago, division, boleta: boleta ?? null, creado_por: pago, creado_en: cuando, cambiado_en: cuando, borrado_en: null }
+      return { id, titulo, categoria, monto, fecha, pagado_por: pago, division, boleta: boleta ?? null, boleta_por: boleta ? pago : null, creado_por: pago, creado_en: cuando, cambiado_en: cuando, borrado_en: null }
     }),
     partes: ejemplos.flatMap(([gasto, , , , , , , partes]) => partes.map(([persona, monto]) => ({ gasto, persona, monto }))),
     pagos: [],

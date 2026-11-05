@@ -156,6 +156,15 @@ export function puedeCambiarGasto(gasto: Gasto, yo: { id: string; administra: bo
   return gasto.creado_por === yo.id || gasto.pagado_por === yo.id || yo.administra
 }
 
+// La foto de la boleta la cambia quien puede cambiar el gasto y, además, cualquiera con parte en él (menos en uno
+// "solo" o eliminado) mientras no haya foto o la que hay la puso esa persona: nadie pisa la foto de otro. Una foto
+// anterior a "boleta_por" (o si la base aún no manda la columna) no tiene quién la puso: queda para los de siempre.
+export function puedeCambiarBoleta(gasto: Gasto, yo: { id: string; administra: boolean }, tengoParte: boolean): boolean {
+  if (puedeCambiarGasto(gasto, yo)) return true
+  if (gasto.division === 'solo' || gasto.borrado_en || !tengoParte) return false
+  return !gasto.boleta || (gasto.boleta_por ?? null) === yo.id
+}
+
 // Tu relación con un gasto, como la muestra la lista: "prestaste" (pagaste y otros te deben), "te prestaron"
 // (pagó otro y tienes parte), "no participas" o "solo tuyo". El monto va en centavos.
 export type Conmigo = { tipo: 'prestaste' | 'teprestaron' | 'noparticipas' | 'solotuyo'; monto: number }
@@ -237,6 +246,7 @@ export function anotarGasto(datos: DatosGasto): Promise<Gasto> {
     pagado_por: datos.pagado_por,
     division: datos.division,
     boleta: null,
+    boleta_por: null,
     creado_por: miId(),
     creado_en: ahora,
     cambiado_en: ahora,
@@ -352,14 +362,16 @@ export async function prepararBoleta(archivo: Blob): Promise<Blob> {
 // Sube la foto a la carpeta del gasto y la deja puesta; borra la que hubiera antes. Sin señal la foto espera en el
 // dispositivo (con el id del gasto) y se sube cuando vuelve la señal; la ruta se elige antes, así reintentar no la
 // duplica. Mientras espera, la boleta se ve desde el dispositivo.
-type Boleta = { gasto: string; ruta: string; anterior: string | null }
+// "anteriorPor": quién puso la foto que ya estaba (para devolverla tal cual si esta se suelta antes de subir); lo
+// que quedó en espera antes de que existiera no lo trae, y se lee como null.
+type Boleta = { gasto: string; ruta: string; anterior: string | null; anteriorPor?: string | null }
 registrarEscritura<Boleta, void>('subirBoleta', {
   hacer: async ({ gasto, ruta, anterior }) => {
     const guardada = await boletaGuardada(gasto)
     // Si la foto ya no está o la cambiaron por otra (que también espera), esta no sube
     if (guardada?.ruta !== ruta) return
     if (import.meta.env.DEV && modoMaqueta) {
-      cambiarGastosDeMaqueta((d) => ({ ...d, gastos: d.gastos.map((g) => (g.id === gasto ? { ...g, boleta: ruta } : g)) }))
+      cambiarGastosDeMaqueta((d) => ({ ...d, gastos: d.gastos.map((g) => (g.id === gasto ? { ...g, boleta: ruta, boleta_por: miId() } : g)) }))
     } else {
       await asegurarSesion()
       const subida = await supabase.storage.from('boletas').upload(ruta, guardada.foto, { contentType: 'image/jpeg', cacheControl: '31536000' })
@@ -370,7 +382,8 @@ registrarEscritura<Boleta, void>('subirBoleta', {
     }
     await soltarBoleta(gasto)
   },
-  sobre: { gastos: (lista: Gasto[], { gasto, ruta }) => conBoleta(lista, gasto, ruta) },
+  // La foto en espera es mía: así "Deshacer" sigue permitido para quien la puso
+  sobre: { gastos: (lista: Gasto[], { gasto, ruta }) => conBoleta(lista, gasto, ruta, miId()) },
   id: ({ gasto }) => `boleta:${gasto}`,
   recargar: ['gastos'],
 })
@@ -385,8 +398,9 @@ export async function subirBoleta(gasto: Gasto, foto: Blob): Promise<void> {
   // Si otra foto de este gasto esperaba, la de antes sigue siendo la que estaba en la base
   const previa = pendientesDe<Boleta>('subirBoleta').find((v) => v.gasto === gasto.id)
   const anterior = previa ? previa.anterior : gasto.boleta
+  const anteriorPor = previa ? (previa.anteriorPor ?? null) : (gasto.boleta_por ?? null)
   await guardarBoleta(gasto.id, { ruta, foto })
-  await escribir<Boleta, void>('subirBoleta', { gasto: gasto.id, ruta, anterior }, undefined)
+  await escribir<Boleta, void>('subirBoleta', { gasto: gasto.id, ruta, anterior, anteriorPor }, undefined)
 }
 
 export async function quitarBoleta(gasto: Gasto): Promise<void> {
@@ -394,12 +408,12 @@ export async function quitarBoleta(gasto: Gasto): Promise<void> {
   const esperaba = soltarPendiente<Boleta>('subirBoleta', (v) => v.gasto === gasto.id)
   if (esperaba) {
     await soltarBoleta(gasto.id)
-    consultas.setQueryData<Gasto[]>(['gastos'], (lista) => lista && conBoleta(lista, gasto.id, esperaba.anterior))
+    consultas.setQueryData<Gasto[]>(['gastos'], (lista) => lista && conBoleta(lista, gasto.id, esperaba.anterior, esperaba.anteriorPor ?? null))
     if (!esperaba.anterior) return
-    gasto = { ...gasto, boleta: esperaba.anterior }
+    gasto = { ...gasto, boleta: esperaba.anterior, boleta_por: esperaba.anteriorPor ?? null }
   }
   if (import.meta.env.DEV && modoMaqueta) {
-    cambiarGastosDeMaqueta((d) => ({ ...d, gastos: d.gastos.map((g) => (g.id === gasto.id ? { ...g, boleta: null } : g)) }))
+    cambiarGastosDeMaqueta((d) => ({ ...d, gastos: d.gastos.map((g) => (g.id === gasto.id ? { ...g, boleta: null, boleta_por: null } : g)) }))
   } else {
     const { error } = await supabase.rpc('poner_boleta', { gasto: gasto.id })
     if (error) throw error
