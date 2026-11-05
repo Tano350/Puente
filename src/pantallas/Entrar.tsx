@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react'
 import { Tuerca } from '../componentes/Tuerca.tsx'
+import { useConectado } from '../datos/conexion.ts'
 import { useSesion } from '../datos/sesion.tsx'
 import { useTextos } from '../textos.ts'
 import estilos from './Entrar.module.css'
@@ -32,10 +34,47 @@ function LogoGoogle() {
   )
 }
 
+// Al tocar el botón se anota en esta pestaña. Si la página vuelve a cargarse enseguida y sigue sin sesión, la persona
+// canceló en Google (o Google falló): Supabase solo avisa en la dirección y la sesión la lee y la limpia antes de Entrar.
+// Un intento de hace más de 5 minutos ya no cuenta (si entró bien, Entrar no se abrió y la marca quedó guardada).
+const INTENTO = 'puente.entrando'
+
+function volviDeUnIntento(): boolean {
+  try {
+    const intento = Number(sessionStorage.getItem(INTENTO))
+    return intento > 0 && intento < performance.timeOrigin && performance.timeOrigin - intento < 5 * 60_000 && Date.now() - performance.timeOrigin < 30_000
+  } catch {
+    return false
+  }
+}
+
 export function Entrar() {
   const sesion = useSesion()
   const { entrar: textos } = useTextos()
+  const hayConexion = useConectado()
   const noInvitado = sesion.tipo === 'noInvitado' ? sesion : null
+  const [fallo, setFallo] = useState(volviDeUnIntento)
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem(INTENTO)
+    } catch {
+      // Sin almacenamiento no se recuerda; no pasa nada
+    }
+  }, [])
+  const pulsar = async () => {
+    if (!hayConexion) return
+    setFallo(false)
+    try {
+      sessionStorage.setItem(INTENTO, String(Date.now()))
+    } catch {
+      // Igual se intenta entrar
+    }
+    try {
+      await (noInvitado ? sesion.probarOtraCuenta() : sesion.entrar())
+    } catch {
+      setFallo(true)
+    }
+  }
 
   return (
     <main className={estilos.pantalla}>
@@ -46,6 +85,7 @@ export function Entrar() {
           <span className={estilos.nombre}>Puente</span>
         </div>
         <div className={estilos.viaje}>{textos.viaje}</div>
+        {!noInvitado && <div className={estilos.indicacion}>{textos.indicacion}</div>}
         {noInvitado && (
           <div role="alert" className={estilos.alerta}>
             <div className={estilos.alertaTitulo}>
@@ -61,10 +101,20 @@ export function Entrar() {
           </div>
         )}
       </div>
-      <button type="button" className={estilos.google} onClick={() => void (noInvitado ? sesion.probarOtraCuenta() : sesion.entrar())}>
+      <button type="button" className={estilos.google} aria-disabled={!hayConexion} onClick={() => void pulsar()}>
         <LogoGoogle />
         {noInvitado ? textos.otraCuenta : textos.conGoogle}
       </button>
+      {!hayConexion ? (
+        <div className={estilos.nota}>{textos.sinConexion}</div>
+      ) : (
+        fallo &&
+        !noInvitado && (
+          <div role="alert" className={estilos.nota}>
+            {textos.noSePudo}
+          </div>
+        )
+      )}
     </main>
   )
 }

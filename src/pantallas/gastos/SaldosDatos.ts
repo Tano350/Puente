@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { usePersonas, type Persona } from '../../datos/consultas.ts'
 import { comoSaldar, saldos, useGastos, usePagos, usePartes, type Gasto, type Pago, type Parte, type Transferencia } from '../../datos/gastos.ts'
 import { integrantes } from '../../datos/grupo.ts'
-import { primerNombre } from '../../datos/nombres.ts'
+import { nombreCompleto, primerNombre } from '../../datos/nombres.ts'
 import { useSesion } from '../../datos/sesion.tsx'
 import { useTextos, type Textos } from '../../textos.ts'
 
@@ -58,7 +58,7 @@ function calcular(yo: Persona, gastos: Gasto[], partes: Parte[], pagos: Pago[], 
     if (id === yo.id) return textos.gastos.tu
     const p = porId.get(id)
     if (!p) return textos.gastos.saldos.alguien
-    return repetidos.has(primerNombre(p)) ? (p.nombre ?? p.correo) : primerNombre(p)
+    return repetidos.has(primerNombre(p)) ? nombreCompleto(p) : primerNombre(p)
   }
   const gente = visibles
     .map((p) => ({ persona: p, saldo: de(p.id) }))

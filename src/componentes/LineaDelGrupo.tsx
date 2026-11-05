@@ -30,7 +30,8 @@ export function LineaDelGrupo({ gente, ventana: viaje, yo, hoy, computador = fal
   const escala = Math.max(gente.length, 1)
   const hoyEnLaLinea = indiceEnElViaje(hoy, viaje)
   const verHoy = hoyEnLaLinea >= 0 && hoyEnLaLinea < viaje.dias
-  const nombre = (p: Persona) => (p.id === yo ? t.tu : p.entro_en ? primerNombre(p) : p.correo.split('@')[0])
+  // Quien todavía no entra sale con el nombre con que lo invitaron o, si no, el de su correo; "Sin entrar" va en su fila
+  const nombre = (p: Persona) => (p.id === yo ? t.tu : primerNombre(p))
 
   const pista = (p: Persona) => {
     const tramo = tramos.get(p.id)
@@ -82,8 +83,12 @@ export function LineaDelGrupo({ gente, ventana: viaje, yo, hoy, computador = fal
           <span key={mes.nombre} style={{ flex: mes.dias }}>{mes.dias < 7 ? '' : mes.dias < 20 ? mes.nombre.slice(0, 3) : mes.nombre}</span>
         ))}
       </div>
-      <div className={estilos.cuerpo}>
-        {verHoy && <div className={estilos.hoy} aria-hidden="true" style={{ left: `calc(var(--etiqueta) + (100% - var(--etiqueta)) * ${(hoyEnLaLinea + 0.5) / viaje.dias})` }} />}
+      <div className={estilos.cuerpo} data-hoy={verHoy}>
+        {verHoy && (
+          <div className={estilos.hoy} aria-hidden="true" style={{ left: `calc(var(--etiqueta) + (100% - var(--etiqueta)) * ${(hoyEnLaLinea + 0.5) / viaje.dias})` }}>
+            <span className={estilos.hoyEtiqueta}>{t.hoyRaya}</span>
+          </div>
+        )}
         <div role="img" aria-label={t.grafico} className={estilos.barras}>
           {cuantos.map((n, i) => (
             <span key={i} className={estilos.barra} data-hoy={i === hoyEnLaLinea} style={{ height: Math.max(computador ? 2 : 1, Math.round((n / escala) * 40)) }} />

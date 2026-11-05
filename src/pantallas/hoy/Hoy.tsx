@@ -1,8 +1,10 @@
 import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 import { Aviso } from '../../componentes/Controles.tsx'
+import { EntradaPerfil } from '../../componentes/EntradaPerfil.tsx'
 import { InterruptorHoraDeChile, useHoraDeChile } from '../../componentes/HoraDeChile.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
+import { SinConexion } from '../../componentes/SinConexion.tsx'
 import { Tuerca } from '../../componentes/Tuerca.tsx'
 import { useAviso } from '../../componentes/useAviso.ts'
 import { useEsComputador } from '../../componentes/useEsComputador.ts'
@@ -130,7 +132,7 @@ export function Hoy() {
     setYendo(evento.id)
     try {
       await ir(evento.id)
-      aviso.mostrar(v.vasA(evento.titulo), () => void noIr(evento.id).catch(() => aviso.mostrar(v.noSePudoIr.otro)))
+      aviso.mostrar(evento.modo === 'para_todos' ? v.vasA(evento.titulo) : v.tomaste, () => void noIr(evento.id).catch(() => aviso.mostrar(v.noSePudoIr.otro)))
     } catch (error) {
       aviso.mostrar(v.noSePudoIr[error instanceof ErrorDeEvento ? error.motivo : 'otro'])
     } finally {
@@ -164,11 +166,11 @@ export function Hoy() {
   )
   const seccionTambien = tambien.length > 0 && (
     <section className={estilos.seccion} aria-labelledby="hoy-tambien">
+      {sinRed && <p className={estilos.notaRed}>{v.sinRedVoy}</p>}
       <h2 id="hoy-tambien" className={estilos.cinta}>
         {v.tambienHoy}
       </h2>
       <TambienHoy eventos={tambien} asistentes={van} yo={persona.id} chile={chile} computador={computador} elegido={idElegido} yendo={yendo} onAbrir={abrir} onVoy={(e) => void sumarme(e)} />
-      {sinRed && <p className={estilos.notaRed}>{v.sinRedVoy}</p>}
     </section>
   )
   const seccionPendientes = (
@@ -213,7 +215,6 @@ export function Hoy() {
       <>
         {seccionLinea}
         {seccionTambien}
-        {computador && seccionPendientes}
       </>
     )
   else if (momento === 'antes')
@@ -224,15 +225,31 @@ export function Hoy() {
       </>
     )
 
-  const resumen = durante && !computador ? pendientes.resumen : null
+  // Durante el viaje los pendientes van resumidos en una línea de la ficha, que abre la lista en una hoja.
+  // En el celular es una fila bajo la ficha; en el computador va bajo la fecha.
+  const resumen = durante ? pendientes.resumen : null
+  const botonResumen = resumen && (
+    <button type="button" className={estilos.resumenBoton} aria-haspopup="dialog" onClick={() => setHoja('pendientes')}>
+      <span className={estilos.punto} aria-hidden="true" />
+      <span className={estilos.resumenTexto}>{resumen}</span>
+      <Icono nombre="derecha" medida={16} trazo={2} />
+    </button>
+  )
   const cabeza = (
-    <header className={estilos.ficha} data-fila={Boolean(resumen)}>
+    <header className={estilos.ficha} data-fila={Boolean(resumen) && !computador}>
       <div className={estilos.fichaFila}>
-        <div>
+        <div className={estilos.fichaTexto}>
           <h1 className={estilos.titulo}>{t.titulo}</h1>
           <p className={estilos.fecha}>{fecha}</p>
           {detalle && <p className={estilos.detalle}>{detalle}</p>}
+          {computador && botonResumen && <div className={estilos.resumenPc}>{botonResumen}</div>}
+          {sinRed && !computador && (
+            <div className={estilos.sinRed}>
+              <SinConexion sobrePanel />
+            </div>
+          )}
         </div>
+        {computador && <SinConexion sobrePanel />}
         {tuerca && (
           <div className={estilos.tuerca}>
             <Tuerca ancho={104} />
@@ -243,16 +260,13 @@ export function Hoy() {
             </span>
           </div>
         )}
+        {!computador && (
+          <div className={estilos.perfil}>
+            <EntradaPerfil />
+          </div>
+        )}
       </div>
-      {resumen && (
-        <div className={estilos.resumen}>
-          <button type="button" className={estilos.resumenBoton} aria-haspopup="dialog" onClick={() => setHoja('pendientes')}>
-            <span className={estilos.punto} aria-hidden="true" />
-            <span className={estilos.resumenTexto}>{resumen}</span>
-            <Icono nombre="derecha" medida={16} trazo={2} />
-          </button>
-        </div>
-      )}
+      {!computador && botonResumen && <div className={estilos.resumen}>{botonResumen}</div>}
     </header>
   )
 
@@ -278,6 +292,7 @@ export function Hoy() {
             <div className={estilos.derecha}>{lado}</div>
           </div>
         </div>
+        <HojaPendientes abierta={hoja === 'pendientes'} pendientes={pendientes.lista} onCerrar={() => setHoja(null)} />
         <Aviso texto={aviso.texto} onDeshacer={aviso.deshacer} conPanel />
       </div>
     )

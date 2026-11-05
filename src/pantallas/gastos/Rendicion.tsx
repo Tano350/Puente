@@ -1,10 +1,12 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, type ChangeEvent } from 'react'
 import { Aviso } from '../../componentes/Controles.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
 import { PanelEncima } from '../../componentes/Paneles.tsx'
 import { useAviso } from '../../componentes/useAviso.ts'
 import { estaConectado, useConectado } from '../../datos/conexion.ts'
-import { plata, rendir } from '../../datos/gastos.ts'
+import { consultas } from '../../datos/consultas.ts'
+import { plata, prepararBoleta, puedeCambiarGasto, quitarBoleta, rendir, subirBoleta, type Gasto } from '../../datos/gastos.ts'
+import { nombreCompleto } from '../../datos/nombres.ts'
 import { useSesion } from '../../datos/sesion.tsx'
 import { useTextos } from '../../textos.ts'
 import { diaDelGasto, resumir, usePorRendir, type PorRendir } from './RendicionDatos.ts'
@@ -26,6 +28,10 @@ export function VistaRendicion({ computador, onCerrar }: { computador: boolean; 
   const toques = useRef<Record<string, number>>({})
   const [descargando, setDescargando] = useState(false)
   const ocupado = useRef(false)
+  // La foto que se agrega desde una fila: un solo selector de archivos para todas, con el gasto al que va
+  const archivo = useRef<HTMLInputElement>(null)
+  const paraGasto = useRef<Gasto | null>(null)
+  const [subiendo, setSubiendo] = useState<string | null>(null)
 
   const filas = (lista ?? []).map((x) => (x.gasto.id in cambios ? { ...x, marcado: cambios[x.gasto.id] } : x))
   const { marcados, total, sinFoto } = resumir(filas)
@@ -48,13 +54,47 @@ export function VistaRendicion({ computador, onCerrar }: { computador: boolean; 
     })
   }
 
+  // "Sin foto" abre la cámara o los archivos; la foto se achica y se sube al tiro, con aviso y Deshacer
+  const agregarFoto = (gasto: Gasto) => {
+    if (subiendo) return
+    if (!estaConectado()) return aviso.mostrar(textos.gastos.detalle.necesitasConexion)
+    paraGasto.current = gasto
+    archivo.current?.click()
+  }
+  const alElegirFoto = async (e: ChangeEvent<HTMLInputElement>) => {
+    const elegido = e.target.files?.[0]
+    const gasto = paraGasto.current
+    e.target.value = ''
+    if (!elegido || !gasto || subiendo) return
+    const d = textos.gastos.detalle
+    aviso.cerrar()
+    setSubiendo(gasto.id)
+    let foto: Blob | null = null
+    try {
+      foto = await prepararBoleta(elegido)
+    } catch {
+      aviso.mostrar(d.noSeAbrio)
+    }
+    if (foto) {
+      try {
+        await subirBoleta(gasto, foto)
+        // Deshacer la quita con la ruta nueva, para que también se borre el archivo
+        const conBoleta = consultas.getQueryData<Gasto[]>(['gastos'])?.find((g) => g.id === gasto.id && g.boleta)
+        aviso.mostrar(d.agregasteFoto, conBoleta ? () => void quitarBoleta(conBoleta).then(aviso.cerrar, () => aviso.mostrar(textos.noSeGuardo)) : undefined)
+      } catch {
+        aviso.mostrar(textos.noSeGuardo)
+      }
+    }
+    setSubiendo(null)
+  }
+
   const descargar = async () => {
     if (!marcados.length || ocupado.current || sesion.tipo !== 'dentro' || !estaConectado()) return
     ocupado.current = true
     setDescargando(true)
     aviso.cerrar()
     try {
-      await descargarRendicion(sesion.persona.nombre ?? sesion.persona.correo, marcados)
+      await descargarRendicion(nombreCompleto(sesion.persona), marcados)
       aviso.mostrar(t.descargaste(marcados.length, plata(total)))
     } catch {
       aviso.mostrar(t.noSeDescargo)
@@ -73,7 +113,7 @@ export function VistaRendicion({ computador, onCerrar }: { computador: boolean; 
           <div className={estilos.arriba}>
             <span className={estilos.textos}>
               <span className={estilos.etiqueta}>{t.vasARendir}</span>
-              <span className={estilos.detalle}>{marcados.length ? t.cuantos(marcados.length) : t.marca}</span>
+              <span className={estilos.detalle}>{marcados.length ? t.cuantos(marcados.length, marcados.some((x) => x.monto !== x.gasto.monto)) : t.marca}</span>
             </span>
             <span className={estilos.total} aria-live="polite">
               {plata(total)}
@@ -93,12 +133,19 @@ export function VistaRendicion({ computador, onCerrar }: { computador: boolean; 
         </div>
         <div className={estilos.lista}>
           {filas.map((x) => (
-            <Fila key={x.gasto.id} fila={x} onAlternar={() => void alternar(x)} />
+            <Fila
+              key={x.gasto.id}
+              fila={x}
+              subiendo={subiendo === x.gasto.id}
+              onAlternar={() => void alternar(x)}
+              onAgregarFoto={sesion.tipo === 'dentro' && puedeCambiarGasto(x.gasto, sesion.persona) ? () => agregarFoto(x.gasto) : undefined}
+            />
           ))}
         </div>
       </>
     )
 
+  const selector = <input ref={archivo} type="file" accept="image/*" tabIndex={-1} aria-hidden="true" className={estilos.archivo} onChange={(e) => void alElegirFoto(e)} />
   if (computador) {
     const titulo = textos.gastos.pestanas.rendicion
     return (
@@ -106,6 +153,7 @@ export function VistaRendicion({ computador, onCerrar }: { computador: boolean; 
         <PanelEncima etiqueta={titulo} cabecera={<h2 className={estilos.tituloPanel}>{titulo}</h2>} onCerrar={onCerrar ?? (() => {})}>
           <div className={estilos.raiz} data-computador="true">
             {cuerpo}
+            {selector}
           </div>
         </PanelEncima>
         <Aviso texto={aviso.texto} conPanel />
@@ -115,41 +163,59 @@ export function VistaRendicion({ computador, onCerrar }: { computador: boolean; 
   return (
     <div className={estilos.raiz}>
       {cuerpo}
+      {selector}
       {/* Arriba del botón "Anotar gasto" */}
       <Aviso texto={aviso.texto} sobrePie />
     </div>
   )
 }
 
-// Un gasto con su casilla: "Hoy, tu parte" (o "solo tuyo"), lo que rindes y si tiene foto de la boleta
-function Fila({ fila, onAlternar }: { fila: PorRendir; onAlternar: () => void }) {
+// Un gasto con su casilla: "Hoy, tu parte" (o "solo tuyo"), lo que rindes y la foto de la boleta.
+// "Sin foto" solo sale en lo marcado, que es lo que va al PDF; si puedes cambiar el gasto, es el botón que agrega la foto.
+function Fila({ fila, subiendo, onAlternar, onAgregarFoto }: { fila: PorRendir; subiendo: boolean; onAlternar: () => void; onAgregarFoto?: () => void }) {
   const t = useTextos().gastos.rendicion
   const { gasto, monto, marcado } = fila
   const dia = diaDelGasto(gasto.fecha, t)
+  const faltaFoto = marcado && !gasto.boleta
+  const sinFoto = (
+    <>
+      <Icono nombre={onAgregarFoto || subiendo ? 'camara' : 'alerta'} medida={12} trazo={2.25} />
+      {subiendo ? t.subiendoFoto : t.sinFotoCorto}
+    </>
+  )
   return (
-    <button type="button" role="checkbox" aria-checked={marcado} className={estilos.fila} onClick={onAlternar}>
-      <span className={estilos.caja} aria-hidden="true">
-        {marcado && <Icono nombre="check" medida={14} trazo={3} />}
-      </span>
-      <span className={estilos.textos}>
-        <span className={estilos.titulo}>{gasto.titulo}</span>
-        <span className={estilos.sub}>{gasto.division === 'solo' ? t.soloTuyo(dia) : t.tuParte(dia)}</span>
-      </span>
-      <span className={estilos.derecha}>
-        <span className={estilos.monto}>{plata(monto)}</span>
-        {gasto.boleta ? (
-          <span className={estilos.foto}>
-            <span className={estilos.boleta} aria-hidden="true" />
-            {t.foto}
-          </span>
-        ) : (
-          <span className={estilos.sinFoto}>
-            <Icono nombre="alerta" medida={12} trazo={2.25} />
-            {t.sinFotoCorto}
-          </span>
-        )}
-      </span>
-    </button>
+    <div className={estilos.filaRaiz}>
+      <button type="button" role="checkbox" aria-checked={marcado} className={estilos.fila} onClick={onAlternar}>
+        <span className={estilos.caja} aria-hidden="true">
+          {marcado && <Icono nombre="check" medida={14} trazo={3} />}
+        </span>
+        <span className={estilos.textos}>
+          <span className={estilos.titulo}>{gasto.titulo}</span>
+          <span className={estilos.sub}>{gasto.division === 'solo' ? t.soloTuyo(dia) : t.tuParte(dia)}</span>
+        </span>
+        <span className={estilos.derecha}>
+          <span className={estilos.monto}>{plata(monto)}</span>
+          {gasto.boleta ? (
+            <span className={estilos.foto}>
+              <span className={estilos.boleta} aria-hidden="true" />
+              {t.foto}
+            </span>
+          ) : faltaFoto && !onAgregarFoto ? (
+            <span className={estilos.sinFoto}>{sinFoto}</span>
+          ) : (
+            // Con el botón de "Sin foto" encima, esta línea solo guarda el lugar
+            <span className={estilos.sinFoto} aria-hidden="true" style={{ visibility: 'hidden' }}>
+              {sinFoto}
+            </span>
+          )}
+        </span>
+      </button>
+      {faltaFoto && onAgregarFoto && (
+        <button type="button" className={estilos.agregarFoto} aria-label={t.agregarFoto(gasto.titulo)} aria-disabled={subiendo} onClick={onAgregarFoto}>
+          {sinFoto}
+        </button>
+      )}
+    </div>
   )
 }
 

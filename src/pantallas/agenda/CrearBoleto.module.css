@@ -79,11 +79,13 @@
 /* ---------- Nombre ---------- */
 .titulo {
   display: block;
-  box-sizing: content-box;
+  box-sizing: border-box;
   width: 100%;
-  height: 28px;
+  height: 35px;
   margin: 2px 0 0;
   padding: 0 0 4px;
+  overflow: hidden;
+  resize: none;
   border: none;
   border-bottom: 1.5px dashed var(--regla);
   border-radius: 0;
@@ -93,7 +95,6 @@
   font-weight: 700;
   font-size: 26px;
   line-height: 28px;
-  text-overflow: ellipsis;
   appearance: none;
 }
 
@@ -110,6 +111,21 @@
 
 .titulo[aria-invalid='true'] {
   border-bottom-color: var(--error);
+}
+
+.error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 4px 0 2px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--error);
+}
+
+.error svg {
+  flex: none;
+  margin-top: 2px;
 }
 
 /* ---------- Día, hora y lugar ---------- */

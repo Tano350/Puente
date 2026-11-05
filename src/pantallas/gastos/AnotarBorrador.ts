@@ -1,6 +1,7 @@
 import type { Persona } from '../../datos/consultas.ts'
 import { hoyEnCalifornia } from '../../datos/fechas.ts'
 import { aCentavos, CATEGORIAS, categoriaDe, plata, repartirIguales, type Categoria, type DatosGasto, type Division, type Gasto, type Parte } from '../../datos/gastos.ts'
+import { estaAlla, tieneFechas } from '../../datos/grupo.ts'
 import { primerNombre } from '../../datos/nombres.ts'
 import type { Textos } from '../../textos.ts'
 
@@ -16,6 +17,8 @@ export type Borrador = {
   pagadoPor: string
   division: Division
   elegidos: string[]
+  // Elegidos a mano: ya no cambian con la fecha
+  elegidosFijos: boolean
   // Lo que se escribió para cada uno en montos exactos; queda aunque lo desmarquen
   exactos: Record<string, string>
 }
@@ -46,8 +49,26 @@ const montoDe = (texto: string): number | null => {
   return centavos !== null && centavos <= MAXIMO ? centavos : null
 }
 
-export function borradorNuevo(yo: string, todos: string[]): Borrador {
-  return { titulo: '', categoria: 'otro', categoriaFija: false, monto: '', fecha: hoyEnCalifornia(), pagadoPor: yo, division: 'iguales', elegidos: todos, exactos: {} }
+// "gente": las personas de la lista, en orden. Parte con quienes están allá hoy.
+export function borradorNuevo(yo: string, gente: Persona[]): Borrador {
+  const fecha = hoyEnCalifornia()
+  return { titulo: '', categoria: 'otro', categoriaFija: false, monto: '', fecha, pagadoPor: yo, division: 'iguales', elegidos: presentes(gente, fecha), elegidosFijos: false, exactos: {} }
+}
+
+// Quienes están allá ese día según sus fechas de estadía. Quien no puso fechas cuenta (no se sabe que no esté);
+// si así no queda nadie (un gasto de antes o después del viaje), son todos.
+export function presentes(gente: Persona[], fecha: string): string[] {
+  const alla = gente.filter((p) => !tieneFechas(p) || estaAlla(p, fecha)).map((p) => p.id)
+  return alla.length ? alla : gente.map((p) => p.id)
+}
+
+// Los de tu último gasto compartido (el último que anotaste), en el orden de la lista; null si no hay
+export function ultimoGrupo(gastos: Gasto[], partes: Parte[], yo: string, orden: string[]): string[] | null {
+  const ultimo = gastos.filter((g) => g.creado_por === yo && g.division !== 'solo').reduce<Gasto | null>((a, g) => (!a || g.creado_en > a.creado_en ? g : a), null)
+  if (!ultimo) return null
+  const suyas = new Set(partes.filter((p) => p.gasto === ultimo.id).map((p) => p.persona))
+  const grupo = orden.filter((id) => suyas.has(id))
+  return grupo.length ? grupo : null
 }
 
 // Al editar parte con lo que tiene el gasto. Si la categoría no es la que se adivina del título, la eligieron a mano.
@@ -63,6 +84,7 @@ export function borradorDe(gasto: Gasto, partes: Parte[]): Borrador {
     pagadoPor: gasto.pagado_por,
     division,
     elegidos: partes.map((p) => p.persona),
+    elegidosFijos: true,
     exactos: division === 'exactos' ? Object.fromEntries(partes.map((p) => [p.persona, sinMoneda(p.monto)])) : {},
   }
 }

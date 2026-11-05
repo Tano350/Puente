@@ -15,6 +15,8 @@ type Props = {
   gente: Persona[]
   nombres: Map<string, string>
   yo: string
+  // Los de tu último gasto compartido, para "Como el último"
+  ultimo: string[] | null
   errores: Errores
   onCambio: (cambios: Partial<Borrador>, soloFormato?: boolean) => void
 }
@@ -23,7 +25,8 @@ type Tono = 'sec' | 'enContra' | 'aFavor' | 'error'
 
 // "Entre quiénes": las 14 personas con su casilla y su parte. El buscador filtra sin perder a los marcados.
 // En montos exactos cada marcado tiene su campo y la línea de arriba dice cuánto falta, cuánto sobra o que suma bien.
-export function AnotarEntreQuienes({ computador, borrador, cuenta, gente, nombres, yo, errores, onCambio }: Props) {
+// "Como el último" marca de un toque a los mismos de tu último gasto compartido.
+export function AnotarEntreQuienes({ computador, borrador, cuenta, gente, nombres, yo, ultimo, errores, onCambio }: Props) {
   const textos = useTextos()
   const tg = textos.gastos
   const t = tg.anotar
@@ -49,6 +52,13 @@ export function AnotarEntreQuienes({ computador, borrador, cuenta, gente, nombre
   }
   const alerta = nota.tono === 'error'
 
+  // "Como el último: Catalina, Diego y Martina" (a ti no se te nombra; con más de tres, "y 4 más"). Si eran todos,
+  // ya está "Todos".
+  const otros = ultimo?.filter((id) => id !== yo).map((id) => nombres.get(id) ?? '') ?? []
+  const comoElUltimo =
+    ultimo && ultimo.length < gente.length ? t.comoElUltimo(otros.length === 0 ? tg.tu : textos.y(otros.length > 3 ? [...otros.slice(0, 3), t.mas(otros.length - 3)] : otros)) : null
+  const igualAlUltimo = Boolean(ultimo && ultimo.length === n && ultimo.every((id) => cuenta.marcados.includes(id)))
+
   const marcar = (persona: string, si: boolean) => onCambio({ elegidos: si ? [...borrador.elegidos, persona] : borrador.elegidos.filter((id) => id !== persona) })
   const escribir = (persona: string, texto: string, soloFormato = false) => onCambio({ exactos: { ...borrador.exactos, [persona]: texto } }, soloFormato)
 
@@ -72,6 +82,11 @@ export function AnotarEntreQuienes({ computador, borrador, cuenta, gente, nombre
         </div>
       ) : (
         <>
+          {comoElUltimo && ultimo && !buscando && (
+            <button type="button" className={estilos.ultimo} aria-pressed={igualAlUltimo} onClick={() => onCambio({ elegidos: ultimo })}>
+              <span className={estilos.ultimoTexto}>{comoElUltimo}</span>
+            </button>
+          )}
           <Buscador valor={busqueda} onCambio={setBusqueda} clase={estilos.buscador} />
           <div id="anotar-nota" role={alerta ? 'alert' : 'status'} className={estilos.nota} data-tono={nota.tono}>
             {alerta && <Icono nombre="alerta" medida={15} trazo={2} />}

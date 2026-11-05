@@ -10,6 +10,19 @@
   margin-top: -12px;
 }
 
+.titulo {
+  margin-bottom: 16px;
+}
+
+/* Cada ajuste va en su envoltura: ella pone la raya entre filas y, sin señal, atenúa las que necesitan conexión */
+.fila + .fila {
+  border-top: 1px solid var(--borde);
+}
+
+.fila[data-sin-red='true'] > button {
+  opacity: 0.45;
+}
+
 .editar {
   display: inline-flex;
   align-items: center;

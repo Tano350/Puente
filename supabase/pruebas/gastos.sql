@@ -57,6 +57,15 @@ begin
     raise exception 'Se anotó un gasto sin personas';
   exception when invalid_parameter_value then null;
   end;
+  -- Alojamiento es una categoría (20261108000000_alojamiento.sql); una que no existe no entra
+  perform public.anotar_gasto('Airbnb de prueba', 'alojamiento', 50000, '2030-01-10', a, 'solo', null);
+  select count(*) into n from public.gastos where titulo = 'Airbnb de prueba' and categoria = 'alojamiento' and creado_por = a;
+  if n <> 1 then raise exception 'No se anotó el gasto de alojamiento'; end if;
+  begin
+    perform public.anotar_gasto('Categoría rara', 'casino', 1000, '2030-01-10', a, 'solo', null);
+    raise exception 'Se anotó un gasto con una categoría que no existe';
+  exception when check_violation then null;
+  end;
   -- Sin señal: el id viene del dispositivo; repetir devuelve el mismo gasto, sin cambiarlo ni duplicarlo
   g4 := public.anotar_gasto('Bicis sin señal', 'bici', 1200, '2030-01-11', a, 'iguales',
     jsonb_build_array(jsonb_build_object('persona', a, 'monto', 600), jsonb_build_object('persona', b, 'monto', 600)), gid);

@@ -21,6 +21,23 @@
   gap: 16px;
 }
 
+.fichaTexto {
+  flex: 1;
+  min-width: 0;
+}
+
+/* En el celular, tu foto arriba a la derecha, junto a la tuerca */
+.perfil {
+  flex: none;
+  align-self: flex-start;
+  margin: -6px -6px 0 -12px;
+}
+
+/* Sin conexión: la ficha bajo la fecha */
+.sinRed {
+  margin-top: 8px;
+}
+
 .titulo {
   margin: 0;
   font-family: var(--letra-titulo);
@@ -229,6 +246,17 @@
     gap: 24px;
   }
 
+  /* Los pendientes, en una línea bajo la fecha */
+  .resumenPc {
+    margin-top: 4px;
+  }
+
+  .resumenPc .resumenBoton {
+    width: auto;
+    min-height: 36px;
+    font-size: 14px;
+  }
+
   .cuerpo {
     position: relative;
     flex: 1;
@@ -278,10 +306,13 @@
   }
 }
 
-/* Sin conexión: la nota bajo los "Voy" apagados */
+/* Sin conexión: la razón, en una línea sobre los "Voy" y "Tomar cupo" apagados */
 .notaRed {
-  margin: 8px 0 0;
+  margin: 0 0 8px;
+  overflow: hidden;
   font-size: 13px;
   line-height: 18px;
   color: var(--sec);
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }

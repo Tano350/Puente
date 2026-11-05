@@ -43,6 +43,14 @@
   color: var(--sec-tarjeta);
 }
 
+.indicacion {
+  margin-top: 16px;
+  font-size: 16px;
+  line-height: 22px;
+  color: var(--sec-tarjeta);
+  text-wrap: balance;
+}
+
 .alerta {
   width: 100%;
   margin-top: 28px;
@@ -83,6 +91,19 @@
   font-size: 17px;
   font-weight: 500;
   cursor: pointer;
+}
+
+.google[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.nota {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: center;
+  color: var(--sec-tarjeta);
 }
 
 :global(:root[data-tema='claro']) .google {

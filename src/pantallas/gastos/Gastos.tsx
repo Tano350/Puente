@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router'
 import { Aviso } from '../../componentes/Controles.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
@@ -28,6 +28,7 @@ const PESTANAS: Pestana[] = ['gastos', 'saldos', 'rendicion']
 // Rutas: /gastos, /gastos/nuevo, /gastos/:id y /gastos/:id/editar. El gasto, nuevo o abierto, ocupa la pantalla en el
 // celular y va en un panel encima de la lista en el computador. Otra pantalla abre una pestaña con
 // navigate('/gastos', { state: { ver: 'saldos' | 'rendicion' } }); en el computador, "rendicion" abre la rendición encima.
+// Con saldar: true también abre "Saldar" (en el celular, en la pestaña Saldos).
 export function Gastos() {
   const textos = useTextos()
   const sesion = useSesion()
@@ -40,9 +41,17 @@ export function Gastos() {
   const personas = usePersonas()
   const aviso = useAviso()
   const conectado = useConectado()
-  const estado = location.state as { desdeAqui?: boolean; ver?: string } | null
+  const estado = location.state as { desdeAqui?: boolean; ver?: string; saldar?: boolean } | null
   const pedida = PESTANAS.find((p) => p === estado?.ver)
   const [pestana, setPestana] = useState<Pestana>(pedida ?? 'gastos')
+  // Quien llega pidiendo 'Saldar' (Hoy, al volver del viaje) lo encuentra abierto; se consume al abrirse
+  const [saldarAlLlegar, setSaldarAlLlegar] = useState(estado?.saldar === true)
+  const alAbrirseSaldar = useCallback(() => {
+    setSaldarAlLlegar(false)
+    // Que recargar la página o volver a esta entrada no lo abra otra vez
+    const entrada = window.history.state as { usr?: Record<string, unknown> } | null
+    if (entrada?.usr?.saldar) window.history.replaceState({ ...entrada, usr: { ...entrada.usr, saldar: false } }, '')
+  }, [])
   const pestanas = useRef<(HTMLButtonElement | null)[]>([])
   const desdeAqui = estado?.desdeAqui === true
   const verRendicion = esComputador && !id && pedida === 'rendicion'
@@ -187,7 +196,7 @@ export function Gastos() {
           </div>
         </div>
         <div className={estilos.cuerpoPc}>
-          <div className={estilos.columnasPc}>
+          <div className={estilos.columnasPc} data-panel={Boolean(panel)}>
             <div className={estilos.listaPc}>{contenido}</div>
             {/* Con un panel abierto, la columna queda tapada: no se alcanza con el teclado */}
             <aside aria-label={t.pestanas.saldos} className={estilos.ladoPc} inert={Boolean(panel)}>
@@ -195,13 +204,13 @@ export function Gastos() {
                 <div className={estilos.sobreTarjeta}>
                   <ResumenTotales />
                 </div>
-                <TarjetaSaldo computador />
-              </div>
-              <div className={estilos.bloque}>
-                <VistaSaldos computador enColumna />
+                <TarjetaSaldo computador abrirSaldar={saldarAlLlegar} onSaldarAbierto={alAbrirseSaldar} />
               </div>
               <div className={estilos.bloque}>
                 <ResumenRendicion onPreparar={() => abrir('/gastos', 'rendicion')} />
+              </div>
+              <div className={estilos.bloque}>
+                <VistaSaldos computador enColumna />
               </div>
             </aside>
           </div>
@@ -266,7 +275,7 @@ export function Gastos() {
             {contenido}
           </>
         ) : (
-          <div className={estilos.arriba}>{pestana === 'saldos' ? <VistaSaldos computador={false} /> : <VistaRendicion computador={false} />}</div>
+          <div className={estilos.arriba}>{pestana === 'saldos' ? <VistaSaldos computador={false} abrirSaldar={saldarAlLlegar} onSaldarAbierto={alAbrirseSaldar} /> : <VistaRendicion computador={false} />}</div>
         )}
       </div>
       <button type="button" className={estilos.anotar} onClick={() => abrir('/gastos/nuevo')}>

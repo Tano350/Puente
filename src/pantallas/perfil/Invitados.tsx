@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState, type Ref } from 'react'
 import { Navigate, useNavigate } from 'react-router'
 import { Avatar } from '../../componentes/Avatar.tsx'
 import { Buscador } from '../../componentes/Buscador.tsx'
@@ -12,8 +12,8 @@ import { useConectado } from '../../datos/conexion.ts'
 import { usePersonas, type Persona } from '../../datos/consultas.ts'
 import { diaCorto, diaLocal, hoyAqui } from '../../datos/fechas.ts'
 import { coincide, porNombre } from '../../datos/grupo.ts'
-import { devolver, ENLACE_DE_PUENTE, ErrorAlInvitar, invitar, sacar } from '../../datos/invitados.ts'
-import { carreraCorta, primerNombre } from '../../datos/nombres.ts'
+import { devolver, ENLACE_DE_PUENTE, enlaceDeWhatsApp, ErrorAlInvitar, invitar, sacar } from '../../datos/invitados.ts'
+import { carreraCorta, nombreCompleto, primerNombre } from '../../datos/nombres.ts'
 import { useSesion } from '../../datos/sesion.tsx'
 import { useTextos } from '../../textos.ts'
 import estilos from './Invitados.module.css'
@@ -36,7 +36,18 @@ function Sobre({ medida }: { medida: number }) {
   )
 }
 
-function FormularioInvitar({ correo, onCorreo, error, ocupado, onEnviar, onCancelar }: { correo: string; onCorreo: (correo: string) => void; error: string | null; ocupado: boolean; onEnviar: () => void; onCancelar: () => void }) {
+type PropsFormulario = {
+  nombre: string
+  onNombre: (nombre: string) => void
+  correo: string
+  onCorreo: (correo: string) => void
+  error: string | null
+  ocupado: boolean
+  onEnviar: () => void
+  onCancelar: () => void
+}
+
+function FormularioInvitar({ nombre, onNombre, correo, onCorreo, error, ocupado, onEnviar, onCancelar }: PropsFormulario) {
   const textos = useTextos()
   const t = textos.invitados
   return (
@@ -47,8 +58,12 @@ function FormularioInvitar({ correo, onCorreo, error, ocupado, onEnviar, onCance
         onEnviar()
       }}
     >
+      <Etiqueta texto={t.nombre} opcional para="invitar-nombre" />
+      <CampoTexto id="invitar-nombre" valor={nombre} onCambio={onNombre} autoComplete="off" placeholder={t.ejemploNombre} autoFocus />
       <Etiqueta texto={t.correo} para="invitar-correo" />
-      <CampoTexto id="invitar-correo" valor={correo} onCambio={onCorreo} error={error} inputMode="email" autoComplete="off" placeholder={t.ejemplo} autoFocus />
+      <CampoTexto id="invitar-correo" valor={correo} onCambio={onCorreo} error={error} inputMode="email" autoComplete="off" placeholder={t.ejemplo} />
+      {/* Con dos campos, Enter solo envía si hay un botón de envío */}
+      <button type="submit" hidden />
       <div className={estilos.botones}>
         <BotonPrincipal onClick={onEnviar} ocupado={ocupado}>{t.invitar}</BotonPrincipal>
         <BotonBorde onClick={onCancelar}>{textos.cancelar}</BotonBorde>
@@ -70,7 +85,15 @@ export function Invitados() {
   const [hoja, setHoja] = useState<'invitar' | 'opciones' | 'sacar' | null>(null)
   const [panel, setPanel] = useState<Panel>('persona')
   const [elegidaId, setElegidaId] = useState<string | null>(null)
+  const [nombreNuevo, setNombreNuevo] = useState('')
   const [correo, setCorreo] = useState('')
+  // Recién invitada: en vez del formulario se ofrece mandarle el enlace por WhatsApp
+  const [invitada, setInvitada] = useState<Persona | null>(null)
+  // Al invitar, el formulario se cambia por lo que sigue y el foco va a WhatsApp, el paso que viene
+  const enlaceListo = useRef<HTMLAnchorElement>(null)
+  useEffect(() => {
+    if (invitada) enlaceListo.current?.focus()
+  }, [invitada])
   const [error, setError] = useState<string | null>(null)
   const [ocupado, setOcupado] = useState(false)
   if (sesion.tipo !== 'dentro') return null
@@ -85,7 +108,7 @@ export function Invitados() {
   const sinEntrarVisibles = sinEntrar.filter((p) => coincide(p, busqueda))
   const dentroVisibles = dentro.filter((p) => coincide(p, busqueda))
   const elegida = activas.find((p) => p.id === elegidaId) ?? sinEntrar[0] ?? dentro.find((p) => p.id !== yo.id) ?? null
-  const nombre = (p: Persona) => p.nombre ?? p.correo
+  const nombre = nombreCompleto
   const invitadoEl = (p: Persona) => {
     const dia = diaLocal(p.invitada_en)
     return dia === hoyAqui() ? t.invitadoHoy : t.invitadoEl(diaCorto(dia))
@@ -107,7 +130,9 @@ export function Invitados() {
   }
   const abrirInvitar = () => {
     if (!conectado) return aviso.mostrar(t.necesitasInvitar)
+    setNombreNuevo('')
     setCorreo('')
+    setInvitada(null)
     setError(null)
     aviso.cerrar()
     if (esComputador) setPanel('invitar')
@@ -116,6 +141,7 @@ export function Invitados() {
   const cerrar = () => {
     setHoja(null)
     setPanel('persona')
+    setInvitada(null)
     setError(null)
   }
   const devolverA = async (p: Persona) => {
@@ -123,15 +149,6 @@ export function Invitados() {
       await devolver(p.id)
       aviso.cerrar()
       setElegidaId(p.id)
-    } catch {
-      aviso.mostrar(t.noSePudo)
-    }
-  }
-  // Deshacer una invitación recién hecha la saca, sin otro aviso
-  const deshacerInvitacion = async (p: Persona) => {
-    try {
-      await sacar(p.id)
-      aviso.cerrar()
     } catch {
       aviso.mostrar(t.noSePudo)
     }
@@ -150,10 +167,9 @@ export function Invitados() {
     if (!conectado) return setError(t.necesitasInvitar)
     setOcupado(true)
     try {
-      const nueva = await invitar(limpio)
-      cerrar()
+      const nueva = await invitar(limpio, nombreNuevo)
       setElegidaId(nueva.id)
-      aviso.mostrar(t.invitaste(limpio), () => void deshacerInvitacion(nueva))
+      setInvitada(nueva)
     } catch (e) {
       const motivo = e instanceof ErrorAlInvitar ? e.motivo : 'otro'
       setError(motivo === 'yaInvitado' ? t.yaInvitado : motivo === 'correoIncompleto' ? t.correoIncompleto : t.noSePudo)
@@ -186,7 +202,8 @@ export function Invitados() {
       <>
         <Sobre medida={40} />
         <span className={estilos.quien}>
-          <span className={esComputador ? estilos.correoRecortado : estilos.correo}>{esComputador ? p.correo : correoCortable(p.correo)}</span>
+          <span className={estilos.nombre}>{nombre(p)}</span>
+          <span className={esComputador ? estilos.correoRecortado : estilos.correo} data-chico="true">{esComputador ? p.correo : correoCortable(p.correo)}</span>
           <span className={estilos.dato}>{invitadoEl(p)}</span>
         </span>
       </>
@@ -258,7 +275,44 @@ export function Invitados() {
     </>
   )
 
-  const formulario = <FormularioInvitar correo={correo} onCorreo={(nuevo) => { setCorreo(nuevo); setError(null) }} error={error} ocupado={ocupado} onEnviar={() => void enviar()} onCancelar={cerrar} />
+  const formulario = (
+    <FormularioInvitar
+      nombre={nombreNuevo}
+      onNombre={setNombreNuevo}
+      correo={correo}
+      onCorreo={(nuevo) => {
+        setCorreo(nuevo)
+        setError(null)
+      }}
+      error={error}
+      ocupado={ocupado}
+      onEnviar={() => void enviar()}
+      onCancelar={cerrar}
+    />
+  )
+
+  // Mandar el enlace por WhatsApp: se abre con el mensaje escrito, para elegir a quién va
+  const whatsapp = (p: Persona, ref?: Ref<HTMLAnchorElement>) => (
+    <a ref={ref} className={estilos.whatsapp} href={enlaceDeWhatsApp(t.mensajeWhatsApp(p.correo, ENLACE_DE_PUENTE))} target="_blank" rel="noopener noreferrer">
+      <Icono nombre="compartir" medida={20} trazo={2.25} />
+      {t.compartirWhatsApp}
+    </a>
+  )
+
+  // Lo que se ve justo después de invitar, en la hoja (celular) o en el panel (computador)
+  const listoInvitacion = (p: Persona) => (
+    <>
+      <div className={estilos.explica}>{p.correo}</div>
+      <div className={estilos.botones}>
+        {whatsapp(p, enlaceListo)}
+        <BotonBorde onClick={cerrar}>{t.listo}</BotonBorde>
+        <button type="button" className={estilos.rojo} onClick={() => void sacarA(p)}>
+          <Icono nombre="cerrar" medida={18} trazo={2} />
+          {t.sacarInvitacion}
+        </button>
+      </div>
+    </>
+  )
 
   // ---------- Computador ----------
   if (esComputador) {
@@ -266,8 +320,8 @@ export function Invitados() {
       if (panel === 'invitar') {
         return (
           <>
-            <h2 className={estilos.tituloLado}>{t.invitarA}</h2>
-            {formulario}
+            <h2 className={estilos.tituloLado}>{invitada ? t.invitasteA(nombre(invitada)) : t.invitarA}</h2>
+            {invitada ? listoInvitacion(invitada) : formulario}
           </>
         )
       }
@@ -289,10 +343,12 @@ export function Invitados() {
         return (
           <>
             <Sobre medida={56} />
-            <div className={estilos.nombreLado}>{correoCortable(elegida.correo)}</div>
+            <div className={estilos.nombreLado}>{nombre(elegida)}</div>
+            <div className={estilos.datoLado}>{correoCortable(elegida.correo)}</div>
             <div className={estilos.sinEntrar}>{t.sinEntrar}</div>
             <div className={estilos.datoLado}>{invitadoEl(elegida)}</div>
             <div className={estilos.botones}>
+              {whatsapp(elegida)}
               <BotonBorde icono="copiar" onClick={copiarEnlace}>{t.copiarEnlace}</BotonBorde>
               <button type="button" className={estilos.rojo} aria-disabled={!conectado} onClick={() => pedirSacar(() => void sacarA(elegida))}>
                 <Icono nombre="cerrar" medida={18} trazo={2} />
@@ -378,9 +434,9 @@ export function Invitados() {
         </BotonPrincipal>
         {!conectado && <div className={estilos.nota}>{t.necesitasInvitar}</div>}
       </Pie>
-      <Hoja abierta={hoja === 'invitar'} etiqueta={t.invitarA} onCerrar={cerrar}>
-        <TituloHoja>{t.invitarA}</TituloHoja>
-        {formulario}
+      <Hoja abierta={hoja === 'invitar'} etiqueta={invitada ? t.invitasteA(nombre(invitada)) : t.invitarA} onCerrar={cerrar}>
+        <TituloHoja>{invitada ? t.invitasteA(nombre(invitada)) : t.invitarA}</TituloHoja>
+        {invitada ? listoInvitacion(invitada) : formulario}
       </Hoja>
       <Hoja abierta={hoja === 'opciones' && elegida !== null} etiqueta={elegida ? nombre(elegida) : ''} onCerrar={cerrar}>
         {elegida && (

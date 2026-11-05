@@ -7,6 +7,9 @@ import { supabase } from './supabase.ts'
 // La dirección que se comparte con los invitados
 export const ENLACE_DE_PUENTE = 'https://puente-2027.vercel.app'
 
+// El enlace que abre WhatsApp con el mensaje ya escrito, para elegir a quién mandarlo
+export const enlaceDeWhatsApp = (mensaje: string) => `https://wa.me/?text=${encodeURIComponent(mensaje)}`
+
 export type FalloAlInvitar = 'yaInvitado' | 'correoIncompleto' | 'otro'
 
 export class ErrorAlInvitar extends Error {
@@ -19,16 +22,17 @@ export class ErrorAlInvitar extends Error {
 
 const recargar = () => consultas.invalidateQueries({ queryKey: ['personas'] })
 
-export async function invitar(correo: string): Promise<Persona> {
+export async function invitar(correo: string, nombre = ''): Promise<Persona> {
   // Solo en desarrollo, con ?maqueta: los cambios quedan en las personas de ejemplo
   if (import.meta.env.DEV && modoMaqueta) {
     const limpio = correo.trim().toLowerCase()
-    const nueva = { id: `nueva-${Date.now()}`, correo: limpio, usuario: null, nombre: null, foto: null, foto_google: null, carrera: null, emprendimiento: null, emprendimiento_texto: null, objetivos: null, linkedin: null, llega: null, vuelve: null, administra: false, idioma: 'es', invitada_por: null, invitada_en: new Date().toISOString(), entro_en: null, sacada_en: null, bienvenida_en: null, avisos: {} }
+    const nueva = { id: `nueva-${Date.now()}`, correo: limpio, usuario: null, nombre: nombre.trim() || null, foto: null, foto_google: null, carrera: null, emprendimiento: null, emprendimiento_texto: null, objetivos: null, linkedin: null, llega: null, vuelve: null, administra: false, idioma: 'es', invitada_por: null, invitada_en: new Date().toISOString(), entro_en: null, sacada_en: null, bienvenida_en: null, avisos: {} }
     cambiarMaqueta((personas) => [...personas, nueva])
     await recargar()
     return nueva
   }
-  const { data, error } = await supabase.rpc('invitar', { correo_nuevo: correo.trim() })
+  // El nombre provisorio solo viaja si se escribió: así también sirve antes de aplicar la migración que lo recibe
+  const { data, error } = await supabase.rpc('invitar', { correo_nuevo: correo.trim(), ...(nombre.trim() ? { nombre: nombre.trim() } : {}) })
   if (error) throw new ErrorAlInvitar(error.code === '23505' ? 'yaInvitado' : error.code === '22023' ? 'correoIncompleto' : 'otro')
   await recargar()
   return data

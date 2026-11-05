@@ -46,6 +46,28 @@
   pointer-events: none;
 }
 
+/* "hoy" al pie de la raya azul; el cuerpo deja el espacio */
+.cuerpo[data-hoy='true'] {
+  padding-bottom: 18px;
+}
+
+.cuerpo[data-hoy='true'] .hoy {
+  bottom: 18px;
+}
+
+.hoyEtiqueta {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+  color: var(--acento);
+}
+
 .barras {
   display: flex;
   align-items: flex-end;

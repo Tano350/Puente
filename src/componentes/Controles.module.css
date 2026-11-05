@@ -212,6 +212,17 @@
   background: var(--acento);
 }
 
+/* La pista también se hunde (base.css); como esta transición le gana a la de allá, las repite */
+.pista,
+.perilla {
+  transition:
+    background-color 110ms ease-out,
+    left 110ms ease-out,
+    translate 110ms ease-out,
+    box-shadow 110ms ease-out,
+    filter 110ms ease-out;
+}
+
 .perilla {
   position: absolute;
   top: 3px;
@@ -245,6 +256,11 @@
   background: transparent;
   text-align: left;
   cursor: pointer;
+}
+
+/* El grupo recorta lo que sale de él: el anillo de foco va por dentro */
+.fila:focus-visible {
+  outline-offset: -2px;
 }
 
 .fila + .fila {

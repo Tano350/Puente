@@ -102,6 +102,12 @@
   border-bottom: 1px solid var(--borde);
 }
 
+/* El botón "Sin foto" va encima de la fila, abajo a la derecha: un botón no puede ir dentro de otro */
+.filaRaiz {
+  position: relative;
+  border-top: 1px solid var(--borde);
+}
+
 .fila {
   display: flex;
   align-items: center;
@@ -110,7 +116,6 @@
   min-height: 60px;
   padding: 8px 0;
   border: none;
-  border-top: 1px solid var(--borde);
   background: transparent;
   color: var(--tinta);
   text-align: left;
@@ -182,6 +187,49 @@
 
 .sinFoto {
   color: var(--en-contra);
+}
+
+.agregarFoto {
+  position: absolute;
+  right: 0;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--en-contra);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.raiz[data-computador='true'] .agregarFoto {
+  bottom: 11px;
+}
+
+/* Mide 16 px de alto, pero se puede tocar en 44 */
+.agregarFoto::after {
+  content: '';
+  position: absolute;
+  inset: -14px -6px;
+}
+
+.agregarFoto[aria-disabled='true'] {
+  color: var(--sec);
+  text-decoration: none;
+  cursor: default;
+}
+
+.archivo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* Una boleta de papel chiquita, con sus líneas */

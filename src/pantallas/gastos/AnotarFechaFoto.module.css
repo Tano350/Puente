@@ -53,10 +53,58 @@
   outline: none;
 }
 
+/* Con foto, la ficha tiene dos botones: la miniatura (la abre en grande) y la X (la quita) */
 .conFoto {
-  gap: 8px;
-  padding: 0 8px 0 6px;
+  gap: 0;
+  padding: 0;
   border-color: var(--tinta);
+  cursor: default;
+}
+
+.conFoto::after {
+  content: none;
+}
+
+.conFoto:has(:focus-visible) {
+  outline: none;
+}
+
+.ver,
+.quitar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  border: none;
+  border-radius: 18px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ver {
+  gap: 8px;
+  padding: 0 4px 0 6px;
+}
+
+.quitar {
+  justify-content: center;
+  padding: 0 10px 0 6px;
+}
+
+/* Se ven de 36 px y se tocan en 44 */
+.ver::after,
+.quitar::after {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
+}
+
+.ver:focus-visible,
+.quitar:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: -2px;
 }
 
 .miniatura {
@@ -85,6 +133,8 @@
 }
 
 .fila[data-computador='true'] .ficha::after,
+.fila[data-computador='true'] .ver::after,
+.fila[data-computador='true'] .quitar::after,
 .fila[data-computador='true'] .fechaNativa {
   inset: -5px -2px;
   height: calc(100% + 10px);

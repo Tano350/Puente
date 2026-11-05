@@ -140,12 +140,9 @@ function PasoAvisos({ persona, alTerminar, alActivar }: { persona: Persona; alTe
   const [preferencias, setPreferencias] = useState(() => preferenciasDe(persona.avisos))
   const [ocupado, setOcupado] = useState(false)
   const [problema, setProblema] = useState<string | null>(null)
+  // En iPhone los avisos solo llegan con la app instalada: hasta entonces, el botón queda apagado
+  const sinInstalar = esIPhone && !estaInstalada()
   const activar = async () => {
-    // En iPhone los avisos solo llegan con la app instalada (Safari no los ofrece)
-    if (esIPhone && !estaInstalada()) {
-      setProblema(textos.instalar.enIPhone)
-      return
-    }
     setOcupado(true)
     setProblema(null)
     try {
@@ -160,9 +157,8 @@ function PasoAvisos({ persona, alTerminar, alActivar }: { persona: Persona; alTe
     }
   }
   return (
-    <PantallaPaso alVolver={alTerminar} pie={<><BotonPrincipal onClick={() => void activar()} ocupado={ocupado}>{textos.avisos.activar}</BotonPrincipal>{problema && <div className={estilos.nota} role="alert">{problema}</div>}</>}>
+    <PantallaPaso alVolver={alTerminar} pie={<><BotonPrincipal onClick={() => void activar()} apagado={sinInstalar} ocupado={ocupado}>{textos.avisos.activar}</BotonPrincipal>{problema && <div className={estilos.nota} role="alert">{problema}</div>}</>}>
       <Titulo>{textos.avisos.titulo}</Titulo>
-      <div className={estilos.bajada}>{textos.avisos.elige}</div>
       <InterruptoresDeAvisos preferencias={preferencias} onCambio={setPreferencias} />
     </PantallaPaso>
   )
@@ -188,8 +184,7 @@ function PasoCalendario({ conectado, problemaAlVolver, alTerminar }: { conectado
   return (
     <PantallaPaso alVolver={alTerminar} pie={<><Boton onClick={() => void conectar()} ocupado={ocupado}>{conectado ? t.volverAConectar : t.conectar}</Boton>{problema && <div className={estilos.nota} role="alert">{problema}</div>}</>}>
       <Titulo>{t.titulo}</Titulo>
-      <div className={estilos.bajada}>{t.explica}</div>
-      <div className={estilos.bajada}>{t.permiso}</div>
+      <div className={estilos.bajada}>{textos.primeraVez.calendario}</div>
     </PantallaPaso>
   )
 }
@@ -237,15 +232,18 @@ export function PrimeraVez() {
     calendario: conectado,
   }
   const puedeEntrar = hechas.perfil && hechas.fechas
+  // Solo lo obligatorio cuenta como lo que falta
+  const faltan = (['perfil', 'fechas'] as const).filter((clave) => !hechas[clave])
+  // En iPhone los avisos piden primero la app instalada
+  const avisosSinInstalar = esIPhone && !hechas.instalar
   const nombre = primerNombre(persona)
   const tareas: { clave: Tarea; pendiente: string }[] = [
     { clave: 'perfil', pendiente: t.falta },
     { clave: 'fechas', pendiente: t.falta },
     { clave: 'instalar', pendiente: t.recomendado },
-    { clave: 'avisos', pendiente: t.recomendado },
+    { clave: 'avisos', pendiente: avisosSinInstalar ? t.primeroInstalar : t.recomendado },
     ...(persona.administra ? [{ clave: 'calendario' as const, pendiente: t.recomendado }] : []),
   ]
-  const faltan = tareas.filter(({ clave }) => !hechas[clave]).length
   const irAHoy = async () => {
     setEntrando(true)
     try {
@@ -259,8 +257,8 @@ export function PrimeraVez() {
     <div className={estilos.pantalla}>
       <div className={estilos.desplazable}>
         <div className={estilos.lista}>
-          <Titulo grande>{faltan === 0 ? t.listo(nombre) : t.hola(nombre)}</Titulo>
-          {faltan > 0 && <div className={estilos.faltan}>{t.faltan(faltan, tareas.length)}</div>}
+          <Titulo grande>{puedeEntrar ? t.listo(nombre) : t.hola(nombre)}</Titulo>
+          {!puedeEntrar && <div className={estilos.faltan}>{t.faltanParaEntrar(faltan.map((clave) => t.faltaParte[clave]))}</div>}
           <div className={estilos.tareas}>
             {tareas.map(({ clave, pendiente }) => (
               <button key={clave} type="button" className={estilos.tarea} onClick={() => setPaso(clave)}>
@@ -286,10 +284,12 @@ export function PrimeraVez() {
         </div>
       </div>
       <Pie>
-        <BotonPrincipal onClick={() => void irAHoy()} apagado={!puedeEntrar} ocupado={entrando}>
-          {t.irAHoy}
-        </BotonPrincipal>
-        {!puedeEntrar && <div className={estilos.nota}>{hechas.perfil ? t.primeroFechas : t.primeroPerfil}</div>}
+        {/* Apagado mientras falte algo: el motivo está arriba, en "Para entrar falta" */}
+        <div className={estilos.entrar}>
+          <BotonPrincipal onClick={() => void irAHoy()} apagado={!puedeEntrar} ocupado={entrando}>
+            {t.irAHoy}
+          </BotonPrincipal>
+        </div>
       </Pie>
     </div>
   )

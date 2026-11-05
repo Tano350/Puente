@@ -36,8 +36,21 @@ test.describe('Hoy durante el viaje', () => {
 
   test('sumarse a un evento del grupo desde Hoy', async ({ page }) => {
     await abrir(page, LISTA)
-    await page.getByRole('button', { name: v.voyA('Charla en Stripe') }).click()
-    await expect(page.getByRole('status').filter({ hasText: v.vasA('Charla en Stripe') })).toBeVisible()
+    // Las mismas palabras que la Agenda: "Tomar cupo" en lo que tiene cupos, "Voy" en lo que es para todos
+    await expect(page.getByRole('button', { name: v.voyA('Cena con exalumnos UC') })).toHaveText(v.voy)
+    await page.getByRole('button', { name: v.tomarCupoEn('Charla en Stripe') }).click()
+    await expect(page.getByRole('status').filter({ hasText: v.tomaste })).toBeVisible()
     await expect(page.getByRole('region', { name: v.tuDia }).getByRole('button', { name: /Charla en Stripe/ })).toBeVisible()
+  })
+
+  test('lo que está en curso se ve como la próxima parada', async ({ page }) => {
+    // El 16 de enero a las 10:15, el paseo de 10:00 a 16:00 sigue y no viene nada más
+    await abrir(page, '/hoy?maqueta=lista&hoy=2027-01-16')
+    const dia = page.getByRole('region', { name: v.tuDia })
+    await expect(dia.getByRole('listitem')).toContainText(['10:00', '10:15'])
+    if (esCelular(page)) {
+      await expect(dia.getByRole('listitem').first()).toContainText(v.enCursoHasta('16:00'))
+      await expect(dia.getByRole('link', { name: v.comoLlegar })).toBeVisible()
+    }
   })
 })

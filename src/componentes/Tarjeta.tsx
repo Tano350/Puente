@@ -3,7 +3,7 @@ import type { Persona } from '../datos/consultas.ts'
 import { useContactos } from '../datos/contactos.ts'
 import { diaLargo, diasEntre, estadia, hoyEnCalifornia, indiceEnElViaje, mesesDe, rango, rangoLargo, ventanaDelViaje } from '../datos/fechas.ts'
 import { tieneFechas, useViaje, type ConFechas } from '../datos/grupo.ts'
-import { carreraCorta, primerNombre } from '../datos/nombres.ts'
+import { carreraCorta, nombreCompleto, primerNombre } from '../datos/nombres.ts'
 import { useTextos } from '../textos.ts'
 import { Avatar } from './Avatar.tsx'
 import { Icono } from './Icono.tsx'
@@ -23,7 +23,7 @@ export function Tarjeta({ persona }: { persona: Persona }) {
       <div className={estilos.cabeza}>
         <Avatar persona={persona} medida={56} />
         <span className={estilos.quien}>
-          <span className={estilos.nombre}>{persona.nombre ?? persona.correo}</span>
+          <span className={estilos.nombre}>{nombreCompleto(persona)}</span>
           {estado.tipo !== 'sinFechas' && (
             <span className={estilos.estado} data-alla={estado.tipo === 'alla'}>
               {estado.tipo === 'alla' && <span className={estilos.punto} aria-hidden="true" />}

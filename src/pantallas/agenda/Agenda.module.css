@@ -298,3 +298,18 @@
   line-height: 22px;
   color: var(--sec);
 }
+
+/* La ficha "Sin conexión" va arriba de la cabecera, a la derecha; con señal no ocupa lugar */
+.fichaCel {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.fichaCel:empty {
+  display: none;
+}
+
+.cabecera:has(.fichaCel:not(:empty)) {
+  padding-top: 12px;
+}

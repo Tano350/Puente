@@ -17,7 +17,7 @@
   --centro: 13px;
 }
 
-.parada[data-estado='proxima'] {
+.parada[data-destacada='true'] {
   --centro: 15px;
 }
 
@@ -36,7 +36,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.parada[data-estado='proxima'] .hora {
+.parada[data-destacada='true'] .hora {
   font-size: 28px;
   line-height: 30px;
 }
@@ -97,7 +97,7 @@
   background: var(--apagado);
 }
 
-.tuerca[data-estado='proxima'] {
+.tuerca[data-destacada='true'] {
   left: 1px;
   top: calc(var(--centro) - 13px);
   width: 26px;
@@ -115,7 +115,7 @@
   background: var(--puntito, var(--fondo));
 }
 
-.tuerca[data-estado='proxima'] .agujero {
+.tuerca[data-destacada='true'] .agujero {
   left: 9px;
   top: 9px;
   width: 8px;
@@ -265,7 +265,45 @@
 .mitadArriba {
   top: 0;
   height: var(--mitad);
+}
+
+.mitadArriba[data-color='apagado'] {
   background: var(--apagado);
+}
+
+/* Lo que está en curso sigue un poco bajo "ahora" y termina en una punta plana */
+.cola {
+  display: grid;
+  grid-template-columns: 64px 28px minmax(0, 1fr);
+  column-gap: 10px;
+  height: 22px;
+}
+
+.colaCompacta {
+  height: 16px;
+}
+
+.colaTramo {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 12px;
+  width: 4px;
+  background: var(--tinta);
+}
+
+.colaTramo::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: -4px;
+  width: 12px;
+  height: 3px;
+  background: var(--tinta);
+}
+
+.cola .riel {
+  height: 100%;
 }
 
 .mitadAbajo {
@@ -322,7 +360,7 @@
   line-height: 24px;
 }
 
-.fila[data-estado='proxima'] .nombre {
+.fila[data-destacada='true'] .nombre {
   font-weight: 500;
 }
 

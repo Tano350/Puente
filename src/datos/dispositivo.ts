@@ -14,6 +14,10 @@ const INSTALADA = 'puente.instalada'
 
 export const esIPhone = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
 
+// En iPhone solo Safari puede instalar la app. Chrome, Firefox, Edge y los navegadores de adentro de otras apps
+// (WhatsApp, Instagram, Facebook) llevan su propia marca en el agente o no dicen "Safari".
+export const esSafari = /safari\//i.test(navigator.userAgent) && !/crios|fxios|edgios|opios|gsa\/|duckduckgo|fban|fbav|instagram|line\/|micromessenger/i.test(navigator.userAgent)
+
 export function estaInstalada(): boolean {
   const independiente = window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true
   if (independiente) return true

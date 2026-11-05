@@ -54,6 +54,42 @@
   color: var(--sec);
 }
 
+/* "Como el último", ficha sobre la lista; marcada cuando ya están esos mismos */
+.ultimo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  height: 36px;
+  margin: 4px 0 6px;
+  padding: 0 14px;
+  border: 1.5px solid var(--regla);
+  border-radius: 18px;
+  background: transparent;
+  color: var(--tinta);
+  font-size: 15px;
+  line-height: 20px;
+  cursor: pointer;
+}
+
+.ultimo[aria-pressed='true'] {
+  border-color: var(--tinta);
+  background: var(--panel);
+}
+
+/* Se ve de 36 px y se toca en 44 */
+.ultimo::after {
+  content: '';
+  position: absolute;
+  inset: -4px -2px;
+}
+
+.ultimoTexto {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .buscador {
   margin: 4px 0 8px;
 }
@@ -235,6 +271,17 @@
 .lista[data-computador='true'] .todos {
   height: 32px;
   padding: 0;
+}
+
+.lista[data-computador='true'] .ultimo {
+  height: 34px;
+  margin-top: 6px;
+  border-radius: 17px;
+  font-size: 14px;
+}
+
+.lista[data-computador='true'] .ultimo::after {
+  inset: -5px -2px;
 }
 
 .lista[data-computador='true'] .buscador {

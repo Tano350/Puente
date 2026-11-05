@@ -47,8 +47,12 @@ export function CrearBoleto({ borrador, errores, computador, enfocar, editando =
   const textos = useTextos()
   const t = textos.agenda.crear
   const caja = useRef<HTMLDivElement>(null)
+  const lineasRef = useRef<HTMLDivElement>(null)
+  const tituloRef = useRef<HTMLTextAreaElement>(null)
   const botonLugar = useRef<HTMLButtonElement>(null)
   const [ancho, setAncho] = useState(358)
+  // Lo alto de las líneas: el boleto crece si el nombre baja de línea o aparece un error
+  const [contenido, setContenido] = useState(0)
   const [editandoLugar, setEditandoLugar] = useState(false)
   // La hoja enfoca su primer campo al abrirse, así que no sabe volver: el foco vuelve a la línea del lugar
   const cerrarLugar = () => {
@@ -58,19 +62,39 @@ export function CrearBoleto({ borrador, errores, computador, enfocar, editando =
   useLayoutEffect(() => {
     const elemento = caja.current
     if (!elemento) return
-    const medir = () => setAncho(elemento.clientWidth)
+    const medir = () => {
+      setAncho(elemento.clientWidth)
+      setContenido(lineasRef.current?.offsetHeight ?? 0)
+    }
     medir()
     const observador = new ResizeObserver(medir)
     observador.observe(elemento)
+    if (lineasRef.current) observador.observe(lineasRef.current)
     return () => observador.disconnect()
   }, [])
+  // El nombre baja de línea en vez de cortarse
+  const nombre = borrador.titulo
+  useLayoutEffect(() => {
+    const campo = tituloRef.current
+    if (!campo) return
+    campo.style.height = 'auto'
+    campo.style.height = `${campo.scrollHeight + 2}px`
+  }, [nombre, ancho, borrador.clase])
 
   const { clase, tipo, titulo, dia, empieza, termina, lugar, direccion, modo, cupos } = borrador
   const evento = clase === 'evento'
-  const alto = evento ? 200 : 140
+  const alto = Math.max(evento ? 200 : 140, contenido + 18)
   const { borde, corte } = silueta(ancho, alto)
   const lugarTexto = [lugar.trim(), direccion.trim()].filter(Boolean).join(', ')
   const errorHora = errores.hora ? 'crear-hora-error' : undefined
+  // Cada error va bajo su línea
+  const error = (campo: 'titulo' | 'dia' | 'hora') =>
+    errores[campo] && (
+      <div id={`crear-${campo}-error`} className={estilos.error} role="alert">
+        <Icono nombre="alerta" medida={15} trazo={2} />
+        {errores[campo]}
+      </div>
+    )
 
   const talon = !evento ? (
     <>
@@ -129,7 +153,7 @@ export function CrearBoleto({ borrador, errores, computador, enfocar, editando =
           <path d={borde} className={estilos.borde} />
           <path d={corte} className={estilos.corte} />
         </svg>
-        <div className={estilos.lineas}>
+        <div ref={lineasRef} className={estilos.lineas}>
           {evento && (
             <span className={estilos.tipo} data-vacio={!tipo}>
               <span aria-hidden="true">{tipo ? textos.agenda.tipos[tipo] : t.eligeTipo}</span>
@@ -148,9 +172,11 @@ export function CrearBoleto({ borrador, errores, computador, enfocar, editando =
               </select>
             </span>
           )}
-          <input
+          <textarea
+            ref={tituloRef}
             id="crear-titulo"
             className={estilos.titulo}
+            rows={1}
             value={titulo}
             placeholder={evento ? t.nombreEvento : t.queTienes}
             aria-label={evento ? t.nombreEvento : t.queTienes}
@@ -158,8 +184,12 @@ export function CrearBoleto({ borrador, errores, computador, enfocar, editando =
             aria-describedby={errores.titulo ? 'crear-titulo-error' : undefined}
             autoComplete="off"
             autoFocus={enfocar}
-            onChange={(e) => onCambio({ titulo: e.target.value })}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') e.preventDefault()
+            }}
+            onChange={(e) => onCambio({ titulo: e.target.value.replace(/[\r\n]+/g, ' ') })}
           />
+          {error('titulo')}
           <div className={estilos.fila} data-mal={Boolean(errores.dia)}>
             <span className={`${estilos.celda} ${estilos.resto}`} data-vacio={!dia}>
               <Icono nombre="agenda" medida={16} trazo={2} />
@@ -181,6 +211,7 @@ export function CrearBoleto({ borrador, errores, computador, enfocar, editando =
               />
             </span>
           </div>
+          {error('dia')}
           {/* Con la hora elegida, la línea se parte: lo de la izquierda cambia el inicio y lo de la derecha, el término */}
           <div className={estilos.fila} data-mal={Boolean(errores.hora)}>
             <span className={`${estilos.celda} ${empieza ? '' : estilos.resto}`} data-vacio={!empieza}>
@@ -217,6 +248,7 @@ export function CrearBoleto({ borrador, errores, computador, enfocar, editando =
               </span>
             )}
           </div>
+          {error('hora')}
           {evento && (
             <button ref={botonLugar} type="button" className={`${estilos.fila} ${estilos.lugar}`} data-vacio={!lugarTexto} onClick={() => setEditandoLugar(true)}>
               <Icono nombre="lugar" medida={16} trazo={2} />

@@ -99,6 +99,7 @@ test.describe('Contactos', () => {
     const nuevo = esCelular(page) ? page.getByRole('main') : page.getByRole('complementary')
     await expect(nuevo.getByLabel(es.agenda.crear.nombreEvento)).toHaveValue(es.agenda.crear.reunionCon('Felipe Araya'))
     await expect(nuevo.getByText(es.agenda.crear.pasara('Felipe Araya', c.etapas.reunion_agendada))).toBeVisible()
+    await expect(nuevo.getByRole('heading', { name: es.agenda.crear.tituloReunion })).toBeVisible()
     await nuevo.getByLabel(es.agenda.crear.dia, { exact: true }).fill('2027-01-14')
     await nuevo.getByLabel(es.agenda.crear.empieza).fill('11:00')
     await nuevo.getByLabel(es.agenda.crear.termina).fill('12:00')

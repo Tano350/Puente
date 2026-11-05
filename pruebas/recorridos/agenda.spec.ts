@@ -49,7 +49,7 @@ test.describe('Agenda', () => {
     const d = detalle(page)
     await expect(d.getByRole('heading', { name: 'Plug and Play' })).toBeVisible()
     await expect(d.getByText(ev.tuCupo)).toBeVisible()
-    await expect(d.getByText(ev.cupos(5, 8))).toBeVisible()
+    await expect(d.getByText(ev.cupos(3, 8))).toBeVisible()
     await expect(d.getByText(ev.tienesCupo)).toBeVisible()
     await expect(d.getByRole('link', { name: ev.comoLlegar })).toBeVisible()
     await expect(d.getByRole('button', { name: ev.soltarCupo })).toBeVisible()
@@ -75,10 +75,25 @@ test.describe('Agenda', () => {
     await page.getByRole('tab', { name: a.vista.nombres.semana }).click()
     await evento(page, 'Visita a Google').click()
     const d = detalle(page)
-    await expect(d.getByText(ev.llenoEspera(2))).toBeVisible()
+    await expect(d.getByRole('button', { name: ev.anotarme })).toBeVisible()
     await d.getByRole('button', { name: ev.anotarme }).click()
     await expect(page.getByRole('status').filter({ hasText: ev.quedaste(3) })).toBeVisible()
-    await expect(d.getByText(ev.estasEnLista(3))).toBeVisible()
+    await expect(d.getByText(ev.enLaListaDeEspera, { exact: true })).toBeVisible()
+  })
+
+  test('al crear sin lo necesario, cada error sale bajo su línea', async ({ page }) => {
+    await abrir(page, AGENDA)
+    await page.getByRole('button', { name: /^Nuevo/ }).first().click()
+    const panel = detalle(page)
+    await panel.getByRole('button', { name: a.crear.crearEvento }).click()
+    const nombre = panel.getByText(a.crear.faltaNombre)
+    const hora = panel.getByText(a.crear.faltaInicio)
+    await expect(nombre).toBeVisible()
+    await expect(hora).toBeVisible()
+    // El del nombre queda arriba de la hora, los dos dentro del boleto
+    const [y1, y2] = [(await nombre.boundingBox())?.y ?? 0, (await hora.boundingBox())?.y ?? 0]
+    expect(y1).toBeLessThan(y2)
+    await expect(panel.getByLabel(a.crear.nombreEvento)).toHaveAttribute('aria-invalid', 'true')
   })
 
   test('crear un evento, editarlo, cancelarlo y deshacer', async ({ page }) => {

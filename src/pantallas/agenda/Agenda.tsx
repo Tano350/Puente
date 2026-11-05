@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate, useParams } from 'react-router'
 import { Aviso } from '../../componentes/Controles.tsx'
 import { InterruptorHoraDeChile, useHoraDeChile } from '../../componentes/HoraDeChile.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
+import { SinConexion } from '../../componentes/SinConexion.tsx'
 import { useAviso } from '../../componentes/useAviso.ts'
 import { useEsComputador } from '../../componentes/useEsComputador.ts'
 import type { TablesUpdate } from '../../datos/base.ts'
@@ -289,9 +290,10 @@ export function Agenda() {
         pendiente={pendiente}
         onAbrir={abrir}
         onIr={(pieza) => void irAl(pieza)}
+        onNuevo={() => ir('/agenda/nuevo')}
       />
     ) : vista === 'semana' ? (
-      <AgendaSemana dias={semana} piezas={porDias} computador={esComputador} chile={chile} hoy={hoy} ahora={ahora} viaje={viaje} elegido={elegido?.id} onAbrir={abrir} onDia={elegirDia} />
+      <AgendaSemana dias={semana} piezas={porDias} computador={esComputador} chile={chile} hoy={hoy} ahora={ahora} viaje={viaje} soloVoy={soloVoy} elegido={elegido?.id} onAbrir={abrir} onDia={elegirDia} />
     ) : (
       <AgendaMes dia={dia} piezas={porDias} computador={esComputador} hoy={hoy} yo={yo} soloVoy={soloVoy} viaje={viaje} onDia={elegirDia} />
     )
@@ -309,6 +311,7 @@ export function Agenda() {
                 {titulo}
               </span>
             </div>
+            <SinConexion sobrePanel />
             <button type="button" className={estilos.nuevo} aria-pressed={id === 'nuevo'} onClick={() => (id === 'nuevo' ? cerrarNuevo() : ir('/agenda/nuevo'))}>
               <Icono nombre="mas" medida={18} trazo={2.25} />
               {tv.nuevoEvento}
@@ -353,6 +356,9 @@ export function Agenda() {
   return (
     <div className={estilos.celular}>
       <div className={estilos.cabecera}>
+        <div className={estilos.fichaCel}>
+          <SinConexion sobrePanel />
+        </div>
         <div className={estilos.titular}>
           <h1 className={estilos.titulo}>{textos.agenda.titulo}</h1>
           <button type="button" className={estilos.nuevo} aria-label={tv.nuevoEventoORato} onClick={() => ir('/agenda/nuevo')}>

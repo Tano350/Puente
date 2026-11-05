@@ -3,7 +3,7 @@ import { Buscador } from '../../componentes/Buscador.tsx'
 import { Hoja } from '../../componentes/Controles.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
 import type { Persona } from '../../datos/consultas.ts'
-import { CATEGORIAS, type Categoria } from '../../datos/gastos.ts'
+import { CATEGORIAS, type Categoria, type Division } from '../../datos/gastos.ts'
 import { coincide } from '../../datos/grupo.ts'
 import { useTextos } from '../../textos.ts'
 import { iconoDe } from './categorias.ts'
@@ -12,7 +12,8 @@ import estilos from './AnotarElegir.module.css'
 type PropsMenu = { computador: boolean; abierto: boolean; titulo: string; clase: string; onCerrar: () => void; children: ReactNode }
 
 // Elegir algo del gasto: en el celular, una hoja con "Cancelar"; en el computador, un menú bajo lo que lo abre
-// (el botón con aria-haspopup, en el mismo contenedor que el menú, con position: relative).
+// (el botón con aria-haspopup, en el mismo contenedor que el menú, con position: relative; si hay dos, el que está
+// con aria-expanded="true").
 function Elegir({ computador, abierto, titulo, clase, onCerrar, children }: PropsMenu) {
   const textos = useTextos()
   if (computador) return <Menu abierto={abierto} titulo={titulo} clase={clase} onCerrar={onCerrar}>{children}</Menu>
@@ -29,13 +30,19 @@ function Elegir({ computador, abierto, titulo, clase, onCerrar, children }: Prop
   )
 }
 
+// Lo que abrió el menú: en su mismo contenedor, el abierto si hay más de uno
+function disparadorDe(caja: HTMLElement | null): HTMLElement | null {
+  const contenedor = caja?.parentElement
+  return contenedor?.querySelector<HTMLElement>('[aria-haspopup][aria-expanded="true"]') ?? contenedor?.querySelector<HTMLElement>('[aria-haspopup]') ?? null
+}
+
 function Menu({ abierto, titulo, clase, onCerrar, children }: Omit<PropsMenu, 'computador'>) {
   const caja = useRef<HTMLDivElement>(null)
   // Se cierra al tocar fuera; tocar lo que lo abrió lo cierra por su cuenta
   useEffect(() => {
     if (!abierto) return
     const alTocar = (e: PointerEvent) => {
-      const disparador = caja.current?.parentElement?.querySelector('[aria-haspopup]')
+      const disparador = disparadorDe(caja.current)
       if (e.target instanceof Node && !caja.current?.contains(e.target) && !disparador?.contains(e.target)) onCerrar()
     }
     document.addEventListener('pointerdown', alTocar)
@@ -44,7 +51,7 @@ function Menu({ abierto, titulo, clase, onCerrar, children }: Omit<PropsMenu, 'c
   // Al abrir, el foco va al buscador o a lo elegido; al cerrar, vuelve a lo que lo abrió (aunque el clic no le haya dado el foco)
   useEffect(() => {
     if (!abierto) return
-    const antes = caja.current?.parentElement?.querySelector<HTMLElement>('[aria-haspopup]') ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null)
+    const antes = disparadorDe(caja.current) ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null)
     caja.current?.querySelector<HTMLElement>('input, [aria-pressed="true"]')?.focus()
     return () => {
       if (antes?.isConnected) antes.focus({ preventScroll: true })
@@ -140,7 +147,30 @@ export function AnotarQuienPago({ computador, abierto, gente, nombres, yo, elegi
   )
 }
 
-type PropsCategoria = { computador: boolean; abierto: boolean; elegida: Categoria; onElegir: (categoria: Categoria) => void; onCerrar: () => void }
+type PropsDivision = { computador: boolean; abierto: boolean; divisiones: readonly Division[]; elegida: Division; onElegir: (division: Division) => void; onCerrar: () => void }
+
+// Cómo se divide: partes iguales, montos exactos o solo mío. Tocar una la elige y cierra.
+export function AnotarDivision({ computador, abierto, divisiones, elegida, onElegir, onCerrar }: PropsDivision) {
+  const t = useTextos().gastos.anotar
+  return (
+    <Elegir computador={computador} abierto={abierto} titulo={t.comoDividir} clase={estilos.menuDivision} onCerrar={onCerrar}>
+      <div className={computador ? estilos.divisionesMenu : estilos.opciones}>
+        {divisiones.map((d) => {
+          const si = d === elegida
+          return (
+            <button key={d} type="button" className={computador ? estilos.opcionMenu : estilos.opcion} aria-pressed={si} onClick={() => onElegir(d)}>
+              {!computador && <span className={estilos.radio} aria-hidden="true" />}
+              <span className={computador ? estilos.nombreMenu : estilos.nombre}>{t.formas[d]}</span>
+              {computador && si && <Marca />}
+            </button>
+          )
+        })}
+      </div>
+    </Elegir>
+  )
+}
+
+type PropsCategoria ={ computador: boolean; abierto: boolean; elegida: Categoria; onElegir: (categoria: Categoria) => void; onCerrar: () => void }
 
 // La categoría, por si la que se eligió sola no es la que corresponde
 export function AnotarCategoria({ computador, abierto, elegida, onElegir, onCerrar }: PropsCategoria) {

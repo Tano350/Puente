@@ -71,7 +71,7 @@ function talonDe(estado: Estado, evento: Evento, van: number, espera: number, t:
     case 'fuera':
       return { arriba: t.noEstas[0], abajo: t.noEstas[1] }
     case 'tienes':
-      return { arriba: t.tuCupo, marca: 'check', abajo: t.deTotal(van, cupos) }
+      return { arriba: t.tuCupo, marca: 'check', abajo: '' }
     case 'vas':
       return { arriba: t.vas, marca: 'check', abajo: van > 1 ? t.conMas(van - 1) : '' }
     case 'espera':
@@ -302,7 +302,7 @@ function Boleto({ evento, computador, atras, conNota, onCerrar, onEditar }: Prop
   } else if (estado?.tipo === 'vas') {
     accion = enEstado('check', t.vas, t.yaNoVoy, yaNoVoy, t.sinRedYaNoVoy)
   } else if (estado?.tipo === 'espera') {
-    accion = enEstado('reloj', t.estasEnLista(estado.puesto), t.salir, salirDeLaLista, t.sinRedSalir)
+    accion = enEstado('reloj', t.enLaListaDeEspera, t.salir, salirDeLaLista, t.sinRedSalir)
   } else if (estado?.tipo === 'fuera') {
     accion = info(estado.cuando === 'antes' ? t.todaviaNoLlegas : estado.cuando === 'despues' ? t.yaVolviste : t.sinFechas)
   } else if (estado?.tipo === 'cerrada') {

@@ -1,7 +1,6 @@
 import { useEffect, useId, useRef, useState, type ChangeEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { Icono } from '../../componentes/Icono.tsx'
-import { useConectado } from '../../datos/conexion.ts'
 import { consultas } from '../../datos/consultas.ts'
 import { prepararBoleta, quitarBoleta, subirBoleta, useUrlBoleta, type Gasto } from '../../datos/gastos.ts'
 import { useTextos } from '../../textos.ts'
@@ -11,10 +10,10 @@ type Avisos = { mostrar: (texto: string, deshacer?: () => void) => void; cerrar:
 
 // La boleta de un gasto: "Ver boleta", con la foto en chico, la abre en grande. Si no hay y lo puedes cambiar,
 // "Agregar foto de la boleta" la achica y la sube al tiro, con aviso y Deshacer.
-export function DetalleBoleta({ gasto, puede, computador, aviso }: { gasto: Gasto; puede: boolean; computador: boolean; aviso: Avisos }) {
+// "libre": se puede cambiar ahora (con señal, o un gasto que todavía no sube: la foto espera con él).
+export function DetalleBoleta({ gasto, puede, libre, computador, aviso }: { gasto: Gasto; puede: boolean; libre: boolean; computador: boolean; aviso: Avisos }) {
   const textos = useTextos()
   const d = textos.gastos.detalle
-  const conectado = useConectado()
   const { data: url, isError } = useUrlBoleta(gasto.boleta)
   const [viendo, setViendo] = useState(false)
   const [subiendo, setSubiendo] = useState(false)
@@ -58,7 +57,7 @@ export function DetalleBoleta({ gasto, puede, computador, aviso }: { gasto: Gast
             <Icono nombre="derecha" medida={18} trazo={2} />
           </span>
         </button>
-        {viendo && <DetalleVisor titulo={gasto.titulo} url={url} fallo={isError} onCerrar={() => setViendo(false)} />}
+        {viendo && <VisorBoleta titulo={d.boletaDe(gasto.titulo)} url={url} fallo={isError} onCerrar={() => setViendo(false)} />}
       </>
     )
   }
@@ -69,11 +68,11 @@ export function DetalleBoleta({ gasto, puede, computador, aviso }: { gasto: Gast
         key="boleta"
         type="button"
         className={estilos.agregar}
-        aria-disabled={subiendo || !conectado}
-        data-sin-red={!conectado}
+        aria-disabled={subiendo || !libre}
+        data-sin-red={!libre}
         onClick={() => {
           // Subir la foto necesita conexión: sin señal, el botón sigue ahí pero avisa
-          if (!conectado) aviso.mostrar(d.necesitasConexion)
+          if (!libre) aviso.mostrar(d.necesitasConexion)
           else if (!subiendo) archivo.current?.click()
         }}
       >
@@ -86,7 +85,8 @@ export function DetalleBoleta({ gasto, puede, computador, aviso }: { gasto: Gast
 }
 
 // La boleta en grande, sobre todo y siempre oscura. "Cerrar", Escape o tocar afuera de la foto la cierran.
-function DetalleVisor({ titulo, url, fallo, onCerrar }: { titulo: string; url: string | undefined; fallo: boolean; onCerrar: () => void }) {
+// "titulo" va tal cual arriba (también la usa "Nuevo gasto", con la foto todavía sin subir).
+export function VisorBoleta({ titulo, url, fallo, onCerrar }: { titulo: string; url: string | null | undefined; fallo: boolean; onCerrar: () => void }) {
   const textos = useTextos()
   const d = textos.gastos.detalle
   const idTitulo = useId()
@@ -117,7 +117,7 @@ function DetalleVisor({ titulo, url, fallo, onCerrar }: { titulo: string; url: s
     <div role="dialog" aria-modal="true" aria-labelledby={idTitulo} className={estilos.visor}>
       <div className={estilos.visorCabeza}>
         <h2 id={idTitulo} className={estilos.visorTitulo}>
-          {d.boletaDe(titulo)}
+          {titulo}
         </h2>
         <button ref={cerrar} type="button" className={estilos.visorCerrar} onClick={onCerrar}>
           {textos.cerrar}

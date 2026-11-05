@@ -13,6 +13,7 @@ import {
   prepararBoleta,
   quitarBoleta,
   subirBoleta,
+  useGastos,
   usePartes,
   type DatosGasto,
   type Division,
@@ -22,6 +23,7 @@ import {
 import { integrantes } from '../../datos/grupo.ts'
 import { primerNombre } from '../../datos/nombres.ts'
 import { useSesion } from '../../datos/sesion.tsx'
+import { useSinSubir } from '../../datos/sinSenal.ts'
 import { useTextos } from '../../textos.ts'
 import {
   borradorDe,
@@ -33,13 +35,15 @@ import {
   mismosDatos,
   nombresCortos,
   ordenarMonto,
+  presentes,
   sinMoneda,
   soloMonto,
+  ultimoGrupo,
   validar,
   type Borrador,
   type Errores,
 } from './AnotarBorrador.ts'
-import { AnotarCategoria, AnotarQuienPago } from './AnotarElegir.tsx'
+import { AnotarCategoria, AnotarDivision, AnotarQuienPago } from './AnotarElegir.tsx'
 import { AnotarEntreQuienes } from './AnotarEntreQuienes.tsx'
 import { AnotarFechaFoto, type Boleta } from './AnotarFechaFoto.tsx'
 import { iconoDe } from './categorias.ts'
@@ -47,7 +51,7 @@ import estilos from './AnotarGasto.module.css'
 
 type Props = { computador: boolean; gasto?: Gasto; onCerrar: () => void; onListo: (gasto: Gasto, como: 'anotado' | 'guardado') => void }
 
-// Tocar "dividido" pasa por las tres formas
+// Las tres formas de dividir, en el orden de la hoja
 const DIVISIONES = ['iguales', 'exactos', 'solo'] as const satisfies readonly Division[]
 
 // "Nuevo gasto" y, con "gasto", "Editar gasto". En el celular tapa todo, también la barra de secciones;
@@ -56,7 +60,7 @@ export function AnotarGasto({ gasto, ...resto }: Props) {
   const sesion = useSesion()
   const { data: personas } = usePersonas()
   const { data: partes } = usePartes()
-  // Parte cuando están las personas (todas quedan marcadas) y, al editar, las partes del gasto
+  // Parte cuando están las personas (quedan marcadas las que están allá ese día) y, al editar, las partes del gasto
   if (sesion.tipo !== 'dentro' || !personas || (gasto && !partes)) return null
   return <Formulario key={gasto?.id ?? 'nuevo'} {...resto} gasto={gasto} yo={sesion.persona} personas={personas} partes={gasto ? partesDe(gasto.id, partes ?? []) : []} />
 }
@@ -64,17 +68,21 @@ export function AnotarGasto({ gasto, ...resto }: Props) {
 function Formulario({ computador, gasto, onCerrar, onListo, yo, personas, partes }: Props & { yo: Persona; personas: Persona[]; partes: Parte[] }) {
   const textos = useTextos()
   const conectado = useConectado()
+  const sinSubir = useSinSubir()
   const tg = textos.gastos
   const t = tg.anotar
   const gente = integrantes([yo, ...personas.filter((p) => p.id !== yo.id)], yo.id)
   const nombres = nombresCortos(gente)
   const [antes] = useState(() => (gasto ? datosGuardados(gasto, partes) : undefined))
-  const [borrador, setBorrador] = useState<Borrador>(() => (gasto ? borradorDe(gasto, partes) : borradorNuevo(yo.id, gente.map((p) => p.id))))
+  const [borrador, setBorrador] = useState<Borrador>(() => (gasto ? borradorDe(gasto, partes) : borradorNuevo(yo.id, gente)))
+  // Para "Como el último" (solo en un gasto nuevo)
+  const { data: gastos } = useGastos()
+  const { data: todasLasPartes } = usePartes()
   const [errores, setErrores] = useState<Errores>({})
   const [boleta, setBoleta] = useState<Boleta>(gasto?.boleta ? { tipo: 'guardada', ruta: gasto.boleta } : { tipo: 'nada' })
   const [preparando, setPreparando] = useState(false)
   const [fotoMala, setFotoMala] = useState(false)
-  const [eligiendo, setEligiendo] = useState<'pago' | 'categoria' | null>(null)
+  const [eligiendo, setEligiendo] = useState<'pago' | 'categoria' | 'division' | null>(null)
   const [guardando, setGuardando] = useState(false)
   const [fallo, setFallo] = useState<'gasto' | 'foto' | null>(null)
   // Para no anotarlo dos veces si tocan el botón seguido, antes de que se vea "ocupado"
@@ -83,8 +91,9 @@ function Formulario({ computador, gasto, onCerrar, onListo, yo, personas, partes
   const guardado = useRef<{ gasto: Gasto; datos: DatosGasto } | null>(null)
 
   const cuenta = cuentaDe(borrador, gente.map((p) => p.id), yo.id, antes)
+  const ultimo = !gasto && gastos && todasLasPartes ? ultimoGrupo(gastos, todasLasPartes, yo.id, gente.map((p) => p.id)) : null
   const solo = borrador.division === 'solo'
-  // "No se divide" es de quien lo anota: al editar el de otra persona no se ofrece
+  // "Solo mío" es de quien lo anota: al editar el de otra persona no se ofrece
   const divisiones: readonly Division[] = !gasto || gasto.creado_por === yo.id ? DIVISIONES : DIVISIONES.filter((d) => d !== 'solo')
   const pagador = cuenta.pagador === yo.id ? tg.ti : (nombres.get(cuenta.pagador) ?? primerNombre(personas.find((p) => p.id === cuenta.pagador) ?? { nombre: null, correo: '' }))
   const titulo = gasto ? t.editar : t.titulo
@@ -95,22 +104,27 @@ function Formulario({ computador, gasto, onCerrar, onListo, yo, personas, partes
       const nuevo = { ...b, ...cambios }
       // La categoría sigue a lo que se escribe, hasta que la eligen a mano
       if ('titulo' in cambios && !nuevo.categoriaFija) nuevo.categoria = categoriaDe(nuevo.titulo)
+      // Entre quiénes sigue a la fecha (quienes están allá ese día), hasta que tocan la lista, las partes o la división
+      if ('elegidos' in cambios || 'exactos' in cambios || 'division' in cambios) nuevo.elegidosFijos = true
+      else if ('fecha' in cambios && !nuevo.elegidosFijos) nuevo.elegidos = presentes(gente, nuevo.fecha)
       return nuevo
     })
     if (soloFormato) return
     // Lo que se corrige deja de marcarse
-    const reparte = 'exactos' in cambios || 'elegidos' in cambios || 'division' in cambios
+    const eligen = 'elegidos' in cambios || ('fecha' in cambios && !borrador.elegidosFijos)
+    const reparte = 'exactos' in cambios || eligen || 'division' in cambios
     setErrores((e) => ({
       titulo: 'titulo' in cambios ? undefined : e.titulo,
       monto: 'monto' in cambios ? undefined : e.monto,
-      personas: 'elegidos' in cambios || 'division' in cambios ? undefined : e.personas,
+      personas: eligen || 'division' in cambios ? undefined : e.personas,
       partes: reparte ? undefined : e.partes,
       cuadra: reparte || 'monto' in cambios ? false : e.cuadra,
     }))
   }
 
-  const dividir = () => {
-    const division = divisiones[(divisiones.indexOf(borrador.division) + 1) % divisiones.length]
+  const dividir = (division: Division) => {
+    setEligiendo(null)
+    if (division === borrador.division) return
     // Al pasar a montos exactos sin ninguno escrito, cada uno parte con su parte igual
     const escritos = cuenta.marcados.some((id) => borrador.exactos[id]?.trim())
     if (division === 'exactos' && cuenta.total && !escritos) {
@@ -212,6 +226,10 @@ function Formulario({ computador, gasto, onCerrar, onListo, yo, personas, partes
     />
   )
 
+  const elegirDivision = (
+    <AnotarDivision computador={computador} abierto={eligiendo === 'division'} divisiones={divisiones} elegida={borrador.division} onElegir={dividir} onCerrar={() => setEligiendo(null)} />
+  )
+
   const formulario = (
     <div className={estilos.formulario} data-computador={computador}>
       <div className={estilos.queFue}>
@@ -287,16 +305,25 @@ function Formulario({ computador, gasto, onCerrar, onListo, yo, personas, partes
         </button>{' '}
         {solo ? t.y : t.yDividido}{' '}
         <span className={estilos.juntos}>
-          <button type="button" className={estilos.fraseBoton} onClick={dividir}>
+          <button
+            type="button"
+            className={estilos.fraseBoton}
+            aria-haspopup="dialog"
+            aria-expanded={eligiendo === 'division'}
+            onClick={() => setEligiendo(eligiendo === 'division' ? null : 'division')}
+          >
             {t.divisiones[borrador.division]}
           </button>
           .
         </span>
+        {/* Los dos menús van bajo la frase; cada uno sabe qué botón lo abrió (el que está abierto) */}
         {computador && elegirPago}
+        {computador && elegirDivision}
       </div>
 
       <AnotarFechaFoto
         computador={computador}
+        titulo={borrador.titulo}
         fecha={borrador.fecha}
         boleta={boleta}
         onFecha={(fecha) => cambiar({ fecha })}
@@ -308,7 +335,7 @@ function Formulario({ computador, gasto, onCerrar, onListo, yo, personas, partes
       />
       {error('anotar-foto-error', fotoMala ? t.noSeAbrio : undefined, false)}
 
-      <AnotarEntreQuienes computador={computador} borrador={borrador} cuenta={cuenta} gente={gente} nombres={nombres} yo={yo.id} errores={errores} onCambio={cambiar} />
+      <AnotarEntreQuienes computador={computador} borrador={borrador} cuenta={cuenta} gente={gente} nombres={nombres} yo={yo.id} ultimo={ultimo} errores={errores} onCambio={cambiar} />
     </div>
   )
 
@@ -317,8 +344,9 @@ function Formulario({ computador, gasto, onCerrar, onListo, yo, personas, partes
       {gasto ? t.guardar : t.anotar}
     </BotonPrincipal>
   )
-  // Anotar un gasto nuevo sin señal sí se puede: queda en este celular y sube cuando vuelva la conexión
-  const seSube = !conectado && !gasto && <div className={estilos.seSube}>{t.seSube}</div>
+  // Anotar un gasto nuevo sin señal sí se puede: queda en este celular y sube cuando vuelva la conexión. Lo mismo
+  // al corregir uno que todavía no sube.
+  const seSube = !conectado && (!gasto || sinSubir.has(gasto.id)) && <div className={estilos.seSube}>{t.seSube}</div>
   const noSeGuardo = fallo && (
     <div className={estilos.fallo} role="alert">
       {fallo === 'foto' ? t.sinFoto : textos.noSeGuardo}
@@ -373,6 +401,7 @@ function Formulario({ computador, gasto, onCerrar, onListo, yo, personas, partes
         {formulario}
       </PantallaConPie>
       {elegirPago}
+      {elegirDivision}
       {elegirCategoria}
     </>
   )

@@ -28,6 +28,7 @@
   --error: #ff9b8f;
   --sobre-error: #1a1c1e;
   --sombra: rgba(0, 0, 0, 0.45);
+  --hundido-sombra: rgba(0, 0, 0, 0.5);
 
   --letra: 'Barlow', system-ui, sans-serif;
   --letra-titulo: 'Barlow Semi Condensed', 'Arial Narrow', sans-serif;
@@ -58,6 +59,7 @@
   --error: #b42318;
   --sobre-error: #ffffff;
   --sombra: rgba(30, 36, 44, 0.18);
+  --hundido-sombra: rgba(30, 36, 44, 0.3);
 }
 
 *,
@@ -98,6 +100,104 @@ button {
 :focus-visible {
   outline: 2px solid var(--acento);
   outline-offset: 2px;
+}
+
+/* Respuesta al tocar ("hundido"), para todo lo que se aprieta: con el mouse encima sube 1 px con una sombra corta; al
+   apretar baja 1 px y se oscurece. Con movimiento reducido solo cambia el tono.
+   Cada selector va entero dentro de :where(), que no suma especificidad: lo propio de cada pantalla gana (un anillo de
+   selección, la sombra de un botón flotante, una transición). Usa translate y filter, no transform, para no pisar las
+   transformaciones que ya tienen algunos elementos. Para excluir un elemento: data-sin-hundido. Un interruptor que es
+   solo la zona de toque alrededor de su pista (un único hijo con data-activo) mueve la pista, no la zona. */
+:where(
+    :is(
+        button,
+        a[href],
+        summary,
+        [role='button'],
+        [role='tab'],
+        [role='switch'],
+        [role='radio'],
+        label:has(> input[type='radio'], > input[type='checkbox'])
+      ):not(:disabled, [aria-disabled='true'], [data-sin-hundido], [role='switch']:has(> [data-activo]:only-child)),
+    [role='switch']:not(:disabled, [aria-disabled='true'], [data-sin-hundido]) > [data-activo]:only-child
+  ) {
+  transition:
+    translate 110ms ease-out,
+    box-shadow 110ms ease-out,
+    filter 110ms ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  :where(
+      :is(
+          button,
+          a[href],
+          summary,
+          [role='button'],
+          [role='tab'],
+          [role='switch'],
+          [role='radio'],
+          label:has(> input[type='radio'], > input[type='checkbox'])
+        ):not(:disabled, [aria-disabled='true'], [data-sin-hundido], [role='switch']:has(> [data-activo]:only-child)):hover,
+      [role='switch']:not(:disabled, [aria-disabled='true'], [data-sin-hundido]):hover > [data-activo]:only-child
+    ) {
+    translate: 0 -1px;
+    box-shadow: 0 2px 0 var(--hundido-sombra);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :where(
+      :is(
+          button,
+          a[href],
+          summary,
+          [role='button'],
+          [role='tab'],
+          [role='switch'],
+          [role='radio'],
+          label:has(> input[type='radio'], > input[type='checkbox'])
+        ):not(:disabled, [aria-disabled='true'], [data-sin-hundido], [role='switch']:has(> [data-activo]:only-child)):active,
+      [role='switch']:not(:disabled, [aria-disabled='true'], [data-sin-hundido]):active > [data-activo]:only-child
+    ) {
+    translate: 0 1px;
+    box-shadow: none;
+  }
+}
+
+:where(
+    :is(
+        button,
+        a[href],
+        summary,
+        [role='button'],
+        [role='tab'],
+        [role='switch'],
+        [role='radio'],
+        label:has(> input[type='radio'], > input[type='checkbox'])
+      ):not(:disabled, [aria-disabled='true'], [data-sin-hundido], [role='switch']:has(> [data-activo]:only-child)):active,
+    [role='switch']:not(:disabled, [aria-disabled='true'], [data-sin-hundido]):active > [data-activo]:only-child
+  ) {
+  filter: brightness(0.88);
+}
+
+/* Con movimiento reducido, el mouse encima solo oscurece un poco */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: reduce) {
+  :where(
+      :is(
+          button,
+          a[href],
+          summary,
+          [role='button'],
+          [role='tab'],
+          [role='switch'],
+          [role='radio'],
+          label:has(> input[type='radio'], > input[type='checkbox'])
+        ):not(:disabled, [aria-disabled='true'], [data-sin-hundido], [role='switch']:has(> [data-activo]:only-child)):hover:not(:active),
+      [role='switch']:not(:disabled, [aria-disabled='true'], [data-sin-hundido]):hover:not(:active) > [data-activo]:only-child
+    ) {
+    filter: brightness(0.94);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

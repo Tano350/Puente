@@ -3,15 +3,14 @@ import { abrir, es, esCelular, LISTA, MIEMBRO } from './ayuda.ts'
 
 const p = es.perfil
 
-// Tu perfil: en el celular se llega desde Grupo (tocando "Tú"); en el computador, por la barra lateral
+// Tu perfil: en el celular se llega con tu foto, arriba a la derecha de Grupo; en el computador, por la barra lateral
 async function irAlPerfil(page: Page) {
   if (esCelular(page)) {
     await page.getByRole('navigation', { name: es.navegacion }).getByRole('link', { name: es.secciones.grupo }).click()
-    await page.getByRole('main').getByRole('button', { name: /^Tú / }).click()
+    await page.getByRole('main').getByRole('link', { name: p.titulo }).click()
   } else {
     await page.getByRole('navigation', { name: es.navegacion }).getByRole('link', { name: es.secciones.perfil }).click()
   }
-  // El celular no lleva título en esta pantalla: se sabe que llegó por sus filas
   await expect(page.getByRole('button', { name: new RegExp(`^${es.fechas.titulo}`) })).toBeVisible()
 }
 
@@ -70,9 +69,68 @@ test.describe('Tu perfil', () => {
   test('quien administra ve Invitados y puede abrirlos', async ({ page }) => {
     await abrir(page, LISTA)
     await irAlPerfil(page)
+    await expect(page.getByRole('button', { name: new RegExp(`^${p.invitados}`) })).toContainText(p.yaEntraron(12, 14))
     await page.getByRole('button', { name: new RegExp(`^${p.invitados}`) }).click()
     await expect(page.getByRole('heading', { name: es.invitados.titulo, level: 1 })).toBeVisible()
     await expect(page.getByText(es.invitados.entraron(12, 14))).toBeVisible()
+  })
+
+  test('en el celular Tu perfil tiene título, no marca Grupo y vuelve a donde estabas', async ({ page }) => {
+    test.skip(!esCelular(page), 'La barra de abajo y la entrada con la foto son del celular')
+    const barra = page.getByRole('navigation', { name: es.navegacion })
+    const principal = page.getByRole('main')
+    // Desde Grupo
+    await abrir(page, LISTA)
+    await barra.getByRole('link', { name: es.secciones.grupo }).click()
+    await principal.getByRole('link', { name: p.titulo }).click()
+    await expect(principal.getByRole('heading', { name: p.titulo, level: 1 })).toBeVisible()
+    await expect(barra.getByRole('link', { name: es.secciones.grupo })).not.toHaveAttribute('aria-current', 'page')
+    await principal.getByRole('button', { name: es.secciones.grupo, exact: true }).click()
+    await expect(principal.getByRole('heading', { name: es.grupo.titulo, level: 1 })).toBeVisible()
+    // Desde Hoy (navegación dentro de la app, para no perder la maqueta)
+    await barra.getByRole('link', { name: es.secciones.hoy }).click()
+    await page.evaluate(() => {
+      window.history.pushState({}, '', '/perfil')
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    })
+    await expect(principal.getByRole('heading', { name: p.titulo, level: 1 })).toBeVisible()
+    await principal.getByRole('button', { name: es.secciones.hoy, exact: true }).click()
+    await expect(page).toHaveURL(/\/hoy/)
+  })
+
+  test('sin señal, lo que necesita conexión lo dice y lo demás sigue funcionando', async ({ page }) => {
+    await abrir(page, LISTA)
+    await irAlPerfil(page)
+    await page.evaluate(() => window.puenteSenal?.(false))
+    for (const fila of [es.fechas.titulo, es.avisos.titulo, p.invitados, es.calendario.titulo]) {
+      await page.getByRole('button', { name: new RegExp(`^${fila}`) }).click()
+      await expect(page.getByRole('status').filter({ hasText: p.necesitaConexion })).toBeVisible()
+    }
+    // Idioma y Modo oscuro no necesitan señal
+    await page.getByRole('button', { name: new RegExp(`^${p.idioma}`) }).click()
+    // Celular: hoja con opciones; computador: menú junto a la fila
+    await expect(page.getByRole(esCelular(page) ? 'radio' : 'menuitemradio', { name: 'English' })).toBeVisible()
+  })
+
+  test('invitar con nombre y compartir por WhatsApp', async ({ page }) => {
+    const i = es.invitados
+    await abrir(page, LISTA)
+    await irAlPerfil(page)
+    await page.getByRole('button', { name: new RegExp(`^${p.invitados}`) }).click()
+    // Quien no ha entrado se ve con un nombre sacado del correo, no con el correo
+    await expect(page.getByText('Martin Ossa').first()).toBeVisible()
+    await page.getByRole('button', { name: i.invitar, exact: true }).click()
+    const formulario = esCelular(page) ? page.getByRole('dialog') : page.getByRole('complementary', { name: i.invitarA })
+    await formulario.getByLabel(i.nombre).fill('Valentina')
+    await formulario.getByLabel(i.correo).fill('valentina.prueba@example.com')
+    await formulario.getByRole('button', { name: i.invitar, exact: true }).click()
+    await expect(formulario.getByRole('heading', { name: i.invitasteA('Valentina') })).toBeVisible()
+    const whatsapp = formulario.getByRole('link', { name: i.compartirWhatsApp })
+    const direccion = (await whatsapp.getAttribute('href')) ?? ''
+    expect(direccion.startsWith('https://wa.me/?text=')).toBe(true)
+    expect(decodeURIComponent(direccion.slice('https://wa.me/?text='.length))).toBe(i.mensajeWhatsApp('valentina.prueba@example.com', 'https://puente-2027.vercel.app'))
+    await formulario.getByRole('button', { name: i.listo }).click()
+    await expect(page.getByText('Valentina').first()).toBeVisible()
   })
 
   test('quien no administra no ve Invitados ni entra por la dirección', async ({ page }) => {

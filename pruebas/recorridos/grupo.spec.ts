@@ -31,6 +31,20 @@ test.describe('Grupo', () => {
     }
   })
 
+  test('quien no ha entrado sale con un nombre legible y "Sin entrar"', async ({ page }) => {
+    await abrir(page, GRUPO)
+    const principal = page.getByRole('main')
+    // En la lista del celular sale el nombre entero; en la línea del viaje (también en el computador), el primero
+    await expect(principal.getByText(esCelular(page) ? 'Martin Ossa' : 'Martin', { exact: true })).toBeVisible()
+    await expect(principal.getByText('martin.ossa')).toHaveCount(0)
+    await expect(principal.getByText(es.grupo.sinEntrar).first()).toBeVisible()
+  })
+
+  test('la línea del viaje marca hoy', async ({ page }) => {
+    await abrir(page, GRUPO)
+    await expect(page.getByRole('main').getByText(es.grupo.hoyRaya, { exact: true })).toBeVisible()
+  })
+
   test('buscar a alguien que no está', async ({ page }) => {
     await abrir(page, GRUPO)
     await page.getByRole('main').getByRole('searchbox', { name: es.buscar }).fill('zzzz')

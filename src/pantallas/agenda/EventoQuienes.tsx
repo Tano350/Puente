@@ -61,7 +61,7 @@ export function EventoQuienes({ evento, pasado, van, espera, yo, nombreDe, conta
 
   const cupos = evento.modo === 'con_cupo' && !pasado ? (evento.cupos ?? van.length) : null
   let cuposTexto = ''
-  if (cupos !== null) cuposTexto = voy || van.length < cupos ? t.cupos(van.length, cupos) : t.llenoEspera(espera.length)
+  if (cupos !== null) cuposTexto = van.length < cupos ? t.cupos(cupos - van.length, cupos) : t.lleno
   const modo = pasado ? null : evento.modo === 'para_todos' ? 'todos' : evento.modo === 'cerrado' ? 'cerrada' : null
   const cambia = puedeCambiar && !pasado
 

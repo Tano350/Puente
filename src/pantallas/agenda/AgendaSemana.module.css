@@ -189,6 +189,9 @@
 }
 
 .semanaPc .bloqueTitulo {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   font-size: 12px;
   line-height: 15px;
 }
@@ -275,6 +278,15 @@
   line-height: 13px;
 }
 
+/* Un bloque de una hora mide 28 px: sin relleno arriba y abajo caben dos líneas de nombre */
+.semana .bloque {
+  padding: 0 2px;
+}
+
+.semana .bloqueTitulo {
+  line-height: 12px;
+}
+
 .semana .bloque[data-mio='false'] {
   background: transparent;
 }
@@ -326,4 +338,53 @@
 
 .semana .ahora::before {
   left: -1px;
+}
+
+/* ---------- Leyenda: la misma de la vista Mes ---------- */
+.leyenda,
+.leyendaPc {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  color: var(--sec);
+}
+
+.leyenda > span,
+.leyendaPc > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.leyenda {
+  gap: 6px 14px;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.leyendaPc {
+  gap: 6px 18px;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.marcaVas,
+.marcaNoVas,
+.marcaOcupado {
+  width: 14px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.marcaVas {
+  background: var(--tinta);
+}
+
+.marcaNoVas {
+  border: 1.5px solid var(--sec);
+}
+
+.marcaOcupado {
+  border: 1px solid var(--tinta);
+  background: repeating-linear-gradient(135deg, var(--tinta) 0 1.5px, transparent 1.5px 4px);
 }

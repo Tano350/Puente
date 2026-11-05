@@ -6,7 +6,7 @@ import { useTextos } from '../../textos.ts'
 import { cuposLibres } from './HoyDatos.ts'
 import estilos from './HoyGrupo.module.css'
 
-// También hoy en el grupo: lo que viene hoy y al que te puedes sumar con "Voy" (o en cuya lista de espera estás).
+// También hoy en el grupo: lo que viene hoy y al que te puedes sumar con "Voy" o "Tomar cupo" (o en cuya lista de espera estás).
 // En el celular la fila deja libre la columna del riel, para calzar con la línea de arriba.
 export function TambienHoy({
   eventos,
@@ -40,6 +40,8 @@ export function TambienHoy({
         const puesto = lugar?.estado === 'espera' ? lugar.puesto : null
         const detalle = puesto !== null ? t.enEspera(puesto, e.lugar) : libres === null ? t.paraTodos(e.lugar) : t.quedan(libres, e.lugar)
         const ocupado = yendo === e.id
+        // Las mismas palabras que la Agenda: "Voy" en lo que es para todos y "Tomar cupo" en lo que tiene cupos
+        const conCupo = e.modo !== 'para_todos'
         return (
           <li key={e.id} className={estilos.fila} data-elegida={computador && elegido === e.id}>
             <span className={estilos.horas}>
@@ -51,12 +53,14 @@ export function TambienHoy({
               <span className={estilos.detalle}>{detalle}</span>
             </button>
             {puesto === null && (
-              <button type="button" className={estilos.voy} aria-label={t.voyA(e.titulo)} aria-disabled={ocupado || sinRed} data-sin-red={sinRed} onClick={() => !ocupado && onVoy(e)}>
+              <button type="button" className={estilos.voy} aria-label={conCupo ? t.tomarCupoEn(e.titulo) : t.voyA(e.titulo)} aria-disabled={ocupado || sinRed} data-sin-red={sinRed} onClick={() => !ocupado && onVoy(e)}>
                 {ocupado ? (
                   <>
                     <Icono nombre="check" medida={18} trazo={2} />
                     {t.vas}
                   </>
+                ) : conCupo ? (
+                  t.tomarCupo
                 ) : (
                   t.voy
                 )}

@@ -118,3 +118,11 @@
   text-align: center;
   color: var(--sec);
 }
+
+/* "Ir a Hoy" apagado: gris con borde y texto de alto contraste, no el botón azul medio transparente */
+.entrar button[aria-disabled='true'] {
+  border: 1px solid var(--regla);
+  background: var(--panel);
+  color: var(--sec-tarjeta);
+  opacity: 1;
+}

@@ -47,7 +47,7 @@ function persona(id: string, nombre: string, carrera: string, llega: number, vue
 const sinEntrar: Partial<Persona> = { usuario: null, entro_en: null, nombre: null, carrera: null, llega: null, vuelve: null, bienvenida_en: null }
 
 export function personaDeMaqueta(): Persona {
-  const josefa = persona('josefa.contreras', 'Josefa Contreras', 'Ingeniería Civil Química', 4, 29, {
+  const josefa = persona('josefa.contreras', 'Josefa Contreras', 'Ingeniería Civil', 4, 29, {
     ...perfil('Agua Clara', 'Filtros baratos para agua de pozo en zonas rurales.', 'Conocer fondos de impacto y aprender cómo venden startups de hardware a gobiernos.', null),
     administra: true,
     // Como si viniera de Google, para probar "Usar la de Google"
@@ -65,22 +65,22 @@ let gente: Persona[] | null = null
 export function personasDeMaqueta(): Persona[] {
   gente ??= [
     personaDeMaqueta(),
-    persona('andres.cifuentes', 'Andrés Cifuentes', 'Ingeniería Civil en Computación', 3, 27, perfil('Ruta Fría', 'Sensores de temperatura para camiones que llevan alimentos.', 'Ver cómo operan las startups de logística y buscar un piloto en California.', 'linkedin.com/in/andres-cifuentes')),
-    persona('benjamin.silva', 'Benjamín Silva', 'Ingeniería Civil Mecánica', 5, 33, perfil('Grúa Libre', 'Arriendo de maquinaria entre constructoras.', 'Aprender cómo venden las startups de construcción y conocer inversionistas del rubro.', 'linkedin.com/in/benjamin-silva')),
-    persona('catalina.perez', 'Catalina Pérez', 'Ingeniería Civil Industrial', 4, 29, perfil('Aula Viva', 'Clases de programación para colegios rurales.', 'Conocer los programas de educación de empresas tecnológicas y conseguir socios.', 'linkedin.com/in/catalina-perez')),
-    persona('diego.larrain', 'Diego Larraín', 'Ingeniería Civil Industrial', 2, 36, {
+    persona('andres.cifuentes', 'Andrés Cifuentes', 'Ingeniería Civil', 3, 27, perfil('Ruta Fría', 'Sensores de temperatura para camiones que llevan alimentos.', 'Ver cómo operan las startups de logística y buscar un piloto en California.', 'linkedin.com/in/andres-cifuentes')),
+    persona('benjamin.silva', 'Benjamín Silva', 'Ingeniería Civil', 5, 33, perfil('Grúa Libre', 'Arriendo de maquinaria entre constructoras.', 'Aprender cómo venden las startups de construcción y conocer inversionistas del rubro.', 'linkedin.com/in/benjamin-silva')),
+    persona('catalina.perez', 'Catalina Pérez', 'Ingeniería Comercial', 4, 29, perfil('Aula Viva', 'Clases de programación para colegios rurales.', 'Conocer los programas de educación de empresas tecnológicas y conseguir socios.', 'linkedin.com/in/catalina-perez')),
+    persona('diego.larrain', 'Diego Larraín', 'Ingeniería Comercial', 2, 36, {
       ...perfil('Bodega Viva', 'Software para que los almacenes de barrio controlen su inventario.', 'Entender cómo escalaron los marketplaces B2B y conseguir tres mentores para Bodega Viva.', 'linkedin.com/in/diego-larrain'),
       administra: true,
     }),
-    persona('florencia.diaz', 'Florencia Díaz', 'Ingeniería Civil Biomédica', 9, 37, perfil('Pulso', 'Un parche que mide la presión arterial todo el día.', 'Entender cómo se certifica un dispositivo médico en Estados Unidos.', 'linkedin.com/in/florencia-diaz')),
-    persona('ignacio.rivas', 'Ignacio Rivas', 'Ingeniería Civil Eléctrica', 4, 23, perfil('Voltea', 'Cargadores rápidos para bicicletas eléctricas.', 'Validar Voltea con empresas de movilidad y aprender cómo se hace hardware allá.', 'linkedin.com/in/ignacio-rivas')),
-    persona('joaquin.soto', 'Joaquín Soto', 'Ingeniería Civil en Computación', 7, 30, perfil('Mesa Lista', 'Reservas y pedidos para restaurantes chicos.', 'Aprender a vender software a restaurantes y conocer aceleradoras.', 'linkedin.com/in/joaquin-soto')),
-    persona('martina.vidal', 'Martina Vidal', 'Ingeniería Civil en Computación', 3, 29, perfil('Lazo', 'Una app para coordinar el cuidado de adultos mayores.', 'Validar Lazo con startups de salud y entender cómo cobran.', 'linkedin.com/in/martina-vidal')),
-    persona('paula.torres', 'Paula Torres', 'Ingeniería Civil Industrial', 4, 32, perfil('Ropa Circular', 'Arriendo de ropa de trabajo para empresas.', 'Conocer marcas de moda circular y cómo miden su impacto.', 'linkedin.com/in/paula-torres')),
-    persona('sofia.mendez', 'Sofía Méndez', 'Ingeniería Civil Mecánica', 6, 35, perfil('Andes Dron', 'Drones para revisar torres eléctricas.', 'Aprender de startups de drones y buscar clientes en energía.', 'linkedin.com/in/sofia-mendez')),
+    persona('florencia.diaz', 'Florencia Díaz', 'Ingeniería Comercial', 9, 37, perfil('Pulso', 'Un parche que mide la presión arterial todo el día.', 'Entender cómo se certifica un dispositivo médico en Estados Unidos.', 'linkedin.com/in/florencia-diaz')),
+    persona('ignacio.rivas', 'Ignacio Rivas', 'Ingeniería Civil', 4, 23, perfil('Voltea', 'Cargadores rápidos para bicicletas eléctricas.', 'Validar Voltea con empresas de movilidad y aprender cómo se hace hardware allá.', 'linkedin.com/in/ignacio-rivas')),
+    persona('joaquin.soto', 'Joaquín Soto', 'Ingeniería Comercial', 7, 30, perfil('Mesa Lista', 'Reservas y pedidos para restaurantes chicos.', 'Aprender a vender software a restaurantes y conocer aceleradoras.', 'linkedin.com/in/joaquin-soto')),
+    persona('martina.vidal', 'Martina Vidal', 'Ingeniería Comercial', 3, 29, perfil('Lazo', 'Una app para coordinar el cuidado de adultos mayores.', 'Validar Lazo con startups de salud y entender cómo cobran.', 'linkedin.com/in/martina-vidal')),
+    persona('paula.torres', 'Paula Torres', 'Ingeniería Comercial', 4, 32, perfil('Ropa Circular', 'Arriendo de ropa de trabajo para empresas.', 'Conocer marcas de moda circular y cómo miden su impacto.', 'linkedin.com/in/paula-torres')),
+    persona('sofia.mendez', 'Sofía Méndez', 'Ingeniería Civil', 6, 35, perfil('Andes Dron', 'Drones para revisar torres eléctricas.', 'Aprender de startups de drones y buscar clientes en energía.', 'linkedin.com/in/sofia-mendez')),
     persona('vicente.morales', 'Vicente Morales', 'Ingeniería Civil', 4, 25),
-    persona('tomas.fuenzalida', 'Tomás Fuenzalida', 'Ingeniería Civil Eléctrica', 14, 50, sinEntrar),
-    persona('martin.ossa', 'Martín Ossa', 'Ingeniería Civil', 4, 29, { ...sinEntrar, invitada_en: '2026-11-02T12:00:00Z' }),
+    persona('tomas.fuenzalida', 'Tomás Fuenzalida', 'Ingeniería Comercial', 14, 50, sinEntrar),
+    persona('martin.ossa', 'Martín Ossa', 'Ingeniería Comercial', 4, 29, { ...sinEntrar, invitada_en: '2026-11-02T12:00:00Z' }),
   ]
   return gente
 }
@@ -264,7 +264,7 @@ export function gastosDeMaqueta(): DatosGastos {
     ['museo', '2027-01-11', 'Entradas al Computer History Museum', 'entrada', 9000, JOAQUIN, 'iguales', igual(9000, [JOAQUIN, IGNACIO, VICENTE, ANDRES, BENJAMIN, FLORENCIA])],
     ['caltrain', '2027-01-10', 'Caltrain a San Francisco', 'tren', 2800, CATALINA, 'iguales', igual(2800, [YO, CATALINA, DIEGO, MARTINA])],
     ['bicis', '2027-01-10', 'Arriendo de bicicletas', 'bici', 4500, YO, 'iguales', igual(4500, [YO, MARTINA, SOFIA])],
-    ['airbnb', '2027-01-05', 'Airbnb de la primera semana', 'otro', 7367 * todos.length, DIEGO, 'iguales', igual(7367 * todos.length, todos)],
+    ['airbnb', '2027-01-05', 'Airbnb de la primera semana', 'alojamiento', 7367 * todos.length, DIEGO, 'iguales', igual(7367 * todos.length, todos)],
   ]
   cuentas = {
     // Dentro de un día, el primero de la lista es el último anotado

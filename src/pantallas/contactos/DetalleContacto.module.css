@@ -117,9 +117,8 @@
 }
 
 .canalDato {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  /* Un correo largo baja de línea en vez de cortarse */
+  overflow-wrap: anywhere;
   font-size: 16px;
   line-height: 22px;
 }

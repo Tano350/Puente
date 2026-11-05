@@ -898,7 +898,7 @@ export type Database = {
         Returns: undefined
       }
       invitar: {
-        Args: { correo_nuevo: string }
+        Args: { correo_nuevo: string; nombre?: string }
         Returns: {
           administra: boolean
           avisos: Json

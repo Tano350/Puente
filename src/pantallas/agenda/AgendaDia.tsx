@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Icono } from '../../componentes/Icono.tsx'
+import { useConectado } from '../../datos/conexion.ts'
 import type { Evento, Ocupado } from '../../datos/eventos.ts'
 import { CHILE, conMayuscula, hora } from '../../datos/fechas.ts'
 import { useTextos } from '../../textos.ts'
@@ -20,6 +21,7 @@ type Props = {
   pendiente?: string | null
   onAbrir: (evento: Evento) => void
   onIr?: (pieza: PiezaEvento) => void
+  onNuevo?: () => void
 }
 
 // Asientos chicos: los tomados llenos y los libres huecos (solo si caben)
@@ -36,9 +38,11 @@ function Asientos({ tomados, total }: { tomados: number; total: number }) {
 
 // El día como línea de estaciones, igual que Hoy: lo que pasó en gris, "ahora" y lo que sigue.
 // Un evento se abre en su boleto; un rato ocupado, en su hoja.
-export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy, nombres, elegido, pendiente, onAbrir, onIr }: Props) {
+export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy, nombres, elegido, pendiente, onAbrir, onIr, onNuevo }: Props) {
   const textos = useTextos()
   const tv = textos.agenda.vista
+  // Sin señal, "Tomar cupo" y "Voy" quedan apagados (la ficha de arriba dice por qué)
+  const sinRed = !useConectado()
   const [rato, setRato] = useState<Ocupado | null>(null)
   // La hoja va también con el día vacío: así queda el aviso al borrar lo último del día
   const hoja = <AgendaRato rato={rato} computador={computador} onCerrar={() => setRato(null)} />
@@ -46,6 +50,12 @@ export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy,
     return (
       <>
         <p className={computador ? estilos.vacioPc : estilos.vacio}>{soloVoy ? tv.noVasNada : tv.libre}</p>
+        {!soloVoy && onNuevo && (
+          <button type="button" className={computador ? estilos.crearPc : estilos.crear} onClick={onNuevo}>
+            <Icono nombre="mas" medida={16} trazo={2.25} />
+            {tv.crearEseDia}
+          </button>
+        )}
         {hoja}
       </>
     )
@@ -89,9 +99,9 @@ export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy,
           type="button"
           className={estilos.accion}
           aria-label={`${texto}: ${p.titulo}`}
-          aria-disabled={Boolean(pendiente)}
+          aria-disabled={Boolean(pendiente) || sinRed}
           onClick={() => {
-            if (!pendiente) onIr?.(p)
+            if (!pendiente && !sinRed) onIr?.(p)
           }}
         >
           {texto}
@@ -113,7 +123,7 @@ export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy,
       return (
         <>
           <Asientos tomados={p.van.length} total={p.evento.cupos} />
-          {tv.cupos(p.van.length, p.evento.cupos)}
+          {tv.cupos(p.evento.cupos - p.van.length, p.evento.cupos)}
         </>
       )
     if (p.estado === 'voy')
@@ -129,7 +139,7 @@ export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy,
   // Computador: toda la fila elige el evento (o abre el rato) y el estado va como texto
   const chip = (p: Pieza) => {
     const texto = p.tipo === 'ocupado' ? tv.ocupado : tv.estados[p.estado]
-    const tipo = p.tipo === 'evento' && p.estado === 'vas' ? 'vas' : p.tipo === 'evento' && (p.estado === 'tomar' || p.estado === 'voy') ? 'accion' : 'apagado'
+    const tipo = p.tipo === 'evento' && p.estado === 'vas' ? 'vas' : p.tipo === 'evento' && (p.estado === 'tomar' || p.estado === 'voy') && !sinRed ? 'accion' : 'apagado'
     return (
       <span className={estilos.chip} data-tipo={tipo}>
         {tipo === 'vas' && <Icono nombre="check" medida={16} trazo={2.5} />}

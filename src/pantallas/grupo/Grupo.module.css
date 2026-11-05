@@ -11,6 +11,15 @@
   background: var(--panel);
 }
 
+/* El título y, a la derecha, la entrada a Tu perfil (la foto de 36 px dentro de un área de 44 px) */
+.cabeceraFila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-right: -4px;
+}
+
 .titulo {
   margin: 0;
   font-family: var(--letra-titulo);

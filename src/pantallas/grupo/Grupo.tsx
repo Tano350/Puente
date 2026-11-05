@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router'
 import { Atras } from '../../componentes/Controles.tsx'
 import { Avatar } from '../../componentes/Avatar.tsx'
+import { EntradaPerfil } from '../../componentes/EntradaPerfil.tsx'
 import { Buscador } from '../../componentes/Buscador.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
 import { LineaDelGrupo } from '../../componentes/LineaDelGrupo.tsx'
@@ -11,7 +12,7 @@ import escritorio from '../../componentes/Escritorio.module.css'
 import { usePersonas, type Persona } from '../../datos/consultas.ts'
 import { diaCorto, diaDeLaSemana, diaLargo, hoyEnCalifornia, rangoCorto, sumarDias, ventanaDelViaje } from '../../datos/fechas.ts'
 import { coincide, estaAlla, integrantes, porLlegada, tieneFechas } from '../../datos/grupo.ts'
-import { carreraCorta, primerNombre } from '../../datos/nombres.ts'
+import { carreraCorta, nombreCompleto, primerNombre } from '../../datos/nombres.ts'
 import { useSesion } from '../../datos/sesion.tsx'
 import { useTextos, type Textos } from '../../textos.ts'
 import estilos from './Grupo.module.css'
@@ -73,7 +74,7 @@ function FilaIntegrante({ persona, yo, hoy, onAbrir }: { persona: Persona; yo: s
         </span>
       )}
       <span className={estilos.quien}>
-        <span className={estilos.nombre} data-tu={tuyo}>{tuyo ? textos.grupo.tu : (persona.nombre ?? persona.correo)}</span>
+        <span className={estilos.nombre} data-tu={tuyo}>{tuyo ? textos.grupo.tu : nombreCompleto(persona)}</span>
         {detalle && <span className={estilos.detalle}>{detalle}</span>}
       </span>
       <span className={estilos.estado} data-alla={estado.alla}>
@@ -174,7 +175,10 @@ export function Grupo() {
   return (
     <div className={estilos.celular}>
       <div className={estilos.cabecera}>
-        <h1 className={estilos.titulo}>{t.titulo}</h1>
+        <div className={estilos.cabeceraFila}>
+          <h1 className={estilos.titulo}>{t.titulo}</h1>
+          <EntradaPerfil />
+        </div>
         <div className={estilos.linea1}>{linea1}</div>
         {linea2 && <div className={estilos.linea2}>{linea2}</div>}
       </div>

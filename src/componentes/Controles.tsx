@@ -217,7 +217,7 @@ export function Hoja({ abierta, etiqueta, onCerrar, alerta = false, children }: 
   if (!abierta) return null
   return (
     <div className={estilos.hojaFondo}>
-      <button type="button" aria-label={textos.cerrar} className={estilos.hojaVelo} onClick={onCerrar} />
+      <button type="button" aria-label={textos.cerrar} className={estilos.hojaVelo} data-sin-hundido onClick={onCerrar} />
       <div role={alerta ? 'alertdialog' : 'dialog'} aria-modal="true" aria-label={etiqueta} className={estilos.hoja}>
         <div aria-hidden="true" className={estilos.manilla} />
         {children}

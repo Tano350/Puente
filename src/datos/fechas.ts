@@ -27,7 +27,7 @@ function ordinal(n: number): string {
 // Palabras de la estadía que viven aquí porque las arma una función que no es un componente
 const ESTADIA = {
   es: { llega: 'Llega el', volvio: 'Volvió', alla: 'Allá' },
-  en: { llega: 'Arrives', volvio: 'Back', alla: 'There' },
+  en: { llega: 'Arrives', volvio: 'Back', alla: 'In California' },
 }
 
 // Un tramo de días (los dos bordes cuentan)

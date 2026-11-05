@@ -99,9 +99,11 @@ function Detalle({ gasto, computador, onCerrar, onEditar, onEliminado }: Props) 
   const soloPuede = !puede && quienes.length > 0 ? d.soloPuede(textos.y(quienes), quienes.length > 1) : null
 
   // ---------- Acciones ----------
-  // Editar, la foto y eliminar necesitan conexión: sin señal se ven apagados y tocarlos avisa
+  // Editar, la foto y eliminar necesitan conexión: sin señal se ven apagados y tocarlos avisa. Un gasto que
+  // todavía no sube sí se cambia y se elimina sin señal: se corrige o se suelta lo que espera (gastos.ts).
+  const libre = conectado || sinSubir
   const conConexion = (accion: () => void) => () => {
-    if (conectado) accion()
+    if (libre) accion()
     else aviso.mostrar(d.necesitasConexion)
   }
   const cambiarRindo = async (si: boolean) => {
@@ -190,7 +192,7 @@ function Detalle({ gasto, computador, onCerrar, onEditar, onEliminado }: Props) 
   const cuerpo = (
     <>
       {reparto}
-      <DetalleBoleta gasto={gasto} puede={puede} computador={computador} aviso={aviso} />
+      <DetalleBoleta gasto={gasto} puede={puede} libre={libre} computador={computador} aviso={aviso} />
       {tengoParte && (
         <div className={estilos.rindo}>
           <Interruptor etiqueta={d.rindo} activo={rindo} onCambio={(si) => void cambiarRindo(si)} ultimo />
@@ -200,7 +202,7 @@ function Detalle({ gasto, computador, onCerrar, onEditar, onEliminado }: Props) 
       {!computador && soloPuede && <div className={estilos.ajeno}>{soloPuede}</div>}
       {/* En el computador, la pregunta toma su lugar */}
       {puede && !(computador && preguntando) && (
-        <button ref={botonEliminar} type="button" className={estilos.eliminar} aria-disabled={!conectado} aria-haspopup={computador ? undefined : 'dialog'} onClick={conConexion(() => setPreguntando(true))}>
+        <button ref={botonEliminar} type="button" className={estilos.eliminar} aria-disabled={!libre} aria-haspopup={computador ? undefined : 'dialog'} onClick={conConexion(() => setPreguntando(true))}>
           {d.eliminar}
         </button>
       )}
@@ -208,7 +210,7 @@ function Detalle({ gasto, computador, onCerrar, onEditar, onEliminado }: Props) 
   )
 
   const editar = (
-    <button type="button" className={computador ? estilos.editarPc : estilos.editar} aria-disabled={!conectado} onClick={conConexion(onEditar)}>
+    <button type="button" className={computador ? estilos.editarPc : estilos.editar} aria-disabled={!libre} onClick={conConexion(onEditar)}>
       <Icono nombre="lapiz" medida={18} trazo={2} />
       {d.editar}
     </button>

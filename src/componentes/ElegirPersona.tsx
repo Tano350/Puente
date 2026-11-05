@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { usePersonas, type Persona } from '../datos/consultas.ts'
 import { coincide, integrantes } from '../datos/grupo.ts'
+import { nombreCompleto } from '../datos/nombres.ts'
 import { useSesion } from '../datos/sesion.tsx'
 import { useTextos } from '../textos.ts'
 import { Avatar } from './Avatar.tsx'
@@ -41,7 +42,7 @@ export function ElegirPersona({ abierta, titulo, elegida, onElegir, onCerrar }: 
               }}
             >
               {tuyo ? <span className={estilos.tuAvatar} aria-hidden="true">{textos.grupo.tu}</span> : <Avatar persona={p} medida={36} />}
-              <span className={estilos.nombre} data-tu={tuyo}>{tuyo ? textos.grupo.tu : (p.nombre ?? p.correo)}</span>
+              <span className={estilos.nombre} data-tu={tuyo}>{tuyo ? textos.grupo.tu : nombreCompleto(p)}</span>
               {elegida === p.id && <Icono nombre="check" medida={20} trazo={2.25} />}
             </button>
           )

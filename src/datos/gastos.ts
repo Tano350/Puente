@@ -33,7 +33,7 @@ export type Parte = Tables<'partes'>
 export type Pago = Tables<'pagos'>
 export type Rendicion = Tables<'rendiciones'>
 export type Division = 'iguales' | 'exactos' | 'solo'
-export const CATEGORIAS = ['auto', 'tren', 'bici', 'comida', 'cafe', 'super', 'entrada', 'otro'] as const
+export const CATEGORIAS = ['auto', 'tren', 'bici', 'comida', 'cafe', 'super', 'entrada', 'alojamiento', 'otro'] as const
 export type Categoria = (typeof CATEGORIAS)[number]
 export type { Transferencia }
 
@@ -57,6 +57,7 @@ const PISTAS: [Categoria, RegExp][] = [
   ['comida', /cena|almuerzo|desayuno|comida|restaurant|pizza|burger|sushi|taco|food|once/],
   ['super', /super|walmart|trader|safeway|costco|whole foods|target|farmacia|cvs|walgreens/],
   ['entrada', /entrada|ticket|museo|museum|tour|parque|park|concierto|partido/],
+  ['alojamiento', /airbnb|hotel|hostal|hostel|motel|alojamiento|arriendo|lodging|\binn\b/],
 ]
 export function categoriaDe(titulo: string): Categoria {
   const t = plano(titulo)
@@ -256,9 +257,14 @@ export async function cambiarGasto(id: string, datos: DatosGasto): Promise<Gasto
     }),
   )
   if (corregido) {
-    consultas.setQueryData<Gasto[]>(['gastos'], (lista) => lista && conGasto(lista.filter((g) => g.id !== id), corregido.gasto))
+    // La foto espera aparte (subirBoleta): el gasto que se ve y se devuelve sigue con la foto que espera, así quitarla
+    // al corregir la saca de la espera
+    const fotoEnEspera = pendientesDe<Boleta>('subirBoleta').find((v) => v.gasto === id)
+    const antes = consultas.getQueryData<Gasto[]>(['gastos'])?.find((g) => g.id === id)
+    const visto: Gasto = { ...corregido.gasto, boleta: fotoEnEspera?.ruta ?? antes?.boleta ?? corregido.gasto.boleta }
+    consultas.setQueryData<Gasto[]>(['gastos'], (lista) => lista && conGasto(lista.filter((g) => g.id !== id), visto))
     consultas.setQueryData<Parte[]>(['partes'], (lista) => lista && [...lista.filter((p) => p.gasto !== id), ...corregido.partes])
-    return corregido.gasto
+    return visto
   }
   let cambiado: Gasto
   if (import.meta.env.DEV && modoMaqueta) {

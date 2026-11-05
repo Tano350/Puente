@@ -191,6 +191,8 @@ const trazos = {
   cafe: <path d="M3 10h14v5a6 6 0 0 1-6 6H9a6 6 0 0 1-6-6v-5zM16.75 16.73a3 3 0 1 0 .25-5.56M8 3a2.4 2.4 0 0 0-1 2a2.4 2.4 0 0 0 1 2M12 3a2.4 2.4 0 0 0-1 2a2.4 2.4 0 0 0 1 2" />,
   super: <path d="M4 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0M15 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0M17 17H6V3H4M6 5l14 1l-1 7H6" />,
   entrada: <path d="M15 5v2M15 11v2M15 17v2M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4V7a2 2 0 0 1 2-2" />,
+  // Una cama
+  alojamiento: <path d="M3 6v12M3 15h18M21 18v-5a3 3 0 0 0-3-3h-7v5M5 11a2 2 0 1 0 4 0a2 2 0 1 0-4 0" />,
 }
 
 export type NombreIcono = keyof typeof trazos

@@ -120,6 +120,7 @@ button.elegir {
   line-height: 22px;
 }
 
+.correo[data-chico='true'],
 .correoRecortado[data-chico='true'] {
   font-size: 13px;
   line-height: 18px;
@@ -141,6 +142,7 @@ button.elegir {
 }
 
 .nombre {
+  display: block;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -385,6 +387,23 @@ button.elegir {
   font-size: 14px;
   line-height: 20px;
   color: var(--sec-tarjeta);
+}
+
+/* El enlace a WhatsApp se ve como el botón principal */
+.whatsapp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 50px;
+  border-radius: 6px;
+  background: var(--acento);
+  color: var(--sobre);
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 19px;
+  text-decoration: none;
 }
 
 .rojo {

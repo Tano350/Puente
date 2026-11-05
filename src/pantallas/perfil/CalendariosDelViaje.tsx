@@ -3,6 +3,7 @@ import { BotonBorde, BotonPrincipal, Fila, Grupo, Hoja, Interruptor, TituloHoja 
 import { ElegirPersona } from '../../componentes/ElegirPersona.tsx'
 import { asignarCalendario, buscarCalendarios, cambiarSincronizacion, useCalendariosDelViaje, useSincronizacion, type Calendario } from '../../datos/calendario.ts'
 import { usePersonas } from '../../datos/consultas.ts'
+import { nombreCompleto } from '../../datos/nombres.ts'
 import { useSesion } from '../../datos/sesion.tsx'
 import { useTextos } from '../../textos.ts'
 import estilos from './CalendariosDelViaje.module.css'
@@ -47,7 +48,7 @@ export function CalendariosDelViaje() {
   const nombreDe = (id: string | null) => {
     if (sesion.tipo === 'dentro' && id === sesion.persona.id) return textos.grupo.tu
     const persona = id ? personas.find((p) => p.id === id) : undefined
-    return persona ? (persona.nombre ?? persona.correo) : t.sinAsignar
+    return persona ? nombreCompleto(persona) : t.sinAsignar
   }
   // Cada revisión marca los calendarios que ve; uno asignado que quedó atrás ya no está en la cuenta conectada
   const ultimaRevision = Math.max(...calendarios.map((c) => Date.parse(c.visto_en)))

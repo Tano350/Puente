@@ -203,6 +203,11 @@
   padding: 0 32px;
 }
 
+/* Con un panel abierto (430 px, encima de la columna de la derecha), la lista se angosta para que el panel no tape los montos */
+.columnasPc[data-panel='true'] {
+  padding-right: 74px;
+}
+
 /* La lista se desplaza sola; el margen negativo deja ver entero el borde de foco de las filas */
 .listaPc {
   min-height: 0;

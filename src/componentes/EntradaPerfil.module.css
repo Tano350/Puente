@@ -1,0 +1,11 @@
+/* Área de toque de 44 px alrededor de la foto de 36 px */
+.entrada {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  text-decoration: none;
+}

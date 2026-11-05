@@ -2,6 +2,8 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { Atras, Aviso, Bajada, BotonBorde, BotonPrincipal, Fila, FilaInterruptor, Grupo, Hoja, Pie, Titulo, TituloHoja } from '../../componentes/Controles.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
+import { secciones } from '../../componentes/secciones.ts'
+import { seccionPrevia } from '../../componentes/seccionPrevia.ts'
 import { SinConexion } from '../../componentes/SinConexion.tsx'
 import { DetallePersona, Tarjeta } from '../../componentes/Tarjeta.tsx'
 import { useAviso } from '../../componentes/useAviso.ts'
@@ -163,12 +165,10 @@ function AjusteAvisos({ persona, activos, marco, alActivar }: { persona: Persona
     setPreferencias(nuevas)
     if (activos) void sesion.actualizar({ avisos: nuevas }).catch(() => setProblema(textos.noSeGuardo))
   }
+  // En iPhone los avisos solo llegan con la app instalada: hasta entonces, el botón queda apagado
+  // (los interruptores ya dicen "Primero instala la app")
+  const sinInstalar = esIPhone && !estaInstalada()
   const activar = async () => {
-    // En iPhone los avisos solo llegan con la app instalada (Safari no los ofrece)
-    if (esIPhone && !estaInstalada()) {
-      setProblema(textos.instalar.enIPhone)
-      return
-    }
     setOcupado(true)
     setProblema(null)
     try {
@@ -186,13 +186,13 @@ function AjusteAvisos({ persona, activos, marco, alActivar }: { persona: Persona
     titulo: textos.avisos.titulo,
     pie: activos ? undefined : (
       <>
-        <BotonPrincipal onClick={() => void activar()} ocupado={ocupado}>{textos.avisos.activar}</BotonPrincipal>
+        <BotonPrincipal onClick={() => void activar()} apagado={sinInstalar} ocupado={ocupado}>{textos.avisos.activar}</BotonPrincipal>
         <Nota texto={problema} />
       </>
     ),
     children: (
       <>
-        <div className={estilos.bajada}>{textos.avisos.eligeCorto}</div>
+        {activos && <div className={estilos.bajada}>{textos.avisos.eligeCorto}</div>}
         <InterruptoresDeAvisos preferencias={preferencias} onCambio={cambiar} />
         {activos && <Nota texto={problema} />}
       </>
@@ -306,18 +306,24 @@ export function TuPerfil() {
     if (texto) aviso.mostrar(texto)
   }
 
+  // Sin señal, las filas que necesitan conexión salen atenuadas (y al tocarlas dicen por qué); Idioma, Modo oscuro e Instalar siguen normales
+  const fila = (contenido: ReactNode, necesitaConexion = false) => (
+    <div className={estilos.fila} data-sin-red={necesitaConexion && !hayConexion}>
+      {contenido}
+    </div>
+  )
   const filas = (
     <>
-      <Fila etiqueta={textos.fechas.titulo} valor={persona.llega && persona.vuelve ? rangoCorto(persona.llega, persona.vuelve) : t.falta} onClick={() => abrir('fechas')} />
-      <Fila etiqueta={t.idioma} valor={nombreDelIdioma(idioma)} onClick={() => setEligiendoIdioma((abierta) => !abierta)} />
+      {fila(<Fila etiqueta={textos.fechas.titulo} valor={persona.llega && persona.vuelve ? rangoCorto(persona.llega, persona.vuelve) : t.falta} onClick={() => abrir('fechas')} />, true)}
+      {fila(<Fila etiqueta={t.idioma} valor={nombreDelIdioma(idioma)} onClick={() => setEligiendoIdioma((abierta) => !abierta)} />)}
       {/* Solo en este dispositivo, como el teléfono: se puede querer claro en uno y oscuro en otro */}
-      <FilaInterruptor etiqueta={t.modoOscuro} activo={tema === 'oscuro'} onCambio={(oscuro) => cambiarTema(oscuro ? 'oscuro' : 'claro')} />
-      <Fila etiqueta={textos.avisos.titulo} valor={dispositivo.avisos ? t.activados : t.apagados} onClick={() => abrir('avisos')} />
-      {!dispositivo.instalada && <Fila etiqueta={textos.primeraVez.tareas.instalar} onClick={() => setAbierto('instalar')} />}
-      {persona.administra && <Fila etiqueta={t.invitados} valor={t.deTotal(entraron, activos.length)} onClick={() => (hayConexion ? navigate('/perfil/invitados') : aviso.mostrar(t.necesitaConexion))} />}
-      {persona.administra && (
-        <Fila etiqueta={textos.calendario.titulo} valor={conectado ? textos.calendario.conectado : textos.calendario.sinConectar} onClick={() => abrir('calendario')} />
-      )}
+      {fila(<FilaInterruptor etiqueta={t.modoOscuro} activo={tema === 'oscuro'} onCambio={(oscuro) => cambiarTema(oscuro ? 'oscuro' : 'claro')} />)}
+      {fila(<Fila etiqueta={textos.avisos.titulo} valor={dispositivo.avisos ? t.activados : t.apagados} onClick={() => abrir('avisos')} />, true)}
+      {!dispositivo.instalada && fila(<Fila etiqueta={textos.primeraVez.tareas.instalar} onClick={() => setAbierto('instalar')} />)}
+      {persona.administra &&
+        fila(<Fila etiqueta={t.invitados} valor={t.yaEntraron(entraron, activos.length)} onClick={() => (hayConexion ? navigate('/perfil/invitados') : aviso.mostrar(t.necesitaConexion))} />, true)}
+      {persona.administra &&
+        fila(<Fila etiqueta={textos.calendario.titulo} valor={conectado ? textos.calendario.conectado : textos.calendario.sinConectar} onClick={() => abrir('calendario')} />, true)}
     </>
   )
 
@@ -381,10 +387,12 @@ export function TuPerfil() {
   // Celular: cada ajuste es una pantalla propia, con "Tu perfil" para volver
   if (abierto) return ajuste((props) => <SubPantalla {...props} volverA={t.titulo} onVolver={() => setAbierto(null)} />)
 
+  // "Volver" regresa a la sección desde donde se abrió Tu perfil (Hoy, Grupo…) y lo dice
+  const previa = seccionPrevia()
   return (
     <div className={estilos.celular}>
       <div className={estilos.cabecera}>
-        <Atras texto={t.grupo} onClick={() => navigate('/grupo')} />
+        <Atras texto={textos.secciones[previa]} onClick={() => navigate(secciones.find((s) => s.clave === previa)?.ruta ?? '/hoy')} />
         {hayConexion ? (
           <button type="button" className={estilos.editar} onClick={() => setAbierto('editar')}>
             <Icono nombre="lapiz" medida={18} />
@@ -393,6 +401,9 @@ export function TuPerfil() {
         ) : (
           <SinConexion />
         )}
+      </div>
+      <div className={estilos.titulo}>
+        <Titulo>{t.titulo}</Titulo>
       </div>
       <Tarjeta persona={persona} />
       <Grupo arriba={24}>{filas}</Grupo>

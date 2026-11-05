@@ -81,6 +81,63 @@
   margin-top: 16px;
 }
 
+/* Carrera: dos opciones juntas, como "Quiénes pueden ir" al crear un evento */
+.etiquetaGrupo {
+  margin-top: 14px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.carreras {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px;
+  margin-top: 6px;
+  padding: 3px;
+  border: 1px solid var(--regla);
+  border-radius: 8px;
+}
+
+.carrerasMal {
+  border-color: var(--error);
+}
+
+.carrera {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 6px;
+  border-radius: 6px;
+  color: var(--sec);
+  font-size: 15px;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+}
+
+.carrera:has(:checked) {
+  background: var(--tinta);
+  color: var(--fondo);
+}
+
+.carrera:has(:focus-visible) {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+.radio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .queHace {
   margin-top: 2px;
 }
@@ -101,6 +158,29 @@
 
 .interruptores {
   margin-top: 16px;
+}
+
+.interruptoresApagados {
+  opacity: 0.5;
+}
+
+.estadoAvisos {
+  margin-top: 16px;
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 500;
+  color: var(--sec-tarjeta);
+}
+
+.estadoAvisos + .interruptores {
+  margin-top: 6px;
+}
+
+.tituloGrafico {
+  margin-top: 28px;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 500;
 }
 
 .pasos {

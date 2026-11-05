@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { usePersonas, type Persona } from './consultas.ts'
 import { ventanaDelViaje, type Ventana } from './fechas.ts'
+import { nombreCompleto } from './nombres.ts'
 import { useSesion } from './sesion.tsx'
 
 // Lo que comparten Grupo e Invitados: quiénes siguen en Puente, en qué orden y cómo se buscan.
@@ -25,7 +26,7 @@ export function estaAlla(persona: Persona, dia: string): boolean {
   return tieneFechas(persona) && persona.llega <= dia && dia <= persona.vuelve
 }
 
-export const porNombre = (a: Persona, b: Persona) => (a.nombre ?? a.correo).localeCompare(b.nombre ?? b.correo, 'es')
+export const porNombre = (a: Persona, b: Persona) => nombreCompleto(a).localeCompare(nombreCompleto(b), 'es')
 
 // Quien mira va primero; después los que entraron, por nombre, y al final los que todavía no entran
 export function integrantes(personas: Persona[], yo: string): Persona[] {
@@ -46,7 +47,7 @@ export function plano(texto: string): string {
 // Busca en el nombre y en el correo antes de la @ (después de la @ casi todos dicen "gmail")
 export function coincide(persona: Persona, busqueda: string): boolean {
   const buscado = plano(busqueda.trim())
-  return !buscado || plano(`${persona.nombre ?? ''} ${persona.correo.split('@')[0]}`).includes(buscado)
+  return !buscado || plano(`${nombreCompleto(persona)} ${persona.correo.split('@')[0]}`).includes(buscado)
 }
 
 export function porLlegada(a: ConFechas, b: ConFechas): number {

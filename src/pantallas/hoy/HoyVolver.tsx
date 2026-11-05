@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router'
 import { Hoja, TituloHoja } from '../../componentes/Controles.tsx'
 import { Icono, type NombreIcono } from '../../componentes/Icono.tsx'
 import type { Contacto } from '../../datos/contactos.ts'
@@ -14,11 +15,18 @@ export type Cierre = { id: 'notas' | 'pago' | 'rendir'; icono: NombreIcono; text
 
 // En el celular, filas como las de pendientes; en el computador, tarjetas que se eligen
 export function ParaCerrar({ cierres, computador, elegido, onElegir }: { cierres: Cierre[]; computador: boolean; elegido: Cierre['id']; onElegir: (id: Cierre['id']) => void }) {
+  const navigate = useNavigate()
+  // Lo que se hace en Gastos va directo ahí, sin un paso de más: en el celular, "Saldar" ya abierto; en el computador, la lista de la rendición
+  const elegir = (id: Cierre['id']) => {
+    if (id === 'pago' && !computador) navigate('/gastos', { state: { ver: 'saldos', saldar: true } })
+    else if (id === 'rendir' && computador) navigate('/gastos', { state: { ver: 'rendicion' } })
+    else onElegir(id)
+  }
   if (computador) {
     return (
       <div className={estilos.tarjetas}>
         {cierres.map((c) => (
-          <button key={c.id} type="button" className={estilos.tarjeta} aria-pressed={elegido === c.id} onClick={() => onElegir(c.id)}>
+          <button key={c.id} type="button" className={estilos.tarjeta} aria-pressed={elegido === c.id} onClick={() => elegir(c.id)}>
             <Icono nombre={c.icono} medida={20} />
             <span className={estilos.tarjetaTexto}>{c.texto}</span>
           </button>
@@ -30,7 +38,7 @@ export function ParaCerrar({ cierres, computador, elegido, onElegir }: { cierres
     <ul className={estilosHoy.lista}>
       {cierres.map((c) => (
         <li key={c.id}>
-          <button type="button" className={estilosHoy.pendiente} onClick={() => onElegir(c.id)}>
+          <button type="button" className={estilosHoy.pendiente} onClick={() => elegir(c.id)}>
             <Icono nombre={c.icono} medida={20} />
             <span className={estilosHoy.pendienteTexto}>{c.texto}</span>
             <Icono nombre="derecha" medida={16} trazo={2} />

@@ -316,6 +316,23 @@ button.nombre:focus-visible::after {
   color: var(--sec);
 }
 
+/* Bajo "Libre": crear un evento ese día */
+.crear,
+.crearPc {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  margin: 12px 0 0 74px;
+  padding: 0 16px 0 12px;
+  border: 2px solid var(--tinta);
+  border-radius: 6px;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
 /* ---------- Computador: cada fila es un botón que elige el evento (o abre el rato) ---------- */
 .filaPc {
   display: grid;

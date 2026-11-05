@@ -31,8 +31,6 @@ type Props = {
   onCancelado?: (evento: Evento) => void
 }
 
-const CAMPOS = ['titulo', 'dia', 'hora'] as const
-
 // Cuántos del grupo tienen libre esa hora, cuando el día y la hora dejan de cambiar
 function useLibres(rango: { inicio: string; fin: string } | null) {
   const clave = rango ? `${rango.inicio}/${rango.fin}` : null
@@ -214,7 +212,6 @@ function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCrea
       {textos.noSeGuardo}
     </div>
   )
-  const hayErrores = CAMPOS.some((campo) => errores[campo])
 
   // Cancelar el evento, mientras no termine: primero pregunta
   const paraCancelar = editando && Date.parse(editando.fin) >= Date.parse(ahora()) && (
@@ -246,19 +243,6 @@ function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCrea
         </div>
       )}
       <CrearBoleto borrador={borrador} errores={errores} computador={computador} enfocar={computador && !desdeContacto && !editando} editando={Boolean(editando)} viaje={viaje} onCambio={cambiar} />
-      {hayErrores && (
-        <div className={estilos.errores} role="alert">
-          {CAMPOS.map(
-            (campo) =>
-              errores[campo] && (
-                <div key={campo} id={`crear-${campo}-error`} className={estilos.error}>
-                  <Icono nombre="alerta" medida={15} trazo={2} />
-                  {errores[campo]}
-                </div>
-              ),
-          )}
-        </div>
-      )}
       {evento && disponibilidad && (
         <div className={estilos.libres} role="status">
           <Icono nombre="grupo" medida={16} trazo={2} />
@@ -294,7 +278,7 @@ function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCrea
           <SinConexion sobrePanel />
         </div>
         <div className={estilos.tituloFila}>
-          <h2 className={estilos.tituloPanel}>{editando ? te.titulo : t.titulo}</h2>
+          <h2 className={estilos.tituloPanel}>{editando ? te.titulo : desdeContacto ? t.tituloReunion : t.titulo}</h2>
           {selector}
         </div>
         {cuerpo}
@@ -328,7 +312,7 @@ function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCrea
           <SinConexion />
         </div>
         <div className={estilos.tituloFila}>
-          <h1 className={estilos.titulo}>{editando ? te.titulo : t.titulo}</h1>
+          <h1 className={estilos.titulo}>{editando ? te.titulo : desdeContacto ? t.tituloReunion : t.titulo}</h1>
           {selector}
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router'
 import { Avatar } from '../../componentes/Avatar.tsx'
 import { Aviso } from '../../componentes/Controles.tsx'
@@ -18,6 +18,9 @@ import estilos from './Saldos.module.css'
 // En las listas todo es en dólares, así que los montos van sin "US$"
 const sinMoneda = (centavos: number) => plata(Math.abs(centavos)).replace('US$ ', '')
 const signo = (centavos: number) => (centavos > 0 ? 'mas' : centavos < 0 ? 'menos' : 'cero')
+// La palabra chica sobre el monto: "le deben" / "debe" (o "te deben" / "debes", si el saldo es tuyo)
+const palabraDeSaldo = (t: Textos['gastos']['saldos'], centavos: number, tuyo: boolean) =>
+  centavos > 0 ? (tuyo ? t.teDebenCorto : t.leDeben) : tuyo ? t.debesCorto : t.debe
 
 type Situacion = { tipo: 'debes' | 'teDeben' | 'alDia'; titulo: string; monto: number; detalle: string | null }
 
@@ -50,12 +53,16 @@ function Billetes() {
 
 // Tu tarjeta, con "Saldar" (hoja o panel) y su aviso. La de arriba de la lista lleva el monto grande a la derecha;
 // la de la pestaña Saldos ("compacta") es una fila con ícono y un "Saldar" chico.
-function Tarjeta({ datos, computador, compacta = false }: { datos: Saldos; computador: boolean; compacta?: boolean }) {
+function Tarjeta({ datos, computador, compacta = false, abrirSaldar = false, onSaldarAbierto }: { datos: Saldos; computador: boolean; compacta?: boolean; abrirSaldar?: boolean; onSaldarAbierto?: () => void }) {
   const textos = useTextos()
   const t = textos.gastos.saldos
   const aviso = useAviso()
   const location = useLocation()
-  const [saldando, setSaldando] = useState(false)
+  // Quien llega pidiendo "Saldar" (por ejemplo, desde Hoy) lo encuentra abierto; avisa para que no se reabra al volver a esta vista
+  const [saldando, setSaldando] = useState(abrirSaldar)
+  useEffect(() => {
+    if (abrirSaldar) onSaldarAbierto?.()
+  }, [abrirSaldar, onSaldarAbierto])
   const [marcando, setMarcando] = useState<Transferencia | null>(null)
   const [donde, setDonde] = useState(location.key)
   const puedeSaldar = datos.mio < 0 && datos.pagables.length > 0
@@ -164,7 +171,14 @@ function ListaSaldos({ datos, enColumna }: { datos: Saldos; enColumna: boolean }
                 {datos.nombre(persona.id)}
               </span>
               <span className={estilos.saldo} data-signo={signo(saldo)}>
-                {saldo === 0 ? textos.gastos.saldos.alDiaCorto : `${saldo > 0 ? '+' : '−'}${sinMoneda(saldo)}`}
+                {saldo === 0 ? (
+                  textos.gastos.saldos.alDiaCorto
+                ) : (
+                  <>
+                    <span className={estilos.saldoPalabra}>{palabraDeSaldo(textos.gastos.saldos, saldo, tuyo)}</span>
+                    {sinMoneda(saldo)}
+                  </>
+                )}
               </span>
             </li>
           )
@@ -213,21 +227,21 @@ function ComoSaldar({ datos }: { datos: Saldos }) {
 
 // Tu situación: va arriba de la lista en el celular y arriba de la columna de la derecha en el computador.
 // "Saldar" abre su hoja y, al marcar el pago, muestra su aviso con "Deshacer".
-export function TarjetaSaldo({ computador }: { computador: boolean }) {
+export function TarjetaSaldo({ computador, abrirSaldar, onSaldarAbierto }: { computador: boolean; abrirSaldar?: boolean; onSaldarAbierto?: () => void }) {
   const datos = useSaldos()
   if (!datos) return null
-  return <Tarjeta datos={datos} computador={computador} />
+  return <Tarjeta datos={datos} computador={computador} abrirSaldar={abrirSaldar} onSaldarAbierto={onSaldarAbierto} />
 }
 
 // En el celular, la pestaña Saldos: tu tarjeta, los saldos de todos y "Cómo saldar".
 // En el computador, con "enColumna", los saldos de todos que van siempre a la derecha, bajo tu tarjeta.
-export function VistaSaldos({ computador, enColumna = false }: { computador: boolean; enColumna?: boolean }) {
+export function VistaSaldos({ computador, enColumna = false, abrirSaldar, onSaldarAbierto }: { computador: boolean; enColumna?: boolean; abrirSaldar?: boolean; onSaldarAbierto?: () => void }) {
   const datos = useSaldos()
   if (!datos) return null
   if (enColumna) return <ListaSaldos datos={datos} enColumna />
   return (
     <div>
-      <Tarjeta datos={datos} computador={computador} compacta />
+      <Tarjeta datos={datos} computador={computador} compacta abrirSaldar={abrirSaldar} onSaldarAbierto={onSaldarAbierto} />
       <ListaSaldos datos={datos} enColumna={false} />
       <ComoSaldar datos={datos} />
     </div>

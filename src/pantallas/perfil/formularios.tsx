@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react'
-import { Bajada, CampoFecha, CampoTexto, Etiqueta, Interruptor } from '../../componentes/Controles.tsx'
+import { useEffect, useState, type ReactNode, type SyntheticEvent } from 'react'
+import { Bajada, CampoFecha, CampoTexto, ErrorCampo, Etiqueta, Interruptor } from '../../componentes/Controles.tsx'
 import { Histograma } from '../../componentes/Histograma.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
 import { Tuerca } from '../../componentes/Tuerca.tsx'
 import type { Json } from '../../datos/base.ts'
 import type { Persona } from '../../datos/consultas.ts'
-import { avisosActivos, esIPhone, estaInstalada, sePuedePedirInstalar } from '../../datos/dispositivo.ts'
-import { diasEntre, ventanaDelViaje } from '../../datos/fechas.ts'
+import { avisosActivos, esIPhone, esSafari, estaInstalada, sePuedePedirInstalar } from '../../datos/dispositivo.ts'
+import { diasEntre, VIAJE, ventanaDelViaje } from '../../datos/fechas.ts'
 import { limpiarFotos, subirFoto } from '../../datos/fotos.ts'
 import type { CambiosDePersona } from '../../datos/sesion.tsx'
 import { useTextos } from '../../textos.ts'
@@ -15,17 +15,8 @@ import estilos from './formularios.module.css'
 
 // Formularios que comparten Primera vez y Tu perfil.
 
-const CARRERAS = [
-  'Ingeniería Civil',
-  'Ingeniería Civil Ambiental',
-  'Ingeniería Civil Biomédica',
-  'Ingeniería Civil de Industrias',
-  'Ingeniería Civil Eléctrica',
-  'Ingeniería Civil en Computación',
-  'Ingeniería Civil Mecánica',
-  'Ingeniería Civil Química',
-  'Ingeniería Civil Matemática',
-]
+// Solo hay dos carreras. Se guardan tal cual, en español, también con la app en inglés (son datos, no textos)
+export const CARRERAS = ['Ingeniería Comercial', 'Ingeniería Civil'] as const
 
 // ---------- Perfil ----------
 // La foto es la que se muestra (la de Google, una propia o ninguna); una foto recién elegida se sube al guardar
@@ -86,13 +77,18 @@ export function FormularioPerfil({ persona, borrador, onCambio, errores }: { per
       <FotoDePerfil persona={persona} foto={borrador.foto} fotoNueva={borrador.fotoNueva} onCambio={(cambio) => onCambio({ ...borrador, ...cambio })} />
       <Etiqueta texto={textos.nombre} para="perfil-nombre" />
       <CampoTexto id="perfil-nombre" valor={borrador.nombre} onCambio={poner('nombre')} error={errores.nombre} autoComplete="name" />
-      <Etiqueta texto={textos.carrera} para="perfil-carrera" />
-      <CampoTexto id="perfil-carrera" valor={borrador.carrera} onCambio={poner('carrera')} error={errores.carrera} lista="carreras" />
-      <datalist id="carreras">
+      <div id="perfil-carrera-etiqueta" className={estilos.etiquetaGrupo}>
+        {textos.carrera}
+      </div>
+      <div role="radiogroup" aria-labelledby="perfil-carrera-etiqueta" aria-describedby={errores.carrera ? 'perfil-carrera-error' : undefined} aria-invalid={Boolean(errores.carrera)} className={`${estilos.carreras} ${errores.carrera ? estilos.carrerasMal : ''}`}>
         {CARRERAS.map((c) => (
-          <option key={c} value={c} />
+          <label key={c} className={estilos.carrera}>
+            <input type="radio" name="perfil-carrera" value={c} checked={borrador.carrera === c} className={estilos.radio} onChange={() => poner('carrera')(c)} />
+            {c}
+          </label>
         ))}
-      </datalist>
+      </div>
+      <ErrorCampo texto={errores.carrera} id="perfil-carrera-error" />
       <Etiqueta texto={textos.emprendimiento} opcional para="perfil-emprendimiento" />
       <CampoTexto id="perfil-emprendimiento" valor={borrador.emprendimiento} onCambio={poner('emprendimiento')} />
       <div className={estilos.queHace}>
@@ -118,16 +114,32 @@ export function useValidarFechas() {
   })
 }
 
+// El calendario nativo abre en el mes de la fecha que tiene el campo, y vacío abre en el mes de hoy. Sin poner ningún
+// límite, justo antes de abrirlo se le da al campo (sin avisarle a React) un día de referencia: el que ya eligió la
+// persona o el comienzo del viaje. Lo que se ve y se guarda sale del estado, no de ese valor.
+const ponerValor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!
+function abrirEn(referencia: string) {
+  return (e: SyntheticEvent) => {
+    const campo = e.target
+    if (campo instanceof HTMLInputElement && campo.type === 'date' && !campo.value) ponerValor.call(campo, referencia)
+  }
+}
+
 export function FormularioFechas({ borrador, onCambio, errores, otros }: { borrador: BorradorFechas; onCambio: (b: BorradorFechas) => void; errores: ErroresFechas; otros: Persona[] }) {
   const { fechas: textos } = useTextos()
   const dias = borrador.llega && borrador.vuelve && borrador.vuelve >= borrador.llega ? diasEntre(borrador.llega, borrador.vuelve) : null
   return (
     <>
       <div className={estilos.fechas}>
-        <CampoFecha id="fecha-llega" etiqueta={textos.llegas} valor={borrador.llega} onCambio={(llega) => onCambio({ ...borrador, llega })} error={errores.llega} />
-        <CampoFecha id="fecha-vuelve" etiqueta={textos.vuelves} valor={borrador.vuelve} min={borrador.llega ?? undefined} onCambio={(vuelve) => onCambio({ ...borrador, vuelve })} error={errores.vuelve} />
+        <div onFocusCapture={abrirEn(VIAJE.desde)} onClickCapture={abrirEn(VIAJE.desde)}>
+          <CampoFecha id="fecha-llega" etiqueta={textos.llegas} valor={borrador.llega} onCambio={(llega) => onCambio({ ...borrador, llega })} error={errores.llega} />
+        </div>
+        <div onFocusCapture={abrirEn(borrador.llega ?? VIAJE.desde)} onClickCapture={abrirEn(borrador.llega ?? VIAJE.desde)}>
+          <CampoFecha id="fecha-vuelve" etiqueta={textos.vuelves} valor={borrador.vuelve} min={borrador.llega ?? undefined} onCambio={(vuelve) => onCambio({ ...borrador, vuelve })} error={errores.vuelve} />
+        </div>
       </div>
       {dias && <div className={estilos.dias}>{textos.dias(dias)}</div>}
+      <div className={estilos.tituloGrafico}>{textos.tituloGrafico}</div>
       <Histograma otros={otros} llega={borrador.llega} vuelve={borrador.vuelve} ventana={ventanaDelViaje([...otros, borrador])} />
     </>
   )
@@ -142,14 +154,31 @@ export function preferenciasDe(avisos: Json): Preferencias {
   return Object.fromEntries(TIPOS_DE_AVISO.map((t) => [t, guardadas[t] !== false])) as Preferencias
 }
 
+// Hasta saber si este dispositivo recibe avisos, vale null
+function useRecibeAvisos(): boolean | null {
+  const [recibe, setRecibe] = useState<boolean | null>(null)
+  useEffect(() => {
+    void avisosActivos().then(setRecibe)
+  }, [])
+  return recibe
+}
+
+// Mientras este dispositivo no reciba avisos, los interruptores se ven apagados y atenuados, y no se tocan:
+// se eligen cuando ya están activados
 export function InterruptoresDeAvisos({ preferencias, onCambio }: { preferencias: Preferencias; onCambio: (p: Preferencias) => void }) {
-  const { avisos: textos } = useTextos()
+  const { avisos: textos, primeraVez } = useTextos()
+  const recibe = useRecibeAvisos()
+  const apagados = recibe !== true
+  const sinInstalar = esIPhone && !estaInstalada()
   return (
-    <div className={estilos.interruptores}>
-      {TIPOS_DE_AVISO.map((tipo, i) => (
-        <Interruptor key={tipo} etiqueta={textos.tipos[tipo]} activo={preferencias[tipo]} onCambio={(activo) => onCambio({ ...preferencias, [tipo]: activo })} ultimo={i === TIPOS_DE_AVISO.length - 1} />
-      ))}
-    </div>
+    <>
+      {recibe === false && <div className={estilos.estadoAvisos}>{sinInstalar ? primeraVez.primeroInstalar : textos.apagadosAqui}</div>}
+      <div className={`${estilos.interruptores} ${apagados ? estilos.interruptoresApagados : ''}`} inert={apagados}>
+        {TIPOS_DE_AVISO.map((tipo, i) => (
+          <Interruptor key={tipo} etiqueta={textos.tipos[tipo]} activo={!apagados && preferencias[tipo]} onCambio={(activo) => onCambio({ ...preferencias, [tipo]: activo })} ultimo={i === TIPOS_DE_AVISO.length - 1} />
+        ))}
+      </div>
+    </>
   )
 }
 
@@ -174,16 +203,19 @@ export function modoInstalar(): ModoInstalar {
 export function ComoInstalar({ modo }: { modo: ModoInstalar }) {
   const { instalar: textos } = useTextos()
   if (modo === 'iphone') {
-    const iconos = ['compartir', 'agregarInicio'] as const
+    const iconos = [<Icono key="compartir" nombre="compartir" medida={26} />, <Icono key="inicio" nombre="agregarInicio" medida={26} />, <Tuerca key="tuerca" ancho={26} />]
+    // Fuera de Safari (el navegador de WhatsApp, Chrome…) no se puede instalar: primero hay que abrir el enlace en Safari
+    const pasos: { texto: string; icono: ReactNode }[] = textos.pasos.map((texto, i) => ({ texto, icono: iconos[i] }))
+    if (!esSafari) pasos.unshift({ texto: textos.abrirEnSafari, icono: null })
     return (
       <>
         <Bajada>{textos.enIPhone}</Bajada>
         <ol className={estilos.pasos}>
-          {textos.pasos.map((paso, i) => (
-            <li key={paso} className={estilos.paso}>
+          {pasos.map((paso, i) => (
+            <li key={paso.texto} className={estilos.paso}>
               <span className={estilos.numero}>{i + 1}</span>
-              <span className={estilos.pasoTexto}>{paso}</span>
-              <span className={estilos.pasoIcono}>{i < 2 ? <Icono nombre={iconos[i]} medida={26} /> : <Tuerca ancho={26} />}</span>
+              <span className={estilos.pasoTexto}>{paso.texto}</span>
+              <span className={estilos.pasoIcono}>{paso.icono}</span>
             </li>
           ))}
         </ol>

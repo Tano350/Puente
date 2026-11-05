@@ -14,6 +14,7 @@ type Props = {
   hoy: string
   ahora: string
   viaje: Ventana
+  soloVoy?: boolean
   elegido?: string
   onAbrir: (evento: Evento) => void
   onDia: (dia: string) => void
@@ -21,7 +22,7 @@ type Props = {
 
 // Las 7 columnas con horas. Lo tuyo va lleno, lo de los demás con borde y lo siguiente a lo que vas en acento.
 // Tocar un día lo abre en la vista Día; tocar un rato ocupado abre su hoja.
-export function AgendaSemana({ dias, piezas, computador, chile, hoy, ahora, viaje, elegido, onAbrir, onDia }: Props) {
+export function AgendaSemana({ dias, piezas, computador, chile, hoy, ahora, viaje, soloVoy, elegido, onAbrir, onDia }: Props) {
   const textos = useTextos()
   const tv = textos.agenda.vista
   const [rato, setRato] = useState<Ocupado | null>(null)
@@ -66,8 +67,12 @@ export function AgendaSemana({ dias, piezas, computador, chile, hoy, ahora, viaj
         </button>
       )
     const sitio = computador && largo >= 80 ? lugarYCiudad(p.evento) : ''
-    // En el celular el nombre va solo si cabe bajo la hora
-    const lineas = !computador && largo >= 50 ? Math.floor((largo - 17) / 13) : 0
+    // En un bloque corto la rejilla ya marca la hora: va solo el nombre, hasta en dos líneas.
+    // En uno largo van la hora y el nombre (en el celular, el nombre en las líneas que caben bajo la hora)
+    const linea = computador ? 15 : 12
+    const relleno = computador ? 9 : 3
+    const corto = largo < relleno + linea * 3
+    const lineas = corto ? Math.min(2, Math.floor((largo - relleno) / linea)) : computador ? 0 : Math.floor((largo - relleno - linea) / linea)
     return (
       <button
         key={p.id}
@@ -81,9 +86,9 @@ export function AgendaSemana({ dias, piezas, computador, chile, hoy, ahora, viaj
         data-pasada={p.pasada}
         onClick={() => onAbrir(p.evento)}
       >
-        <span className={estilos.bloqueHora}>{desde}</span>
+        {!corto && <span className={estilos.bloqueHora}>{desde}</span>}
         {(computador || lineas > 0) && (
-          <span className={estilos.bloqueTitulo} style={computador ? undefined : { WebkitLineClamp: lineas }}>
+          <span className={estilos.bloqueTitulo} style={lineas > 0 ? { WebkitLineClamp: lineas } : undefined}>
             {p.titulo}
           </span>
         )}
@@ -130,6 +135,22 @@ export function AgendaSemana({ dias, piezas, computador, chile, hoy, ahora, viaj
             {dia === hoy && ahoraMin >= primera * 60 && ahoraMin <= ultima * 60 && <span aria-hidden="true" className={estilos.ahora} style={{ top: y(ahoraMin) }} />}
           </div>
         ))}
+      </div>
+      <div className={computador ? estilos.leyendaPc : estilos.leyenda} aria-hidden="true">
+        <span>
+          <span className={estilos.marcaVas} />
+          {tv.estados.vas}
+        </span>
+        {!soloVoy && (
+          <span>
+            <span className={estilos.marcaNoVas} />
+            {tv.noVas}
+          </span>
+        )}
+        <span>
+          <span className={estilos.marcaOcupado} />
+          {tv.ocupado}
+        </span>
       </div>
       <AgendaRato rato={rato} computador={computador} onCerrar={() => setRato(null)} />
     </>
