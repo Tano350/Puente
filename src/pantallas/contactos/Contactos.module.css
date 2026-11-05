@@ -265,3 +265,32 @@
 .pc[data-panel='true'] .sinResultados {
   padding-right: 430px;
 }
+
+/* ---------- Sin conexión ---------- */
+.fichaCel {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.fichaCel:empty {
+  display: none;
+}
+
+/* Con la ficha arriba, la cabecera sube */
+.cabecera:has(.fichaCel:not(:empty)) {
+  padding-top: 12px;
+}
+
+.derechaPc {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* "Nuevo" queda apagado sin conexión; al tocarlo, un aviso dice por qué */
+.nuevo[aria-disabled='true'],
+.agregar[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}

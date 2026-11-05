@@ -11,6 +11,17 @@
   background: var(--panel);
 }
 
+/* Sin señal, la ficha va arriba a la derecha y la cabecera pierde parte del aire de arriba */
+.cabecera[data-sin-red='true'] {
+  padding-top: 12px;
+}
+
+.fichaFila {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
 .titulo {
   margin: 0;
   font-family: var(--letra-titulo);
@@ -146,6 +157,12 @@
   justify-content: space-between;
   gap: 16px;
   padding: 28px 32px 0;
+}
+
+.accionesPc {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .anotarPc {

@@ -11,6 +11,8 @@
 .cabezaFila {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   height: 44px;
 }
 
@@ -199,6 +201,21 @@
 }
 
 /* ---------- Pie ---------- */
+.cabeceraPanel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* La nota de abajo del botón cuando no hay señal */
+.seSube {
+  margin-top: 14px;
+  font-size: 13px;
+  line-height: 18px;
+  text-align: center;
+  color: var(--sec);
+}
+
 .fallo {
   margin-top: 8px;
   font-size: 13px;

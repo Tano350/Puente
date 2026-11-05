@@ -4,7 +4,9 @@ import { Atras, Aviso, BotonPrincipal } from '../../componentes/Controles.tsx'
 import { ElegirPersona } from '../../componentes/ElegirPersona.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
 import { PanelEncima, PantallaConPie } from '../../componentes/Paneles.tsx'
+import { SinConexion } from '../../componentes/SinConexion.tsx'
 import { useAviso } from '../../componentes/useAviso.ts'
+import { useConectado } from '../../datos/conexion.ts'
 import { usePersonas, type Persona } from '../../datos/consultas.ts'
 import { cambiarContacto, puedeCambiar, seAgenda, type Canal, type Contacto, type Etapa } from '../../datos/contactos.ts'
 import { useEventos, useNotasReunion } from '../../datos/eventos.ts'
@@ -34,6 +36,7 @@ export function DetalleContacto({ contacto, computador, onCerrar, onEditar }: { 
   const { data: eventos } = useEventos()
   const { data: notasReunion } = useNotasReunion()
   const aviso = useAviso()
+  const sinRed = !useConectado()
   const [eligiendo, setEligiendo] = useState(false)
   const [ocupado, setOcupado] = useState(false)
   if (sesion.tipo !== 'dentro') return null
@@ -65,7 +68,7 @@ export function DetalleContacto({ contacto, computador, onCerrar, onEditar }: { 
     }
   }
   const cambiarEtapa = async (etapa: Etapa) => {
-    if (!puede || ocupado || etapa === contacto.etapa) return
+    if (!puede || sinRed || ocupado || etapa === contacto.etapa) return
     const antes = { etapa: contacto.etapa, etapa_en: contacto.etapa_en }
     setOcupado(true)
     try {
@@ -93,19 +96,24 @@ export function DetalleContacto({ contacto, computador, onCerrar, onEditar }: { 
   const elegirEtapa = (etapa: Etapa) => (seAgenda(contacto.etapa, etapa) ? agendar() : void cambiarEtapa(etapa))
 
   // El paso siguiente va abajo. Después de la reunión, quien no ha escrito su nota la escribe en el evento.
-  const siguientes: Partial<Record<Etapa, { texto: string; accion: () => void }>> = {
-    por_contactar: { texto: d.marcarContactado, accion: () => void cambiarEtapa('contactado') },
-    contactado: { texto: d.marcarRespondio, accion: () => void cambiarEtapa('respondio') },
-    respondio: { texto: d.agendarReunion, accion: agendar },
+  // Sin conexión, cambiar el estado o agendar queda apagado; escribir la nota sigue activo
+  const siguientes: Partial<Record<Etapa, { texto: string; accion: () => void; conRed: boolean }>> = {
+    por_contactar: { texto: d.marcarContactado, accion: () => void cambiarEtapa('contactado'), conRed: true },
+    contactado: { texto: d.marcarRespondio, accion: () => void cambiarEtapa('respondio'), conRed: true },
+    respondio: { texto: d.agendarReunion, accion: agendar, conRed: true },
   }
-  if (reunion && sinTuNota) siguientes.reunion_hecha = { texto: d.escribirNota, accion: () => navigate(`/agenda/${reunion.id}`, { state: { desde: 'contactos', abrir: 'nota' } }) }
+  if (reunion && sinTuNota) siguientes.reunion_hecha = { texto: d.escribirNota, accion: () => navigate(`/agenda/${reunion.id}`, { state: { desde: 'contactos', abrir: 'nota' } }), conRed: false }
   const siguiente = puede ? siguientes[contacto.etapa] : undefined
   let pie: ReactNode = null
   if (siguiente) {
+    const apagado = sinRed && siguiente.conRed
     pie = (
-      <BotonPrincipal ocupado={ocupado} onClick={siguiente.accion}>
-        {siguiente.texto}
-      </BotonPrincipal>
+      <>
+        <BotonPrincipal apagado={apagado} ocupado={ocupado} onClick={siguiente.accion}>
+          {siguiente.texto}
+        </BotonPrincipal>
+        {apagado && <p className={estilos.notaRed}>{d.sinRedEstado}</p>}
+      </>
     )
   } else if (!puede && responsable) {
     pie = <div className={estilos.soloPuede}>{d.soloPuede(primerNombre(responsable))}</div>
@@ -171,9 +179,9 @@ export function DetalleContacto({ contacto, computador, onCerrar, onEditar }: { 
   const cuerpo = (
     <>
       {tarjeta}
-      <DetalleEtapas etapa={contacto.etapa} etapaEn={contacto.etapa_en} activa={puede} onElegir={elegirEtapa} />
+      <DetalleEtapas etapa={contacto.etapa} etapaEn={contacto.etapa_en} activa={puede} apagada={sinRed} onElegir={elegirEtapa} />
       {cambiaResponsable ? (
-        <button type="button" className={estilos.responsable} aria-haspopup="dialog" onClick={() => setEligiendo(true)}>
+        <button type="button" className={estilos.responsable} aria-haspopup="dialog" aria-disabled={sinRed} onClick={() => !sinRed && setEligiendo(true)}>
           {quien}
         </button>
       ) : (
@@ -182,7 +190,7 @@ export function DetalleContacto({ contacto, computador, onCerrar, onEditar }: { 
       {reunion && <DetalleReunion reunion={reunion} hecha={contacto.etapa === 'reunion_hecha'} yo={yo.id} onAbrir={() => navigate(`/agenda/${reunion.id}`, { state: { desde: 'contactos' } })} />}
       <DetalleNotas key={contacto.id} contacto={contacto} yo={yo} aviso={aviso} />
       {puede && !descartado && (
-        <button type="button" className={estilos.descartar} onClick={() => void cambiarEtapa('descartado')}>
+        <button type="button" className={estilos.descartar} aria-disabled={sinRed} onClick={() => void cambiarEtapa('descartado')}>
           {d.descartar}
         </button>
       )}
@@ -200,7 +208,17 @@ export function DetalleContacto({ contacto, computador, onCerrar, onEditar }: { 
   // ---------- Computador ----------
   if (computador) {
     return (
-      <PanelEncima etiqueta={contacto.nombre} onCerrar={onCerrar} cabecera={puede ? editar : undefined} pie={pie}>
+      <PanelEncima
+        etiqueta={contacto.nombre}
+        onCerrar={onCerrar}
+        cabecera={
+          <div className={estilos.derecha}>
+            {puede && !sinRed && editar}
+            <SinConexion sobrePanel />
+          </div>
+        }
+        pie={pie}
+      >
         {cuerpo}
         <Aviso texto={aviso.texto} onDeshacer={aviso.deshacer} conPanel />
       </PanelEncima>
@@ -212,7 +230,10 @@ export function DetalleContacto({ contacto, computador, onCerrar, onEditar }: { 
     <PantallaConPie pie={pie}>
       <div className={estilos.cabecera}>
         <Atras texto={t.titulo} onClick={onCerrar} />
-        {puede && editar}
+        <div className={estilos.derecha}>
+          <SinConexion />
+          {puede && !sinRed && editar}
+        </div>
       </div>
       {cuerpo}
       <Aviso texto={aviso.texto} onDeshacer={aviso.deshacer} sobrePie={Boolean(pie)} />

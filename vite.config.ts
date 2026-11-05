@@ -28,6 +28,8 @@ export default defineConfig({
         // Las letras y los íconos también quedan guardados, para abrir sin señal.
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallback: '/index.html',
+        // Los avisos push viven en public/avisos-sw.js
+        importScripts: ['/avisos-sw.js'],
       },
     }),
   ],

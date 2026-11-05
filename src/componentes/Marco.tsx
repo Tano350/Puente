@@ -1,5 +1,8 @@
-import { useLayoutEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { Outlet, useLocation, useNavigationType } from 'react-router'
+import { sincronizarSuscripcion } from '../datos/dispositivo.ts'
+import { modoMaqueta } from '../datos/maqueta.ts'
+import { useSesion } from '../datos/sesion.tsx'
 import { BarraLateral } from './BarraLateral.tsx'
 import { BarraSecciones } from './BarraSecciones.tsx'
 import estilos from './Marco.module.css'
@@ -14,6 +17,15 @@ export function Marco() {
   useLayoutEffect(() => {
     contenido.current?.scrollTo(0, tipo === 'POP' ? (posiciones.current.get(key) ?? 0) : 0)
   }, [key, tipo])
+  // Una vez al abrir la app con sesión: deja guardada la suscripción de avisos de este dispositivo
+  const sesion = useSesion()
+  const personaId = sesion.tipo === 'dentro' ? sesion.persona.id : null
+  useEffect(() => {
+    if (!personaId || (import.meta.env.DEV && modoMaqueta)) return
+    sincronizarSuscripcion(personaId).catch(() => {
+      // Sin señal o sin permiso: se intenta de nuevo la próxima vez que se abra
+    })
+  }, [personaId])
   return (
     <div className={estilos.marco}>
       <BarraLateral />

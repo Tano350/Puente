@@ -3,6 +3,7 @@ import { Aviso } from '../../componentes/Controles.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
 import { PanelEncima } from '../../componentes/Paneles.tsx'
 import { useAviso } from '../../componentes/useAviso.ts'
+import { estaConectado, useConectado } from '../../datos/conexion.ts'
 import { plata, rendir } from '../../datos/gastos.ts'
 import { useSesion } from '../../datos/sesion.tsx'
 import { useTextos } from '../../textos.ts'
@@ -19,6 +20,7 @@ export function VistaRendicion({ computador, onCerrar }: { computador: boolean; 
   const sesion = useSesion()
   const lista = usePorRendir()
   const aviso = useAviso()
+  const conectado = useConectado()
   // Lo recién marcado se ve al tiro, mientras la base responde (cuenta solo el último toque de cada gasto)
   const [cambios, setCambios] = useState<Record<string, boolean>>({})
   const toques = useRef<Record<string, number>>({})
@@ -47,12 +49,12 @@ export function VistaRendicion({ computador, onCerrar }: { computador: boolean; 
   }
 
   const descargar = async () => {
-    if (!marcados.length || ocupado.current || sesion.tipo !== 'dentro') return
+    if (!marcados.length || ocupado.current || sesion.tipo !== 'dentro' || !estaConectado()) return
     ocupado.current = true
     setDescargando(true)
     aviso.cerrar()
     try {
-      await descargarRendicion(sesion.persona.nombre ?? sesion.persona.correo, marcados, textos)
+      await descargarRendicion(sesion.persona.nombre ?? sesion.persona.correo, marcados)
       aviso.mostrar(t.descargaste(marcados.length, plata(total)))
     } catch {
       aviso.mostrar(t.noSeDescargo)
@@ -83,10 +85,11 @@ export function VistaRendicion({ computador, onCerrar }: { computador: boolean; 
               {t.sinFoto(sinFoto)}
             </div>
           )}
-          <button type="button" className={estilos.descargar} aria-disabled={!marcados.length || descargando} onClick={() => void descargar()}>
+          <button type="button" className={estilos.descargar} aria-disabled={!marcados.length || descargando || !conectado} onClick={() => void descargar()}>
             <Icono nombre="instalar" medida={18} trazo={2.25} />
             {descargando ? t.descargando : t.descargar}
           </button>
+          {!conectado && <div className={estilos.necesita}>{t.necesitasConexion}</div>}
         </div>
         <div className={estilos.lista}>
           {filas.map((x) => (

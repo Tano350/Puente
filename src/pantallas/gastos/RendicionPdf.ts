@@ -1,9 +1,10 @@
 import type { PDFDocument, PDFFont, PDFImage, PDFPage, RGB } from 'pdf-lib'
 import { conMayuscula, diaCorto, diaLargo, rango } from '../../datos/fechas.ts'
-import { plata, urlsDeBoletas, type Gasto } from '../../datos/gastos.ts'
-import type { Textos } from '../../textos.ts'
+import { urlsDeBoletas, type Gasto } from '../../datos/gastos.ts'
+import { es as textos } from '../../textos.ts'
 
-// El PDF de la rendición, armado en el navegador: tu nombre, el viaje y las fechas, una tabla con cada gasto (total y
+// El PDF de la rendición va siempre en español (textos, fechas y montos), esté la app en el idioma que esté,
+// porque es lo que se entrega a quien rinde. Armado en el navegador: tu nombre, el viaje y las fechas, una tabla con cada gasto (total y
 // tu parte) y el total; después, la foto de cada boleta en su propia página. pdf-lib se carga recién al descargar.
 
 export type LineaRendicion = { gasto: Gasto; monto: number }
@@ -17,12 +18,12 @@ const ANCHO = ANCHO_HOJA - 2 * MARGEN
 const PISO = 76
 const FILA = 22
 
-export async function descargarRendicion(nombre: string, lineas: LineaRendicion[], textos: Textos): Promise<void> {
-  const pdf = await armarRendicionPdf(nombre, lineas, textos)
+export async function descargarRendicion(nombre: string, lineas: LineaRendicion[]): Promise<void> {
+  const pdf = await armarRendicionPdf(nombre, lineas)
   bajar(pdf, textos.gastos.rendicion.pdf.archivo(nombre.replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim()))
 }
 
-export async function armarRendicionPdf(nombre: string, lineas: LineaRendicion[], textos: Textos): Promise<Uint8Array> {
+export async function armarRendicionPdf(nombre: string, lineas: LineaRendicion[]): Promise<Uint8Array> {
   const t = textos.gastos.rendicion.pdf
   // Del más viejo al más nuevo, como se lee una rendición
   const orden = [...lineas].sort((a, b) => a.gasto.fecha.localeCompare(b.gasto.fecha) || a.gasto.creado_en.localeCompare(b.gasto.creado_en))
@@ -86,7 +87,7 @@ export async function armarRendicionPdf(nombre: string, lineas: LineaRendicion[]
       cabeza()
     }
     const base = y - 15
-    escribir(hoja, `${diaCorto(l.gasto.fecha)} ${l.gasto.fecha.slice(0, 4)}`, columna.fecha, base)
+    escribir(hoja, `${diaCorto(l.gasto.fecha, 'es')} ${l.gasto.fecha.slice(0, 4)}`, columna.fecha, base)
     escribir(hoja, tituloDe(l.gasto), columna.gasto, base, { ancho: columna.total - 76 - columna.gasto })
     escribir(hoja, plata(l.gasto.monto), columna.total, base, { derecha: true, tono: sec })
     escribir(hoja, plata(l.monto), columna.parte, base, { derecha: true })
@@ -107,7 +108,7 @@ export async function armarRendicionPdf(nombre: string, lineas: LineaRendicion[]
     escribir(pagina, tituloDe(l.gasto), MARGEN, arriba, { tamano: 15, fuente: negrita, ancho: ANCHO })
     arriba -= 19
     const montos = t.montos(plata(l.gasto.monto), l.monto === l.gasto.monto ? null : plata(l.monto))
-    escribir(pagina, `${conMayuscula(diaLargo(l.gasto.fecha))} de ${l.gasto.fecha.slice(0, 4)} · ${montos}`, MARGEN, arriba, { tono: sec, ancho: ANCHO })
+    escribir(pagina, `${conMayuscula(diaLargo(l.gasto.fecha, 'es'))} de ${l.gasto.fecha.slice(0, 4)} · ${montos}`, MARGEN, arriba, { tono: sec, ancho: ANCHO })
     arriba -= 18
     const imagen = imagenes[i]
     const escala = Math.min(ANCHO / imagen.width, (arriba - PISO) / imagen.height)
@@ -134,13 +135,22 @@ export async function armarRendicionPdf(nombre: string, lineas: LineaRendicion[]
   return pdf.save()
 }
 
+// "US$ 1.234,56", siempre en español
+function plata(centavos: number): string {
+  const abs = Math.abs(centavos)
+  const enteros = Math.floor(abs / 100)
+    .toString()
+    .replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+  return `${centavos < 0 ? '-' : ''}US$ ${enteros},${String(abs % 100).padStart(2, '0')}`
+}
+
 // "5 al 12 de enero de 2027" (o un solo día)
 function fechasDe(fechas: string[]): string {
   if (!fechas.length) return ''
   const desde = fechas.reduce((a, b) => (b < a ? b : a))
   const hasta = fechas.reduce((a, b) => (b > a ? b : a))
   const ano = hasta.slice(0, 4)
-  return desde === hasta ? `${diaLargo(desde).replace(/^\S+ /, '')} de ${ano}` : `${rango(desde, hasta)} de ${ano}`
+  return desde === hasta ? `${diaLargo(desde, 'es').replace(/^\S+ /, '')} de ${ano}` : `${rango(desde, hasta, 'es')} de ${ano}`
 }
 
 // Helvetica no tiene todas las letras (sí las del español): las demás van sin tilde o, si no se puede, se omiten

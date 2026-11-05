@@ -1,6 +1,7 @@
 import { Icono } from '../../componentes/Icono.tsx'
 import { conMayuscula, diaDeLaSemana, diaLargo, sumarDias } from '../../datos/fechas.ts'
 import { conmigo, plata, type Gasto, type Parte } from '../../datos/gastos.ts'
+import { useSinSubir } from '../../datos/sinSenal.ts'
 import { useTextos } from '../../textos.ts'
 import { iconoDe } from './categorias.ts'
 import estilos from './ListaGastos.module.css'
@@ -20,6 +21,7 @@ type Props = {
 export function ListaGastos({ gastos, partes, yo, nombres, hoy, computador, elegido, onAbrir }: Props) {
   const textos = useTextos()
   const tl = textos.gastos.lista
+  const sinSubir = useSinSubir()
   const dias = new Map<string, Gasto[]>()
   for (const g of gastos) {
     const delDia = dias.get(g.fecha)
@@ -56,7 +58,14 @@ export function ListaGastos({ gastos, partes, yo, nombres, hoy, computador, eleg
                       </span>
                     )}
                   </span>
-                  <span className={estilos.quien}>{g.pagado_por === yo ? tl.pagaste(monto) : tl.pago(nombres.get(g.pagado_por) ?? tl.alguien, monto)}</span>
+                  {sinSubir.has(g.id) ? (
+                    <span className={estilos.quien} data-sin-subir="true">
+                      <Icono nombre="sinSubir" medida={13} trazo={2} />
+                      <span className={estilos.quienTexto}>{g.pagado_por === yo ? tl.sinSubirPagaste(monto) : tl.sinSubirPago(nombres.get(g.pagado_por) ?? tl.alguien, monto)}</span>
+                    </span>
+                  ) : (
+                    <span className={estilos.quien}>{g.pagado_por === yo ? tl.pagaste(monto) : tl.pago(nombres.get(g.pagado_por) ?? tl.alguien, monto)}</span>
+                  )}
                 </span>
                 <span className={estilos.conmigo} data-tipo={c.tipo}>
                   <span className={estilos.etiqueta}>{tl.conmigo[c.tipo]}</span>

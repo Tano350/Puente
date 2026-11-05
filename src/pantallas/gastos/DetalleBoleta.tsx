@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type ChangeEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { Icono } from '../../componentes/Icono.tsx'
+import { useConectado } from '../../datos/conexion.ts'
 import { consultas } from '../../datos/consultas.ts'
 import { prepararBoleta, quitarBoleta, subirBoleta, useUrlBoleta, type Gasto } from '../../datos/gastos.ts'
 import { useTextos } from '../../textos.ts'
@@ -13,6 +14,7 @@ type Avisos = { mostrar: (texto: string, deshacer?: () => void) => void; cerrar:
 export function DetalleBoleta({ gasto, puede, computador, aviso }: { gasto: Gasto; puede: boolean; computador: boolean; aviso: Avisos }) {
   const textos = useTextos()
   const d = textos.gastos.detalle
+  const conectado = useConectado()
   const { data: url, isError } = useUrlBoleta(gasto.boleta)
   const [viendo, setViendo] = useState(false)
   const [subiendo, setSubiendo] = useState(false)
@@ -67,9 +69,12 @@ export function DetalleBoleta({ gasto, puede, computador, aviso }: { gasto: Gast
         key="boleta"
         type="button"
         className={estilos.agregar}
-        aria-disabled={subiendo}
+        aria-disabled={subiendo || !conectado}
+        data-sin-red={!conectado}
         onClick={() => {
-          if (!subiendo) archivo.current?.click()
+          // Subir la foto necesita conexión: sin señal, el botón sigue ahí pero avisa
+          if (!conectado) aviso.mostrar(d.necesitasConexion)
+          else if (!subiendo) archivo.current?.click()
         }}
       >
         <Icono nombre="camara" medida={computador ? 18 : 20} />

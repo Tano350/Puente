@@ -1,15 +1,19 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router'
-import { Atras, Aviso, BotonBorde, BotonPrincipal, Fila, Grupo, Hoja, Pie, Titulo, TituloHoja } from '../../componentes/Controles.tsx'
+import { Atras, Aviso, Bajada, BotonBorde, BotonPrincipal, Fila, Grupo, Hoja, Pie, Titulo, TituloHoja } from '../../componentes/Controles.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
+import { SinConexion } from '../../componentes/SinConexion.tsx'
 import { DetallePersona, Tarjeta } from '../../componentes/Tarjeta.tsx'
 import { useAviso } from '../../componentes/useAviso.ts'
 import { useEsComputador } from '../../componentes/useEsComputador.ts'
+import { useConectado } from '../../datos/conexion.ts'
 import { conectarCalendario, guardarAccesoAlVolver, useCalendarioConectado } from '../../datos/calendario.ts'
 import { usePersonas } from '../../datos/consultas.ts'
-import { activarAvisos, marcarInstalada, pedirInstalar } from '../../datos/dispositivo.ts'
+import { activarAvisos, esIPhone, estaInstalada, marcarInstalada, pedirInstalar } from '../../datos/dispositivo.ts'
 import { rangoCorto } from '../../datos/fechas.ts'
+import { useIdioma, type Idioma } from '../../datos/idioma.ts'
 import { useSesion, type Persona } from '../../datos/sesion.tsx'
+import { useCuantoSinSubir } from '../../datos/sinSenal.ts'
 import { useTextos } from '../../textos.ts'
 import {
   borradorPerfil,
@@ -29,6 +33,8 @@ import {
   type Preferencias,
 } from './formularios.tsx'
 import { CalendariosDelViaje } from './CalendariosDelViaje.tsx'
+import { elegirIdioma, HojaIdioma, MenuIdioma, nombreDelIdioma } from './Idioma.tsx'
+import estilosIdioma from './Idioma.module.css'
 import estilos from './TuPerfil.module.css'
 
 type Abierto = 'editar' | 'fechas' | 'avisos' | 'instalar' | 'calendario'
@@ -38,11 +44,12 @@ type Envoltura = { titulo: string; pie?: ReactNode; children: ReactNode }
 type Contenedor = (props: Envoltura) => ReactNode
 
 function PanelEncima({ titulo, pie, children, onCerrar }: Envoltura & { onCerrar: () => void }) {
+  const textos = useTextos()
   return (
     <aside aria-label={titulo} className={estilos.panel}>
       <div className={estilos.panelCabeza}>
         <h2 className={estilos.panelTitulo}>{titulo}</h2>
-        <button type="button" aria-label="Cerrar" className={estilos.cerrar} onClick={onCerrar}>
+        <button type="button" aria-label={textos.cerrar} className={estilos.cerrar} onClick={onCerrar}>
           <Icono nombre="cerrar" medida={20} trazo={2} />
         </button>
       </div>
@@ -156,6 +163,11 @@ function AjusteAvisos({ persona, activos, marco, alActivar }: { persona: Persona
     if (activos) void sesion.actualizar({ avisos: nuevas }).catch(() => setProblema(textos.noSeGuardo))
   }
   const activar = async () => {
+    // En iPhone los avisos solo llegan con la app instalada (Safari no los ofrece)
+    if (esIPhone && !estaInstalada()) {
+      setProblema(textos.instalar.enIPhone)
+      return
+    }
     setOcupado(true)
     setProblema(null)
     try {
@@ -248,11 +260,17 @@ export function TuPerfil() {
   const location = useLocation()
   const esComputador = useEsComputador()
   const dispositivo = useDispositivo()
+  const idioma = useIdioma()
+  const hayConexion = useConectado()
   const { data: personas = [] } = usePersonas()
   const aviso = useAviso()
   // Un pendiente de Hoy puede pedir que se abra un ajuste, como "Editar perfil"
   const [abierto, setAbierto] = useState<Abierto | null>(() => (location.state as { abrir?: Abierto } | null)?.abrir ?? null)
   const [confirmarSalir, setConfirmarSalir] = useState(false)
+  const [eligiendoIdioma, setEligiendoIdioma] = useState(false)
+  // Salir borra lo que no ha subido: si hay algo, la confirmación lo dice
+  const pendiente = useCuantoSinSubir()
+  const hayPendiente = pendiente.gastos + pendiente.notas + pendiente.otros > 0
   const { data: conectado = false } = useCalendarioConectado(sesion.tipo === 'dentro' && sesion.persona.administra)
   useEffect(() => {
     if (location.state) navigate(location.pathname, { replace: true, state: null })
@@ -278,14 +296,23 @@ export function TuPerfil() {
     if (texto) aviso.mostrar(texto)
   }
 
+  // Cambiar el perfil necesita conexión; el idioma y la instalación no
+  const abrir = (ajuste: Abierto) => (hayConexion ? setAbierto(ajuste) : aviso.mostrar(t.necesitaConexion))
+  const elegir = (nuevo: Idioma) => {
+    const texto = elegirIdioma(nuevo, idioma, sesion.actualizar, t.idiomaCambiado)
+    setEligiendoIdioma(false)
+    if (texto) aviso.mostrar(texto)
+  }
+
   const filas = (
     <>
-      <Fila etiqueta={textos.fechas.titulo} valor={persona.llega && persona.vuelve ? rangoCorto(persona.llega, persona.vuelve) : t.falta} onClick={() => setAbierto('fechas')} />
-      <Fila etiqueta={textos.avisos.titulo} valor={dispositivo.avisos ? t.activados : t.apagados} onClick={() => setAbierto('avisos')} />
+      <Fila etiqueta={textos.fechas.titulo} valor={persona.llega && persona.vuelve ? rangoCorto(persona.llega, persona.vuelve) : t.falta} onClick={() => abrir('fechas')} />
+      <Fila etiqueta={t.idioma} valor={nombreDelIdioma(idioma)} onClick={() => setEligiendoIdioma((abierta) => !abierta)} />
+      <Fila etiqueta={textos.avisos.titulo} valor={dispositivo.avisos ? t.activados : t.apagados} onClick={() => abrir('avisos')} />
       {!dispositivo.instalada && <Fila etiqueta={textos.primeraVez.tareas.instalar} onClick={() => setAbierto('instalar')} />}
-      {persona.administra && <Fila etiqueta={t.invitados} valor={t.deTotal(entraron, activos.length)} onClick={() => navigate('/perfil/invitados')} />}
+      {persona.administra && <Fila etiqueta={t.invitados} valor={t.deTotal(entraron, activos.length)} onClick={() => (hayConexion ? navigate('/perfil/invitados') : aviso.mostrar(t.necesitaConexion))} />}
       {persona.administra && (
-        <Fila etiqueta={textos.calendario.titulo} valor={conectado ? textos.calendario.conectado : textos.calendario.sinConectar} onClick={() => setAbierto('calendario')} />
+        <Fila etiqueta={textos.calendario.titulo} valor={conectado ? textos.calendario.conectado : textos.calendario.sinConectar} onClick={() => abrir('calendario')} />
       )}
     </>
   )
@@ -306,13 +333,17 @@ export function TuPerfil() {
         <div className={estilos.cuerpo}>
           <div className={estilos.columnas}>
             <div className={estilos.ajustes}>
-              <Grupo arriba={52}>{filas}</Grupo>
+              <div className={estilosIdioma.ancla}>
+                <Grupo arriba={52}>{filas}</Grupo>
+                {eligiendoIdioma && <MenuIdioma alElegir={elegir} onCerrar={() => setEligiendoIdioma(false)} />}
+              </div>
               <div className={estilos.salir}>
                 {confirmarSalir ? (
                   <div className={estilos.confirmar}>
                     <div className={estilos.confirmarTitulo}>{t.salirPregunta}</div>
+                    {hayPendiente && <div className={estilos.bajada}>{t.salirPendiente(pendiente.gastos, pendiente.notas, pendiente.otros)}</div>}
                     <div className={estilos.confirmarBotones}>
-                      <button type="button" className={estilos.chicoPrincipal} onClick={() => void sesion.salir()}>{textos.salir}</button>
+                      <button type="button" className={estilos.chicoPrincipal} onClick={() => void sesion.salir()}>{hayPendiente ? t.salirIgual : textos.salir}</button>
                       <button type="button" className={estilos.chicoBorde} onClick={() => setConfirmarSalir(false)}>{textos.cancelar}</button>
                     </div>
                   </div>
@@ -323,10 +354,14 @@ export function TuPerfil() {
             </div>
             <aside aria-label={t.tuTarjeta} className={estilos.lado}>
               <div className={estilos.editarFila}>
-                <button type="button" className={estilos.editarBorde} onClick={() => setAbierto('editar')}>
-                  <Icono nombre="lapiz" medida={18} />
-                  {t.editarCorto}
-                </button>
+                {hayConexion ? (
+                  <button type="button" className={estilos.editarBorde} onClick={() => setAbierto('editar')}>
+                    <Icono nombre="lapiz" medida={18} />
+                    {t.editarCorto}
+                  </button>
+                ) : (
+                  <SinConexion />
+                )}
               </div>
               <Tarjeta persona={persona} />
               <DetallePersona persona={persona} />
@@ -346,20 +381,26 @@ export function TuPerfil() {
     <div className={estilos.celular}>
       <div className={estilos.cabecera}>
         <Atras texto={t.grupo} onClick={() => navigate('/grupo')} />
-        <button type="button" className={estilos.editar} onClick={() => setAbierto('editar')}>
-          <Icono nombre="lapiz" medida={18} />
-          {t.editarCorto}
-        </button>
+        {hayConexion ? (
+          <button type="button" className={estilos.editar} onClick={() => setAbierto('editar')}>
+            <Icono nombre="lapiz" medida={18} />
+            {t.editarCorto}
+          </button>
+        ) : (
+          <SinConexion />
+        )}
       </div>
       <Tarjeta persona={persona} />
       <Grupo arriba={24}>{filas}</Grupo>
       <Grupo arriba={16}>
         <Fila etiqueta={textos.salir} sinFlecha onClick={() => setConfirmarSalir(true)} />
       </Grupo>
+      <HojaIdioma abierta={eligiendoIdioma} alElegir={elegir} onCerrar={() => setEligiendoIdioma(false)} />
       <Hoja abierta={confirmarSalir} etiqueta={t.salirPregunta} alerta onCerrar={() => setConfirmarSalir(false)}>
         <TituloHoja>{t.salirPregunta}</TituloHoja>
+        {hayPendiente && <Bajada>{t.salirPendiente(pendiente.gastos, pendiente.notas, pendiente.otros)}</Bajada>}
         <div className={estilos.hojaBotones}>
-          <BotonPrincipal onClick={() => void sesion.salir()}>{textos.salir}</BotonPrincipal>
+          <BotonPrincipal onClick={() => void sesion.salir()}>{hayPendiente ? t.salirIgual : textos.salir}</BotonPrincipal>
           <BotonBorde onClick={() => setConfirmarSalir(false)}>{textos.cancelar}</BotonBorde>
         </div>
       </Hoja>

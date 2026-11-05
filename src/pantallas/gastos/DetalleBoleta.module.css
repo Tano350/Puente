@@ -74,6 +74,12 @@
   cursor: default;
 }
 
+/* Sin señal se ve como en el diseño: igual que siempre, pero apagado */
+.agregar[data-sin-red='true'] {
+  color: inherit;
+  opacity: 0.45;
+}
+
 /* El selector de fotos del dispositivo, escondido: lo abre el botón */
 .archivo {
   position: absolute;

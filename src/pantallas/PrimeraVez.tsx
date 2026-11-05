@@ -3,7 +3,7 @@ import { Atras, BotonBorde, BotonPrincipal, Pie, Titulo } from '../componentes/C
 import { Icono } from '../componentes/Icono.tsx'
 import { conectarCalendario, guardarAccesoAlVolver, useCalendarioConectado } from '../datos/calendario.ts'
 import { usePersonas } from '../datos/consultas.ts'
-import { activarAvisos, marcarInstalada, pedirInstalar } from '../datos/dispositivo.ts'
+import { activarAvisos, esIPhone, estaInstalada, marcarInstalada, pedirInstalar } from '../datos/dispositivo.ts'
 import { primerNombre } from '../datos/nombres.ts'
 import { useSesion, type Persona } from '../datos/sesion.tsx'
 import { useTextos } from '../textos.ts'
@@ -141,6 +141,11 @@ function PasoAvisos({ persona, alTerminar, alActivar }: { persona: Persona; alTe
   const [ocupado, setOcupado] = useState(false)
   const [problema, setProblema] = useState<string | null>(null)
   const activar = async () => {
+    // En iPhone los avisos solo llegan con la app instalada (Safari no los ofrece)
+    if (esIPhone && !estaInstalada()) {
+      setProblema(textos.instalar.enIPhone)
+      return
+    }
     setOcupado(true)
     setProblema(null)
     try {

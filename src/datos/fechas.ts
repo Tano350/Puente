@@ -1,9 +1,34 @@
-// Fechas del viaje en español. Las fechas de estadía son días sin hora:
+// Fechas del viaje, en español o en inglés según el idioma de la app. Las fechas de estadía son días sin hora:
 // se leen en UTC para que no se corran con la zona horaria del dispositivo.
-const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
-const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
-const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']
-const DIAS_CORTOS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+import { idiomaActual, type Idioma } from './idioma.ts'
+
+const NOMBRES = {
+  es: {
+    meses: ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
+    mesesCortos: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'],
+    dias: ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'],
+    diasCortos: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
+  },
+  en: {
+    meses: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+    mesesCortos: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    dias: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+    diasCortos: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+  },
+}
+
+// "15th" en inglés
+function ordinal(n: number): string {
+  const resto = n % 100
+  if (resto >= 11 && resto <= 13) return `${n}th`
+  return `${n}${({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[n % 10] ?? 'th'}`
+}
+
+// Palabras de la estadía que viven aquí porque las arma una función que no es un componente
+const ESTADIA = {
+  es: { llega: 'Llega el', volvio: 'Volvió', alla: 'Allá' },
+  en: { llega: 'Arrives', volvio: 'Back', alla: 'There' },
+}
 
 // Enero y febrero de 2027: el rango que muestran los gráficos y que aceptan las fechas
 export const VIAJE = { desde: '2027-01-01', hasta: '2027-02-28', dias: 59 }
@@ -28,45 +53,60 @@ export function indiceEnElViaje(iso: string): number {
   return diasEntre(VIAJE.desde, iso) - 1
 }
 
-export function diaCorto(iso: string): string {
+// "16 ene" o "Jan 16"
+export function diaCorto(iso: string, idioma: Idioma = idiomaActual()): string {
   const f = aFecha(iso)
-  return `${f.getUTCDate()} ${MESES_CORTOS[f.getUTCMonth()]}`
+  const mes = NOMBRES[idioma].mesesCortos[f.getUTCMonth()]
+  return idioma === 'en' ? `${mes} ${f.getUTCDate()}` : `${f.getUTCDate()} ${mes}`
 }
 
-export function diaConSemana(iso: string): string {
+// "Vie 15 ene" o "Fri, Jan 15"
+export function diaConSemana(iso: string, idioma: Idioma = idiomaActual()): string {
   const f = aFecha(iso)
-  return `${DIAS_CORTOS[f.getUTCDay()]} ${f.getUTCDate()} ${MESES_CORTOS[f.getUTCMonth()]}`
+  const dia = NOMBRES[idioma].diasCortos[f.getUTCDay()]
+  return idioma === 'en' ? `${dia}, ${diaCorto(iso, idioma)}` : `${dia} ${diaCorto(iso, idioma)}`
 }
 
-export function diaLargo(iso: string): string {
+// "viernes 15 de enero" o "Friday, January 15"
+export function diaLargo(iso: string, idioma: Idioma = idiomaActual()): string {
   const f = aFecha(iso)
-  return `${DIAS[f.getUTCDay()]} ${f.getUTCDate()} de ${MESES[f.getUTCMonth()]}`
+  const n = NOMBRES[idioma]
+  if (idioma === 'en') return `${n.dias[f.getUTCDay()]}, ${n.meses[f.getUTCMonth()]} ${f.getUTCDate()}`
+  return `${n.dias[f.getUTCDay()]} ${f.getUTCDate()} de ${n.meses[f.getUTCMonth()]}`
 }
 
-// "viernes 15", para lo que pasa en los próximos días
-export function diaDeLaSemana(iso: string): string {
+// "viernes 15" o "Friday the 15th", para lo que pasa en los próximos días
+export function diaDeLaSemana(iso: string, idioma: Idioma = idiomaActual()): string {
   const f = aFecha(iso)
-  return `${DIAS[f.getUTCDay()]} ${f.getUTCDate()}`
+  const dia = NOMBRES[idioma].dias[f.getUTCDay()]
+  return idioma === 'en' ? `${dia} the ${ordinal(f.getUTCDate())}` : `${dia} ${f.getUTCDate()}`
 }
 
 export function conMayuscula(texto: string): string {
   return texto.charAt(0).toUpperCase() + texto.slice(1)
 }
 
-export function rangoCorto(a: string, b: string): string {
-  return `${diaCorto(a)} – ${diaCorto(b)}`
+export function rangoCorto(a: string, b: string, idioma: Idioma = idiomaActual()): string {
+  return `${diaCorto(a, idioma)} – ${diaCorto(b, idioma)}`
 }
 
-// "5 al 30 de enero" o "16 de enero al 14 de febrero"
-export function rango(a: string, b: string): string {
+// "5 al 30 de enero" o "16 de enero al 14 de febrero"; en inglés, "January 5 to 30" o "January 16 to February 14"
+export function rango(a: string, b: string, idioma: Idioma = idiomaActual()): string {
   const fa = aFecha(a)
   const fb = aFecha(b)
-  if (fa.getUTCMonth() === fb.getUTCMonth()) return `${fa.getUTCDate()} al ${fb.getUTCDate()} de ${MESES[fb.getUTCMonth()]}`
-  return `${fa.getUTCDate()} de ${MESES[fa.getUTCMonth()]} al ${fb.getUTCDate()} de ${MESES[fb.getUTCMonth()]}`
+  const { meses } = NOMBRES[idioma]
+  const mismoMes = fa.getUTCMonth() === fb.getUTCMonth()
+  if (idioma === 'en') {
+    return mismoMes
+      ? `${meses[fb.getUTCMonth()]} ${fa.getUTCDate()} to ${fb.getUTCDate()}`
+      : `${meses[fa.getUTCMonth()]} ${fa.getUTCDate()} to ${meses[fb.getUTCMonth()]} ${fb.getUTCDate()}`
+  }
+  if (mismoMes) return `${fa.getUTCDate()} al ${fb.getUTCDate()} de ${meses[fb.getUTCMonth()]}`
+  return `${fa.getUTCDate()} de ${meses[fa.getUTCMonth()]} al ${fb.getUTCDate()} de ${meses[fb.getUTCMonth()]}`
 }
 
-export function rangoLargo(a: string, b: string): string {
-  return `Del ${rango(a, b)}`
+export function rangoLargo(a: string, b: string, idioma: Idioma = idiomaActual()): string {
+  return idioma === 'en' ? rango(a, b, idioma) : `Del ${rango(a, b, idioma)}`
 }
 
 // El día de hoy en California, donde se hace el viaje
@@ -89,9 +129,10 @@ export type Estadia = { tipo: 'sinFechas' } | { tipo: 'llega'; texto: string } |
 // Cómo se ve la estadía de alguien hoy: "Llega el 16 ene", "Allá" o "Volvió"
 export function estadia(llega: string | null, vuelve: string | null, hoy = hoyEnCalifornia()): Estadia {
   if (!llega || !vuelve) return { tipo: 'sinFechas' }
-  if (hoy < llega) return { tipo: 'llega', texto: `Llega el ${diaCorto(llega)}` }
-  if (hoy > vuelve) return { tipo: 'volvio', texto: 'Volvió' }
-  return { tipo: 'alla', texto: 'Allá' }
+  const palabras = ESTADIA[idiomaActual()]
+  if (hoy < llega) return { tipo: 'llega', texto: `${palabras.llega} ${diaCorto(llega)}` }
+  if (hoy > vuelve) return { tipo: 'volvio', texto: palabras.volvio }
+  return { tipo: 'alla', texto: palabras.alla }
 }
 
 // ---------- Horas de los eventos: se guardan en UTC y se muestran en California (o en Chile) ----------
@@ -101,7 +142,8 @@ export const CHILE = 'America/Santiago'
 const formatoHora = new Map<string, Intl.DateTimeFormat>()
 const formatoDia = new Map<string, Intl.DateTimeFormat>()
 
-// "09:30"
+// "09:30". Se queda en 24 horas en los dos idiomas: otras partes de la app leen este texto (los minutos de la
+// Agenda, las horas de la Semana, el formulario de eventos) y 12 horas con AM/PM las rompería.
 export function hora(momento: string, zona = CALIFORNIA): string {
   if (!formatoHora.has(zona)) formatoHora.set(zona, new Intl.DateTimeFormat('es-CL', { timeZone: zona, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }))
   return formatoHora.get(zona)!.format(new Date(momento))

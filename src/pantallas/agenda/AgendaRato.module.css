@@ -32,3 +32,12 @@
   gap: 10px;
   margin-top: 20px;
 }
+
+/* Sin conexión: "Borrar rato ocupado" queda apagado, con su nota */
+.sinRed {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 18px;
+  text-align: center;
+  color: var(--sec);
+}

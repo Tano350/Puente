@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react'
 import { diaConSemana } from '../datos/fechas.ts'
+import { useTextos } from '../textos.ts'
 import { Icono, type NombreIcono } from './Icono.tsx'
 import estilos from './Controles.module.css'
 
@@ -55,10 +56,11 @@ export function BotonBorde({ children, onClick, icono }: PropsBoton) {
 }
 
 export function Etiqueta({ texto, opcional = false, para }: { texto: string; opcional?: boolean; para: string }) {
+  const textos = useTextos()
   return (
     <label className={estilos.etiqueta} htmlFor={para}>
       {texto}
-      {opcional && <span className={estilos.opcional}> (opcional)</span>}
+      {opcional && <span className={estilos.opcional}> {textos.opcional}</span>}
     </label>
   )
 }
@@ -121,11 +123,12 @@ export function CampoTexto({ id, valor, onCambio, error, multilinea = false, pla
 
 // Fecha con el formato del diseño ("Sáb 16 ene"); al tocarla se abre el calendario del dispositivo
 export function CampoFecha({ id, etiqueta, valor, min, max, onCambio, error }: { id: string; etiqueta: string; valor: string | null; min: string; max: string; onCambio: (valor: string | null) => void; error?: string | null }) {
+  const textos = useTextos()
   return (
     <div>
       <Etiqueta texto={etiqueta} para={id} />
       <div className={`${estilos.fecha} ${error ? estilos.campoMal : ''}`}>
-        <span className={valor ? undefined : estilos.vacio}>{valor ? diaConSemana(valor) : 'Elegir'}</span>
+        <span className={valor ? undefined : estilos.vacio}>{valor ? diaConSemana(valor) : textos.elegir}</span>
         <Icono nombre="agenda" medida={18} trazo={2} />
         <input
           id={id}
@@ -182,6 +185,7 @@ export function Fila({ etiqueta, valor, onClick, sinFlecha = false, icono }: { e
 
 // Hoja que sube desde abajo, con el fondo oscurecido
 export function Hoja({ abierta, etiqueta, onCerrar, alerta = false, children }: { abierta: boolean; etiqueta: string; onCerrar: () => void; alerta?: boolean; children: ReactNode }) {
+  const textos = useTextos()
   useEffect(() => {
     if (!abierta) return
     const alPresionar = (e: KeyboardEvent) => {
@@ -201,7 +205,7 @@ export function Hoja({ abierta, etiqueta, onCerrar, alerta = false, children }: 
   if (!abierta) return null
   return (
     <div className={estilos.hojaFondo}>
-      <button type="button" aria-label="Cerrar" className={estilos.hojaVelo} onClick={onCerrar} />
+      <button type="button" aria-label={textos.cerrar} className={estilos.hojaVelo} onClick={onCerrar} />
       <div role={alerta ? 'alertdialog' : 'dialog'} aria-modal="true" aria-label={etiqueta} className={estilos.hoja}>
         <div aria-hidden="true" className={estilos.manilla} />
         {children}
@@ -217,13 +221,14 @@ export function TituloHoja({ children }: { children: ReactNode }) {
 // Aviso abajo, sobre la barra de secciones (o sobre el botón fijo de la pantalla, si tiene uno).
 // En el computador, con un panel encima abierto, se centra en lo que queda a la vista.
 export function Aviso({ texto, onDeshacer, sobrePie = false, conPanel = false }: { texto: string | null; onDeshacer?: () => void; sobrePie?: boolean; conPanel?: boolean }) {
+  const textos = useTextos()
   if (!texto) return null
   return (
     <div role="status" className={`${estilos.aviso} ${sobrePie ? estilos.avisoSobrePie : ''} ${conPanel ? estilos.avisoConPanel : ''}`}>
       <span className={estilos.avisoTexto}>{texto}</span>
       {onDeshacer && (
         <button type="button" className={estilos.deshacer} onClick={onDeshacer}>
-          Deshacer
+          {textos.deshacer}
         </button>
       )}
     </div>

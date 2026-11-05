@@ -2,6 +2,8 @@ import { useRef, useState } from 'react'
 import { BotonPrincipal } from '../../componentes/Controles.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
 import { PanelEncima, PantallaConPie } from '../../componentes/Paneles.tsx'
+import { SinConexion } from '../../componentes/SinConexion.tsx'
+import { useConectado } from '../../datos/conexion.ts'
 import { usePersonas, type Persona } from '../../datos/consultas.ts'
 import {
   anotarGasto,
@@ -61,6 +63,7 @@ export function AnotarGasto({ gasto, ...resto }: Props) {
 
 function Formulario({ computador, gasto, onCerrar, onListo, yo, personas, partes }: Props & { yo: Persona; personas: Persona[]; partes: Parte[] }) {
   const textos = useTextos()
+  const conectado = useConectado()
   const tg = textos.gastos
   const t = tg.anotar
   const gente = integrantes([yo, ...personas.filter((p) => p.id !== yo.id)], yo.id)
@@ -252,7 +255,7 @@ function Formulario({ computador, gasto, onCerrar, onListo, yo, personas, partes
           id="anotar-monto"
           className={estilos.montoCampo}
           value={borrador.monto}
-          placeholder="0,00"
+          placeholder={t.cero}
           aria-label={t.monto}
           aria-invalid={Boolean(errores.monto)}
           aria-describedby={errores.monto ? 'anotar-monto-error' : undefined}
@@ -314,6 +317,8 @@ function Formulario({ computador, gasto, onCerrar, onListo, yo, personas, partes
       {gasto ? t.guardar : t.anotar}
     </BotonPrincipal>
   )
+  // Anotar un gasto nuevo sin señal sí se puede: queda en este celular y sube cuando vuelva la conexión
+  const seSube = !conectado && !gasto && <div className={estilos.seSube}>{t.seSube}</div>
   const noSeGuardo = fallo && (
     <div className={estilos.fallo} role="alert">
       {fallo === 'foto' ? t.sinFoto : textos.noSeGuardo}
@@ -325,10 +330,16 @@ function Formulario({ computador, gasto, onCerrar, onListo, yo, personas, partes
       <PanelEncima
         etiqueta={titulo}
         onCerrar={onCerrar}
-        cabecera={<h2 className={estilos.tituloPanel}>{titulo}</h2>}
+        cabecera={
+          <div className={estilos.cabeceraPanel}>
+            <h2 className={estilos.tituloPanel}>{titulo}</h2>
+            <SinConexion />
+          </div>
+        }
         pie={
           <div className={estilos.piePanel}>
             {boton}
+            {seSube}
             {noSeGuardo}
           </div>
         }
@@ -345,6 +356,7 @@ function Formulario({ computador, gasto, onCerrar, onListo, yo, personas, partes
         pie={
           <>
             {boton}
+            {seSube}
             {noSeGuardo}
           </>
         }
@@ -354,6 +366,7 @@ function Formulario({ computador, gasto, onCerrar, onListo, yo, personas, partes
             <button type="button" className={estilos.cancelar} onClick={onCerrar}>
               {textos.cancelar}
             </button>
+            <SinConexion sobrePanel />
           </div>
           <h1 className={estilos.titulo}>{titulo}</h1>
         </div>

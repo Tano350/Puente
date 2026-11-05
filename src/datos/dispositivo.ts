@@ -73,9 +73,28 @@ export async function activarAvisos(persona: string): Promise<ResultadoAvisos> {
   const suscripcion =
     (await registro.pushManager.getSubscription()) ??
     (await registro.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: aBytes(import.meta.env.VITE_VAPID_PUBLIC_KEY) }))
+  return (await guardarSuscripcion(persona, suscripcion)) ? 'activados' : 'sinSoporte'
+}
+
+async function guardarSuscripcion(persona: string, suscripcion: PushSubscription): Promise<boolean> {
   const { endpoint, keys } = suscripcion.toJSON()
-  if (!endpoint || !keys?.p256dh || !keys.auth) return 'sinSoporte'
+  if (!endpoint || !keys?.p256dh || !keys.auth) return false
   const { error } = await supabase.from('suscripciones').upsert({ endpoint, persona, p256dh: keys.p256dh, auth: keys.auth })
   if (error) throw error
-  return 'activados'
+  return true
+}
+
+// Al abrir la app: si este dispositivo recibe avisos, vuelve a guardar la suscripción.
+// Así queda al día si el navegador la renovó (el service worker no tiene sesión para guardarla).
+export async function sincronizarSuscripcion(persona: string): Promise<void> {
+  if (!avisosPosibles || Notification.permission !== 'granted') return
+  const registro = await navigator.serviceWorker.getRegistration()
+  let suscripcion = await registro?.pushManager.getSubscription()
+  if (registro && !suscripcion && import.meta.env.VITE_VAPID_PUBLIC_KEY) {
+    // La suscripción venció y el permiso sigue dado: se renueva sin molestar
+    suscripcion = await registro.pushManager
+      .subscribe({ userVisibleOnly: true, applicationServerKey: aBytes(import.meta.env.VITE_VAPID_PUBLIC_KEY) })
+      .catch(() => null)
+  }
+  if (suscripcion) await guardarSuscripcion(persona, suscripcion)
 }

@@ -31,6 +31,7 @@ type Props = {
   puedeCambiar: boolean
   cambiando: boolean
   ocupado: boolean
+  sinRed: boolean
   onCambiando: (cambiando: boolean) => void
   onAgregar: () => void
   onSacar: (persona: string) => void
@@ -38,7 +39,7 @@ type Props = {
 
 // Quiénes van: el contacto de la reunión, los cupos, quiénes van y quiénes esperan.
 // Quien organiza (o administra) puede sumar o sacar gente.
-export function EventoQuienes({ evento, pasado, van, espera, yo, nombreDe, contacto, computador, puedeCambiar, cambiando, ocupado, onCambiando, onAgregar, onSacar }: Props) {
+export function EventoQuienes({ evento, pasado, van, espera, yo, nombreDe, contacto, computador, puedeCambiar, cambiando, ocupado, sinRed, onCambiando, onAgregar, onSacar }: Props) {
   const textos = useTextos()
   const t = textos.agenda.evento
   // Hasta cuatro nombres; con más, tres y "N más"
@@ -95,7 +96,7 @@ export function EventoQuienes({ evento, pasado, van, espera, yo, nombreDe, conta
                 </span>
               </span>
             ) : (
-              <button key={a.persona} type="button" className={estilos.chip} aria-label={t.sacarA(nombreDe(a.persona))} aria-disabled={ocupado} onClick={() => !ocupado && onSacar(a.persona)}>
+              <button key={a.persona} type="button" className={estilos.chip} aria-label={t.sacarA(nombreDe(a.persona))} aria-disabled={ocupado || sinRed} onClick={() => !ocupado && !sinRed && onSacar(a.persona)}>
                 <span className={estilos.pastilla}>
                   {nombreDe(a.persona)}
                   <Icono nombre="cerrar" medida={14} trazo={2.25} />
@@ -103,7 +104,7 @@ export function EventoQuienes({ evento, pasado, van, espera, yo, nombreDe, conta
               </button>
             ),
           )}
-          <button type="button" className={estilos.chip} aria-haspopup="dialog" onClick={onAgregar}>
+          <button type="button" className={estilos.chip} aria-haspopup="dialog" aria-disabled={sinRed} onClick={() => !sinRed && onAgregar()}>
             <span className={estilos.pastilla} data-agregar="true">
               <Icono nombre="mas" medida={14} trazo={2.25} />
               {t.agregar}
@@ -115,11 +116,12 @@ export function EventoQuienes({ evento, pasado, van, espera, yo, nombreDe, conta
       )}
       {esperan && <p className={estilos.espera}>{esperan}</p>}
       {cambia && (
-        <button type="button" className={estilos.cambiar} aria-expanded={cambiando} onClick={() => onCambiando(!cambiando)}>
+        <button type="button" className={estilos.cambiar} aria-expanded={cambiando} aria-disabled={sinRed && !cambiando} onClick={() => (!sinRed || cambiando) && onCambiando(!cambiando)}>
           <Icono nombre={cambiando ? 'check' : 'lapiz'} medida={16} trazo={2} />
           {cambiando ? t.listo : t.cambiarQuienes}
         </button>
       )}
+      {cambia && sinRed && <p className={estilos.notaRed}>{t.sinRedQuienes}</p>}
     </div>
   )
 }

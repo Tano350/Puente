@@ -1,10 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import type { Enums, Tables, TablesInsert, TablesUpdate } from './base.ts'
 import { consultas, type Persona } from './consultas.ts'
+import { conNota, sinNota } from './enEspera.ts'
 import { cambiarContactosDeMaqueta, cambiarNotasDeMaqueta, contactosDeMaqueta, modoMaqueta, notasDeMaqueta, personaDeMaqueta } from './maqueta.ts'
+import { asegurarSesion, conPendientes, escribir, miId, registrarEscritura, soltarPendiente } from './sinSenal.ts'
 import { supabase } from './supabase.ts'
 
 // Contactos del viaje y sus notas. Todos ven todo, salvo lo personal, que ve solo quien lo creó.
+// Las notas se escriben sin señal (quedan en espera y suben después); cambiar contactos necesita conexión.
 
 export type Contacto = Tables<'contactos'>
 export type Nota = Tables<'notas'>
@@ -31,10 +34,10 @@ export function useNotas() {
   return useQuery({
     queryKey: ['notas'],
     queryFn: async (): Promise<Nota[]> => {
-      if (import.meta.env.DEV && modoMaqueta) return notasDeMaqueta()
+      if (import.meta.env.DEV && modoMaqueta) return conPendientes('notas', notasDeMaqueta())
       const { data, error } = await supabase.from('notas').select('*').order('creada_en')
       if (error) throw error
-      return data
+      return conPendientes('notas', data)
     },
   })
 }
@@ -103,21 +106,44 @@ export async function borrarContacto(id: string): Promise<void> {
   await Promise.all([recargar('contactos'), recargar('notas')])
 }
 
-export async function agregarNota(nueva: TablesInsert<'notas'>): Promise<Nota> {
-  let creada: Nota
-  if (import.meta.env.DEV && modoMaqueta) {
-    creada = { id: `nota-${Date.now()}`, personal: false, ...nueva, autor: personaDeMaqueta().id, creada_en: ahora() }
-    cambiarNotasDeMaqueta((lista) => [...lista, creada])
-  } else {
-    const { data, error } = await supabase.from('notas').insert(nueva).select('*').single()
-    if (error) throw error
-    creada = data
+// Una nota lleva un id creado aquí: si al reintentar la base ya la tiene (23505), cuenta como hecha
+registrarEscritura<{ nota: Nota }, Nota>('agregarNota', {
+  hacer: async ({ nota }) => {
+    if (import.meta.env.DEV && modoMaqueta) {
+      if (!notasDeMaqueta().some((n) => n.id === nota.id)) cambiarNotasDeMaqueta((lista) => [...lista, nota])
+      return nota
+    }
+    await asegurarSesion()
+    const { id, contacto, texto, personal, creada_en } = nota
+    const { data, error } = await supabase.from('notas').insert({ id, contacto, texto, personal, creada_en }).select('*').single()
+    if (!error) return data
+    if (error.code === '23505') return nota
+    throw error
+  },
+  sobre: { notas: (lista: Nota[], { nota }) => conNota(lista, nota) },
+  id: ({ nota }) => nota.id,
+  recargar: ['notas'],
+})
+
+// Sin señal devuelve al tiro la nota como se verá; sube cuando vuelva la señal
+export function agregarNota(nueva: TablesInsert<'notas'>): Promise<Nota> {
+  const nota: Nota = {
+    id: nueva.id ?? crypto.randomUUID(),
+    contacto: nueva.contacto,
+    texto: nueva.texto,
+    personal: nueva.personal ?? false,
+    autor: miId(),
+    creada_en: nueva.creada_en ?? ahora(),
   }
-  await recargar('notas')
-  return creada
+  return escribir<{ nota: Nota }, Nota>('agregarNota', { nota }, nota)
 }
 
 export async function borrarNota(id: string): Promise<void> {
+  // Si todavía no subía (Deshacer sin señal), basta con sacarla de la espera
+  if (soltarPendiente<{ nota: Nota }>('agregarNota', (v) => v.nota.id === id)) {
+    consultas.setQueryData<Nota[]>(['notas'], (lista) => lista && sinNota(lista, id))
+    return
+  }
   if (import.meta.env.DEV && modoMaqueta) {
     cambiarNotasDeMaqueta((lista) => lista.filter((n) => n.id !== id))
   } else {

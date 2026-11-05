@@ -2,9 +2,11 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router'
 import { Aviso } from '../../componentes/Controles.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
+import { SinConexion } from '../../componentes/SinConexion.tsx'
 import { useAviso } from '../../componentes/useAviso.ts'
 import { useEsComputador } from '../../componentes/useEsComputador.ts'
 import escritorio from '../../componentes/Escritorio.module.css'
+import { estaConectado, useConectado } from '../../datos/conexion.ts'
 import { usePersonas } from '../../datos/consultas.ts'
 import { hoyEnCalifornia } from '../../datos/fechas.ts'
 import { borrarGasto, devolverGasto, puedeCambiarGasto, useGastos, usePartes, type Gasto } from '../../datos/gastos.ts'
@@ -36,6 +38,7 @@ export function Gastos() {
   const partes = usePartes()
   const personas = usePersonas()
   const aviso = useAviso()
+  const conectado = useConectado()
   const estado = location.state as { desdeAqui?: boolean; ver?: string } | null
   const pedida = PESTANAS.find((p) => p === estado?.ver)
   const [pestana, setPestana] = useState<Pestana>(pedida ?? 'gastos')
@@ -87,7 +90,8 @@ export function Gastos() {
       volver('/gastos')
       setPestana('gastos')
     }
-    aviso.mostrar(tl.anotaste(gasto.titulo), () =>
+    // Sin señal el gasto queda anotado en este celular y sube cuando vuelva la conexión
+    aviso.mostrar(estaConectado() ? tl.anotaste(gasto.titulo) : tl.anotasteSinSenal(gasto.titulo), () =>
       void deshacer(async () => {
         if (actual.current.id === gasto.id) cerrarAhora()
         await borrarGasto(gasto.id)
@@ -173,10 +177,13 @@ export function Gastos() {
       <div className={escritorio.pantalla}>
         <div className={estilos.cabeceraPc}>
           <h1 className={escritorio.titulo}>{t.titulo}</h1>
-          <button type="button" className={estilos.anotarPc} aria-pressed={id === 'nuevo'} onClick={() => (id === 'nuevo' ? cerrar() : abrir('/gastos/nuevo'))}>
-            <Icono nombre="mas" medida={18} trazo={2.25} />
-            {tl.anotar}
-          </button>
+          <div className={estilos.accionesPc}>
+            <SinConexion />
+            <button type="button" className={estilos.anotarPc} aria-pressed={id === 'nuevo'} onClick={() => (id === 'nuevo' ? cerrar() : abrir('/gastos/nuevo'))}>
+              <Icono nombre="mas" medida={18} trazo={2.25} />
+              {tl.anotar}
+            </button>
+          </div>
         </div>
         <div className={estilos.cuerpoPc}>
           <div className={estilos.columnasPc}>
@@ -213,7 +220,12 @@ export function Gastos() {
   }
   return (
     <div className={estilos.celular}>
-      <div className={estilos.cabecera}>
+      <div className={estilos.cabecera} data-sin-red={!conectado}>
+        {!conectado && (
+          <div className={estilos.fichaFila}>
+            <SinConexion sobrePanel />
+          </div>
+        )}
         <h1 className={estilos.titulo}>{t.titulo}</h1>
         <div role="tablist" aria-label={tl.vistas} className={estilos.pestanas}>
           {PESTANAS.map((p, i) => (

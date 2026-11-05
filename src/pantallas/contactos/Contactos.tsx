@@ -3,9 +3,11 @@ import { Navigate, useLocation, useNavigate, useParams } from 'react-router'
 import { Buscador } from '../../componentes/Buscador.tsx'
 import { Aviso } from '../../componentes/Controles.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
+import { SinConexion } from '../../componentes/SinConexion.tsx'
 import { useAviso } from '../../componentes/useAviso.ts'
 import { useEsComputador } from '../../componentes/useEsComputador.ts'
 import escritorio from '../../componentes/Escritorio.module.css'
+import { useConectado } from '../../datos/conexion.ts'
 import { usePersonas } from '../../datos/consultas.ts'
 import { borrarContacto, cambiarContacto, ETAPAS, puedeCambiar, seAgenda, useContactos, type Contacto, type Etapa } from '../../datos/contactos.ts'
 import { plano } from '../../datos/grupo.ts'
@@ -36,6 +38,7 @@ export function Contactos() {
   const { data: contactos } = useContactos()
   const { data: personas } = usePersonas()
   const aviso = useAviso()
+  const sinRed = !useConectado()
   const [busqueda, setBusqueda] = useState('')
   const [mios, setMios] = useState(false)
   const [filtros, setFiltros] = useState<Filtros>(SIN_FILTROS)
@@ -59,6 +62,9 @@ export function Contactos() {
     aviso.cerrar()
     ir(ruta, esComputador && Boolean(id))
   }
+
+  // Agregar contactos necesita conexión: sin ella "Nuevo" queda apagado y, al tocarlo, un aviso dice por qué
+  const nuevoContacto = () => (sinRed ? aviso.mostrar(tl.sinRedNuevo) : abrir('/contactos/nuevo'))
 
   const deshacer = async (cambio: () => Promise<unknown>) => {
     try {
@@ -162,7 +168,7 @@ export function Contactos() {
     <div className={estilos.vacio}>
       <span className={estilos.tuercaVacia} aria-hidden="true" />
       <div className={estilos.vacioTexto}>{tl.vacio}</div>
-      <button type="button" className={estilos.agregar} onClick={() => abrir('/contactos/nuevo')}>
+      <button type="button" className={estilos.agregar} aria-disabled={sinRed} onClick={nuevoContacto}>
         {tl.agregar}
       </button>
     </div>
@@ -174,10 +180,13 @@ export function Contactos() {
       <div className={`${escritorio.pantalla} ${estilos.pc}`} data-panel={Boolean(panel)}>
         <div className={estilos.cabeceraPc}>
           <h1 className={escritorio.titulo}>{t.titulo}</h1>
-          <button type="button" className={estilos.nuevo} aria-pressed={id === 'nuevo'} onClick={() => (id === 'nuevo' ? cerrar() : abrir('/contactos/nuevo'))}>
-            <Icono nombre="mas" medida={18} trazo={2.25} />
-            {tl.nuevoContacto}
-          </button>
+          <div className={estilos.derechaPc}>
+            <SinConexion />
+            <button type="button" className={estilos.nuevo} aria-pressed={id === 'nuevo'} aria-disabled={sinRed && id !== 'nuevo'} onClick={() => (id === 'nuevo' ? cerrar() : nuevoContacto())}>
+              <Icono nombre="mas" medida={18} trazo={2.25} />
+              {tl.nuevoContacto}
+            </button>
+          </div>
         </div>
         {hay && (
           <div className={estilos.filtrosPc}>
@@ -207,7 +216,7 @@ export function Contactos() {
                 mios={mios}
                 elegido={abierto?.id}
                 responsable={responsable}
-                puedeMover={(c) => puedeCambiar(c, yo)}
+                puedeMover={(c) => puedeCambiar(c, yo) && !sinRed}
                 onAbrir={(c) => abrir(`/contactos/${c.id}`)}
                 onMover={(c, etapa) => void mover(c, etapa)}
               />
@@ -226,9 +235,12 @@ export function Contactos() {
   return (
     <div className={estilos.celular}>
       <div className={estilos.cabecera}>
+        <div className={estilos.fichaCel}>
+          <SinConexion sobrePanel />
+        </div>
         <div className={estilos.titular}>
           <h1 className={estilos.titulo}>{t.titulo}</h1>
-          <button type="button" className={estilos.nuevo} aria-label={tl.nuevoContacto} onClick={() => abrir('/contactos/nuevo')}>
+          <button type="button" className={estilos.nuevo} aria-label={tl.nuevoContacto} aria-disabled={sinRed} onClick={nuevoContacto}>
             <Icono nombre="mas" medida={18} trazo={2.25} />
             {tl.nuevo}
           </button>

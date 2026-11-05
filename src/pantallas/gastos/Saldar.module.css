@@ -87,6 +87,14 @@
   margin-top: 20px;
 }
 
+/* Sin señal, bajo "Marcar como pagado" */
+.necesita {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec);
+}
+
 .cancelar {
   height: 44px;
   margin-top: 4px;

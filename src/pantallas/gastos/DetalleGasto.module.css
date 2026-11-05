@@ -35,6 +35,35 @@
   margin-left: -8px;
 }
 
+.cabeceraDerecha,
+.cabeceraPc {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cabeceraPc {
+  gap: 12px;
+}
+
+/* Sin señal: editar y eliminar se ven apagados y, al tocarlos, avisan */
+.editar[aria-disabled='true'],
+.editarPc[aria-disabled='true'],
+.eliminar[aria-disabled='true'] {
+  opacity: 0.45;
+}
+
+/* Lo anotado sin señal que todavía no sube */
+.sinSubir {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sec);
+}
+
 /* ---------- El gasto: ícono, nombre y monto grande ---------- */
 .titular {
   display: flex;
