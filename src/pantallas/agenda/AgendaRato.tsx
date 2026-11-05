@@ -3,6 +3,7 @@ import { Aviso, BotonBorde, BotonPrincipal, Hoja, TituloHoja } from '../../compo
 import { useHoraDeChile } from '../../componentes/HoraDeChile.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
 import { useAviso } from '../../componentes/useAviso.ts'
+import { useConectado } from '../../datos/conexion.ts'
 import { borrarOcupado, marcarOcupado, type Ocupado } from '../../datos/eventos.ts'
 import { CHILE, conMayuscula, diaDeLaSemana, diaEn, diaLargo, hora } from '../../datos/fechas.ts'
 import { useTextos } from '../../textos.ts'
@@ -17,6 +18,7 @@ export function AgendaRato({ rato, computador, onCerrar }: Props) {
   const t = textos.agenda.rato
   const [chile] = useHoraDeChile()
   const aviso = useAviso()
+  const sinRed = !useConectado()
   const [borrando, setBorrando] = useState(false)
   // Al abrirse, el foco entra a la hoja; al cerrarse, la hoja lo devuelve al rato (si sigue ahí)
   const contenido = useRef<HTMLDivElement>(null)
@@ -67,11 +69,12 @@ export function AgendaRato({ rato, computador, onCerrar }: Props) {
               {t.soloTu}
             </div>
             <div className={estilos.botones}>
-              <BotonPrincipal peligro ocupado={borrando} onClick={() => void borrar(rato)}>
+              <BotonPrincipal peligro apagado={sinRed} ocupado={borrando} onClick={() => void borrar(rato)}>
                 {t.borrar}
               </BotonPrincipal>
               <BotonBorde onClick={onCerrar}>{textos.cerrar}</BotonBorde>
             </div>
+            {sinRed && <p className={estilos.sinRed}>{t.sinRedBorrar}</p>}
           </div>
         )}
       </Hoja>

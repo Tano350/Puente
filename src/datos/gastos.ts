@@ -3,12 +3,28 @@ import type { Json, Tables } from './base.ts'
 import { consultas } from './consultas.ts'
 import { leerFoto } from './fotos.ts'
 import { plano } from './grupo.ts'
+import { conBoleta, conGasto, conPartes, conRendicion, ordenDeGastos } from './enEspera.ts'
 import { boletaDeMaqueta, cambiarGastosDeMaqueta, gastosDeMaqueta, modoMaqueta, personaDeMaqueta } from './maqueta.ts'
 import { supabase } from './supabase.ts'
 import { transferencias, type Transferencia } from './saldar.ts'
+import {
+  asegurarSesion,
+  boletaGuardada,
+  cambiarPendiente,
+  conPendientes,
+  escribir,
+  guardarBoleta,
+  miId,
+  pendientesDe,
+  registrarEscritura,
+  soltarBoleta,
+  soltarPendiente,
+  type BoletaGuardada,
+} from './sinSenal.ts'
 
 // Gastos del viaje: todo en dólares, guardado en centavos. Un gasto "solo" es de una persona: no se divide y solo
 // ella lo ve. Anotar y cambiar pasan por funciones de la base que revisan que las partes sumen el total.
+// Sin señal se puede anotar (con foto) y marcar qué rindes: queda en espera y sube después (sinSenal.ts).
 
 export type Gasto = Tables<'gastos'>
 export type Parte = Tables<'partes'>
@@ -20,28 +36,8 @@ export type Categoria = (typeof CATEGORIAS)[number]
 export type { Transferencia }
 
 // ---------- Plata ----------
-// "US$ 1.234,56": formato chileno, siempre con centavos
-export function plata(centavos: number): string {
-  const abs = Math.abs(centavos)
-  const enteros = Math.floor(abs / 100)
-    .toString()
-    .replace(/\B(?=(\d{3})+(?!\d))/g, '.')
-  return `${centavos < 0 ? '-' : ''}US$ ${enteros},${String(abs % 100).padStart(2, '0')}`
-}
-
-// Lo que alguien escribe como monto ("84", "84,5", "1.234,56" o "84.50") en centavos; null si no es un monto
-export function aCentavos(texto: string): number | null {
-  let t = texto
-    .trim()
-    .replace(/^US\$/i, '')
-    .replace(/\s/g, '')
-  if (!t) return null
-  // Con coma, la coma es la de los decimales y los puntos son de miles; sin coma, un punto con 3 cifras es de miles
-  if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.')
-  else if (/\.\d{3}(\.|$)/.test(t)) t = t.replace(/\./g, '')
-  if (!/^\d+(\.\d{1,2})?$/.test(t)) return null
-  return Math.round(Number(t) * 100)
-}
+// Formato y lectura de montos según el idioma (en plata.ts, que se prueba aparte)
+export { aCentavos, plata } from './plata.ts'
 
 // Partes iguales: los centavos que sobran van a los primeros de la lista, para que la suma dé exacta
 export function repartirIguales(monto: number, personas: string[]): { persona: string; monto: number }[] {
@@ -72,13 +68,16 @@ export function useGastos() {
     queryKey: ['gastos'],
     queryFn: async (): Promise<Gasto[]> => {
       if (import.meta.env.DEV && modoMaqueta) {
-        return gastosDeMaqueta()
-          .gastos.filter((g) => !g.borrado_en)
-          .sort((a, b) => b.fecha.localeCompare(a.fecha) || b.creado_en.localeCompare(a.creado_en))
+        return conPendientes(
+          'gastos',
+          gastosDeMaqueta()
+            .gastos.filter((g) => !g.borrado_en)
+            .sort(ordenDeGastos),
+        )
       }
       const { data, error } = await supabase.from('gastos').select('*').is('borrado_en', null).order('fecha', { ascending: false }).order('creado_en', { ascending: false })
       if (error) throw error
-      return data
+      return conPendientes('gastos', data)
     },
   })
 }
@@ -88,10 +87,10 @@ export function usePartes() {
   return useQuery({
     queryKey: ['partes'],
     queryFn: async (): Promise<Parte[]> => {
-      if (import.meta.env.DEV && modoMaqueta) return gastosDeMaqueta().partes
+      if (import.meta.env.DEV && modoMaqueta) return conPendientes('partes', gastosDeMaqueta().partes)
       const { data, error } = await supabase.from('partes').select('*')
       if (error) throw error
-      return data
+      return conPendientes('partes', data)
     },
   })
 }
@@ -113,10 +112,10 @@ export function useRendiciones() {
   return useQuery({
     queryKey: ['rendiciones'],
     queryFn: async (): Promise<Rendicion[]> => {
-      if (import.meta.env.DEV && modoMaqueta) return gastosDeMaqueta().rendiciones
+      if (import.meta.env.DEV && modoMaqueta) return conPendientes('rendiciones', gastosDeMaqueta().rendiciones)
       const { data, error } = await supabase.from('rendiciones').select('*')
       if (error) throw error
-      return data
+      return conPendientes('rendiciones', data)
     },
   })
 }
@@ -184,27 +183,79 @@ function partesFinales(datos: DatosGasto): { persona: string; monto: number }[] 
   return datos.division === 'solo' ? [{ persona: datos.pagado_por, monto: datos.monto }] : datos.partes
 }
 
-export async function anotarGasto(datos: DatosGasto): Promise<Gasto> {
-  let anotado: Gasto
-  if (import.meta.env.DEV && modoMaqueta) {
-    const yo = personaDeMaqueta().id
-    anotado = { id: `gasto-${Date.now()}`, ...datos, boleta: null, creado_por: yo, creado_en: ahoraIso(), cambiado_en: ahoraIso(), borrado_en: null }
-    cambiarGastosDeMaqueta((d) => ({
-      ...d,
-      gastos: [anotado, ...d.gastos],
-      partes: [...d.partes, ...partesFinales(datos).map((p) => ({ gasto: anotado.id, ...p }))],
-    }))
-  } else {
-    const { partes, ...resto } = datos
-    const { data, error } = await supabase.rpc('anotar_gasto', { ...resto, partes: partes as unknown as Json })
-    if (error) throw error
-    anotado = data
+// Anotar funciona sin señal: el gasto lleva un id creado aquí y, si la base ya lo tiene (un reintento), lo devuelve
+// sin duplicarlo. Sin señal devuelve al tiro el gasto como se verá; sube cuando vuelva la señal.
+type Anotar = { gasto: Gasto; partes: Parte[] }
+registrarEscritura<Anotar, Gasto>('anotarGasto', {
+  hacer: async ({ gasto, partes }) => {
+    if (import.meta.env.DEV && modoMaqueta) {
+      // Como la base: si ya está, no se duplica
+      if (!gastosDeMaqueta().gastos.some((g) => g.id === gasto.id)) cambiarGastosDeMaqueta((d) => ({ ...d, gastos: [gasto, ...d.gastos], partes: [...d.partes, ...partes] }))
+      return gastosDeMaqueta().gastos.find((g) => g.id === gasto.id) ?? gasto
+    }
+    await asegurarSesion()
+    const { id, titulo, categoria, monto, fecha, pagado_por, division } = gasto
+    const { data, error } = await supabase.rpc('anotar_gasto', {
+      id,
+      titulo,
+      categoria,
+      monto,
+      fecha,
+      pagado_por,
+      division,
+      partes: partes.map((p) => ({ persona: p.persona, monto: p.monto })) as unknown as Json,
+    })
+    if (!error) return data
+    // Dos intentos a la vez (dos pestañas): si ya quedó, vale
+    if (error.code === '23505') {
+      const ya = await supabase.from('gastos').select('*').eq('id', id).maybeSingle()
+      if (ya.data) return ya.data
+    }
+    throw error
+  },
+  sobre: {
+    gastos: (lista: Gasto[], { gasto }) => conGasto(lista, gasto),
+    partes: (lista: Parte[], { partes }) => conPartes(lista, partes),
+  },
+  id: ({ gasto }) => gasto.id,
+  recargar: ['gastos', 'partes'],
+})
+
+export function anotarGasto(datos: DatosGasto): Promise<Gasto> {
+  const ahora = ahoraIso()
+  const gasto: Gasto = {
+    id: crypto.randomUUID(),
+    titulo: datos.titulo.trim(),
+    categoria: datos.categoria,
+    monto: datos.monto,
+    fecha: datos.fecha,
+    pagado_por: datos.pagado_por,
+    division: datos.division,
+    boleta: null,
+    creado_por: miId(),
+    creado_en: ahora,
+    cambiado_en: ahora,
+    borrado_en: null,
   }
-  await recargar('gastos', 'partes')
-  return anotado
+  const partes = partesFinales(datos).map((p) => ({ gasto: gasto.id, persona: p.persona, monto: p.monto }))
+  return escribir<Anotar, Gasto>('anotarGasto', { gasto, partes }, gasto)
 }
 
+// Cambiar necesita señal, salvo un gasto anotado sin señal que todavía no sube: se corrige lo que espera
 export async function cambiarGasto(id: string, datos: DatosGasto): Promise<Gasto> {
+  const corregido = cambiarPendiente<Anotar>(
+    'anotarGasto',
+    (v) => v.gasto.id === id,
+    ({ gasto }) => ({
+      gasto: { ...gasto, titulo: datos.titulo.trim(), categoria: datos.categoria, monto: datos.monto, fecha: datos.fecha, pagado_por: datos.pagado_por, division: datos.division, cambiado_en: ahoraIso() },
+      partes: partesFinales(datos).map((p) => ({ gasto: id, persona: p.persona, monto: p.monto })),
+    }),
+  )
+  if (corregido) {
+    consultas.setQueryData<Gasto[]>(['gastos'], (lista) => lista && conGasto(lista.filter((g) => g.id !== id), corregido.gasto))
+    consultas.setQueryData<Parte[]>(['partes'], (lista) => lista && [...lista.filter((p) => p.gasto !== id), ...corregido.partes])
+    return corregido.gasto
+  }
   let cambiado: Gasto
   if (import.meta.env.DEV && modoMaqueta) {
     const antes = gastosDeMaqueta().gastos.find((g) => g.id === id)
@@ -226,8 +277,26 @@ export async function cambiarGasto(id: string, datos: DatosGasto): Promise<Gasto
   return cambiado
 }
 
+// Lo anotado sin señal que se eliminó antes de subir, para poder devolverlo (Deshacer)
+const soltados = new Map<string, { anotado: Anotar; boleta: Boleta | null; foto: BoletaGuardada | null }>()
+
+// Si el gasto todavía no sube, eliminarlo es sacarlo de la espera (con su foto y su rendición): no hace falta señal
+async function soltarGasto(id: string): Promise<boolean> {
+  const anotado = soltarPendiente<Anotar>('anotarGasto', (v) => v.gasto.id === id)
+  if (!anotado) return false
+  const boleta = soltarPendiente<Boleta>('subirBoleta', (v) => v.gasto === id)
+  soltados.set(id, { anotado, boleta, foto: boleta && (await boletaGuardada(id)) })
+  while (soltarPendiente<Rendir>('rendir', (v) => v.gasto === id));
+  await soltarBoleta(id)
+  consultas.setQueryData<Gasto[]>(['gastos'], (lista) => lista?.filter((g) => g.id !== id))
+  consultas.setQueryData<Parte[]>(['partes'], (lista) => lista?.filter((p) => p.gasto !== id))
+  consultas.setQueryData<Rendicion[]>(['rendiciones'], (lista) => lista?.filter((r) => r.gasto !== id))
+  return true
+}
+
 // Eliminar deja el gasto aparte; "devolver" lo deshace
 export async function borrarGasto(id: string): Promise<void> {
+  if (await soltarGasto(id)) return
   if (import.meta.env.DEV && modoMaqueta) {
     cambiarGastosDeMaqueta((d) => ({ ...d, gastos: d.gastos.map((g) => (g.id === id ? { ...g, borrado_en: ahoraIso() } : g)) }))
   } else {
@@ -238,6 +307,16 @@ export async function borrarGasto(id: string): Promise<void> {
 }
 
 export async function devolverGasto(id: string): Promise<void> {
+  const soltado = soltados.get(id)
+  if (soltado) {
+    soltados.delete(id)
+    await escribir<Anotar, Gasto>('anotarGasto', soltado.anotado, soltado.anotado.gasto)
+    if (soltado.boleta && soltado.foto) {
+      await guardarBoleta(id, soltado.foto)
+      await escribir<Boleta, void>('subirBoleta', soltado.boleta, undefined)
+    }
+    return
+  }
   if (import.meta.env.DEV && modoMaqueta) {
     cambiarGastosDeMaqueta((d) => ({ ...d, gastos: d.gastos.map((g) => (g.id === id ? { ...g, borrado_en: null } : g)) }))
   } else {
@@ -260,22 +339,55 @@ export async function prepararBoleta(archivo: Blob): Promise<Blob> {
   return new Promise((listo, falla) => lienzo.toBlob((blob) => (blob ? listo(blob) : falla(new Error('No se pudo preparar la foto'))), 'image/jpeg', 0.82))
 }
 
-// Sube la foto a la carpeta del gasto y la deja puesta; borra la que hubiera antes
+// Sube la foto a la carpeta del gasto y la deja puesta; borra la que hubiera antes. Sin señal la foto espera en el
+// dispositivo (con el id del gasto) y se sube cuando vuelve la señal; la ruta se elige antes, así reintentar no la
+// duplica. Mientras espera, la boleta se ve desde el dispositivo.
+type Boleta = { gasto: string; ruta: string; anterior: string | null }
+registrarEscritura<Boleta, void>('subirBoleta', {
+  hacer: async ({ gasto, ruta, anterior }) => {
+    const guardada = await boletaGuardada(gasto)
+    // Si la foto ya no está o la cambiaron por otra (que también espera), esta no sube
+    if (guardada?.ruta !== ruta) return
+    if (import.meta.env.DEV && modoMaqueta) {
+      cambiarGastosDeMaqueta((d) => ({ ...d, gastos: d.gastos.map((g) => (g.id === gasto ? { ...g, boleta: ruta } : g)) }))
+    } else {
+      await asegurarSesion()
+      const subida = await supabase.storage.from('boletas').upload(ruta, guardada.foto, { contentType: 'image/jpeg', cacheControl: '31536000' })
+      if (subida.error && !yaExiste(subida.error)) throw subida.error
+      const { error } = await supabase.rpc('poner_boleta', { gasto, ruta })
+      if (error) throw error
+      if (anterior && anterior !== ruta) await supabase.storage.from('boletas').remove([anterior])
+    }
+    await soltarBoleta(gasto)
+  },
+  sobre: { gastos: (lista: Gasto[], { gasto, ruta }) => conBoleta(lista, gasto, ruta) },
+  id: ({ gasto }) => `boleta:${gasto}`,
+  recargar: ['gastos'],
+})
+
+// Un reintento de una foto que ya había subido
+function yaExiste(error: { message?: string; statusCode?: string | number }): boolean {
+  return String(error.statusCode) === '409' || /already exists|duplicate/i.test(error.message ?? '')
+}
+
 export async function subirBoleta(gasto: Gasto, foto: Blob): Promise<void> {
-  if (import.meta.env.DEV && modoMaqueta) {
-    cambiarGastosDeMaqueta((d) => ({ ...d, gastos: d.gastos.map((g) => (g.id === gasto.id ? { ...g, boleta: `${gasto.id}/maqueta.jpg` } : g)) }))
-  } else {
-    const ruta = `${gasto.id}/${crypto.randomUUID()}.jpg`
-    const subida = await supabase.storage.from('boletas').upload(ruta, foto, { contentType: 'image/jpeg', cacheControl: '31536000' })
-    if (subida.error) throw subida.error
-    const { error } = await supabase.rpc('poner_boleta', { gasto: gasto.id, ruta })
-    if (error) throw error
-    if (gasto.boleta) await supabase.storage.from('boletas').remove([gasto.boleta])
-  }
-  await recargar('gastos')
+  const ruta = `${gasto.id}/${crypto.randomUUID()}.jpg`
+  // Si otra foto de este gasto esperaba, la de antes sigue siendo la que estaba en la base
+  const previa = pendientesDe<Boleta>('subirBoleta').find((v) => v.gasto === gasto.id)
+  const anterior = previa ? previa.anterior : gasto.boleta
+  await guardarBoleta(gasto.id, { ruta, foto })
+  await escribir<Boleta, void>('subirBoleta', { gasto: gasto.id, ruta, anterior }, undefined)
 }
 
 export async function quitarBoleta(gasto: Gasto): Promise<void> {
+  // Una foto que todavía no subía se suelta sin señal; si había otra antes en la base, esa se quita como siempre
+  const esperaba = soltarPendiente<Boleta>('subirBoleta', (v) => v.gasto === gasto.id)
+  if (esperaba) {
+    await soltarBoleta(gasto.id)
+    consultas.setQueryData<Gasto[]>(['gastos'], (lista) => lista && conBoleta(lista, gasto.id, esperaba.anterior))
+    if (!esperaba.anterior) return
+    gasto = { ...gasto, boleta: esperaba.anterior }
+  }
   if (import.meta.env.DEV && modoMaqueta) {
     cambiarGastosDeMaqueta((d) => ({ ...d, gastos: d.gastos.map((g) => (g.id === gasto.id ? { ...g, boleta: null } : g)) }))
   } else {
@@ -286,13 +398,23 @@ export async function quitarBoleta(gasto: Gasto): Promise<void> {
   await recargar('gastos')
 }
 
-// Una dirección para ver la boleta por una hora (el espacio es privado)
+// La foto que todavía espera en el dispositivo, para verla antes de que suba
+async function urlLocal(ruta: string): Promise<string | null> {
+  const guardada = await boletaGuardada(ruta.split('/')[0] ?? '')
+  return guardada?.ruta === ruta ? URL.createObjectURL(guardada.foto) : null
+}
+
+// Una dirección para ver la boleta por una hora (el espacio es privado); la que espera se ve desde el dispositivo
 export function useUrlBoleta(ruta: string | null) {
   return useQuery({
     queryKey: ['boleta', ruta],
     enabled: Boolean(ruta),
     staleTime: 50 * 60_000,
+    // Sin señal también busca: la foto puede estar esperando aquí
+    networkMode: 'always',
     queryFn: async (): Promise<string> => {
+      const local = await urlLocal(ruta ?? '')
+      if (local) return local
       if (import.meta.env.DEV && modoMaqueta) return boletaDeMaqueta()
       const { data, error } = await supabase.storage.from('boletas').createSignedUrl(ruta ?? '', 3600)
       if (error) throw error
@@ -304,11 +426,18 @@ export function useUrlBoleta(ruta: string | null) {
 // Direcciones para bajar varias boletas a la vez (la rendición), en el mismo orden que las rutas
 export async function urlsDeBoletas(rutas: string[]): Promise<string[]> {
   if (!rutas.length) return []
-  if (import.meta.env.DEV && modoMaqueta) return rutas.map(() => boletaDeMaqueta())
-  const { data, error } = await supabase.storage.from('boletas').createSignedUrls(rutas, 600)
-  if (error) throw error
-  return rutas.map((ruta) => {
-    const direccion = data.find((d) => d.path === ruta)?.signedUrl
+  // Las que esperan en el dispositivo no se piden a la base
+  const locales = await Promise.all(rutas.map(urlLocal))
+  const faltan = rutas.filter((_, i) => !locales[i])
+  let firmadas: { path: string | null; signedUrl: string | null }[] = []
+  if (import.meta.env.DEV && modoMaqueta) firmadas = faltan.map((ruta) => ({ path: ruta, signedUrl: boletaDeMaqueta() }))
+  else if (faltan.length) {
+    const { data, error } = await supabase.storage.from('boletas').createSignedUrls(faltan, 600)
+    if (error) throw error
+    firmadas = data
+  }
+  return rutas.map((ruta, i) => {
+    const direccion = locales[i] ?? firmadas.find((d) => d.path === ruta)?.signedUrl
     if (!direccion) throw new Error(`No se encontró la boleta ${ruta}`)
     return direccion
   })
@@ -341,19 +470,28 @@ export async function deshacerPago(id: string): Promise<void> {
 }
 
 // ---------- Rendición ----------
-export async function rendir(gasto: string, si: boolean): Promise<void> {
-  if (import.meta.env.DEV && modoMaqueta) {
-    const yo = personaDeMaqueta().id
-    cambiarGastosDeMaqueta((d) => ({
-      ...d,
-      rendiciones: si ? [...d.rendiciones.filter((r) => r.gasto !== gasto), { gasto, persona: yo, marcado_en: ahoraIso() }] : d.rendiciones.filter((r) => r.gasto !== gasto),
-    }))
-  } else if (si) {
-    const { error } = await supabase.from('rendiciones').upsert({ gasto }, { onConflict: 'gasto,persona', ignoreDuplicates: true })
-    if (error) throw error
-  } else {
-    const { error } = await supabase.from('rendiciones').delete().eq('gasto', gasto)
-    if (error) throw error
-  }
-  await recargar('rendiciones')
+// Marcar qué rindes funciona sin señal; marcar o desmarcar dos veces deja lo mismo
+type Rendir = { gasto: string; si: boolean; persona: string; marcado_en: string }
+registrarEscritura<Rendir, void>('rendir', {
+  hacer: async ({ gasto, si, persona, marcado_en }) => {
+    if (import.meta.env.DEV && modoMaqueta) {
+      cambiarGastosDeMaqueta((d) => ({ ...d, rendiciones: conRendicion(d.rendiciones, { gasto, si, persona, marcado_en }) }))
+      return
+    }
+    await asegurarSesion()
+    if (si) {
+      const { error } = await supabase.from('rendiciones').upsert({ gasto }, { onConflict: 'gasto,persona', ignoreDuplicates: true })
+      if (error) throw error
+    } else {
+      const { error } = await supabase.from('rendiciones').delete().eq('gasto', gasto)
+      if (error) throw error
+    }
+  },
+  sobre: { rendiciones: (lista: Rendicion[], cambio) => conRendicion(lista, cambio) },
+  id: ({ gasto }) => `rendicion:${gasto}`,
+  recargar: ['rendiciones'],
+})
+
+export function rendir(gasto: string, si: boolean): Promise<void> {
+  return escribir<Rendir, void>('rendir', { gasto, si, persona: miId(), marcado_en: ahoraIso() }, undefined)
 }

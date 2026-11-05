@@ -109,7 +109,7 @@ export function AnotarEntreQuienes({ computador, borrador, cuenta, gente, nombre
                         id={`anotar-parte-${p.id}`}
                         className={estilos.campo}
                         value={borrador.exactos[p.id] ?? ''}
-                        placeholder="0,00"
+                        placeholder={textos.gastos.anotar.cero}
                         inputMode="decimal"
                         autoComplete="off"
                         maxLength={13}

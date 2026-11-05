@@ -4,6 +4,7 @@ import { Avatar } from '../../componentes/Avatar.tsx'
 import { Aviso } from '../../componentes/Controles.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
 import { useAviso } from '../../componentes/useAviso.ts'
+import { estaConectado } from '../../datos/conexion.ts'
 import { deshacerPago, marcarPagado, plata, type Pago, type Transferencia } from '../../datos/gastos.ts'
 import { useTextos, type Textos } from '../../textos.ts'
 import { Flecha, Saldar } from './Saldar.tsx'
@@ -69,6 +70,8 @@ function Tarjeta({ datos, computador, compacta = false }: { datos: Saldos; compu
 
   // "Deshacer" borra el pago recién marcado
   const deshacer = async (pago: Pago) => {
+    // Deshacer un pago necesita conexión, igual que marcarlo
+    if (!estaConectado()) return aviso.mostrar(t.necesitasConexion)
     aviso.cerrar()
     try {
       await deshacerPago(pago.id)

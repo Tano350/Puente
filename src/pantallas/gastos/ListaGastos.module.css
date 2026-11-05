@@ -72,6 +72,23 @@
   color: var(--sec);
 }
 
+/* Sin señal, lo anotado y todavía sin subir lleva una nube tachada antes del texto */
+.quien[data-sin-subir='true'] {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.quien[data-sin-subir='true'] svg {
+  flex: none;
+}
+
+.quienTexto {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Prestaste en verde, te prestaron en naranja; "no participas" y "solo tuyo" en gris */
 .conmigo {
   flex: none;

@@ -14,6 +14,9 @@ declare
   g1 public.gastos;
   g2 public.gastos;
   g3 public.gastos;
+  g4 public.gastos;
+  g5 public.gastos;
+  gid uuid := gen_random_uuid();
   p1 public.pagos;
   n int;
   como_usuario constant text := 'select set_config(''request.jwt.claims'', json_build_object(''sub'', $1, ''role'', ''authenticated'')::text, true)';
@@ -54,6 +57,19 @@ begin
     raise exception 'Se anotó un gasto sin personas';
   exception when invalid_parameter_value then null;
   end;
+  -- Sin señal: el id viene del dispositivo; repetir devuelve el mismo gasto, sin cambiarlo ni duplicarlo
+  g4 := public.anotar_gasto('Bicis sin señal', 'bici', 1200, '2030-01-11', a, 'iguales',
+    jsonb_build_array(jsonb_build_object('persona', a, 'monto', 600), jsonb_build_object('persona', b, 'monto', 600)), gid);
+  if g4.id <> gid then raise exception 'anotar_gasto no usó el id del dispositivo'; end if;
+  if g4.creado_por <> a then raise exception 'El gasto con id del dispositivo no quedó a nombre de quien anota'; end if;
+  g5 := public.anotar_gasto('Otro título', 'otro', 999, '2030-01-12', a, 'solo', null, gid);
+  if g5.id <> gid or g5.titulo <> 'Bicis sin señal' or g5.monto <> 1200 or g5.division <> 'iguales' then
+    raise exception 'Repetir anotar_gasto con el mismo id cambió el gasto';
+  end if;
+  select count(*) into n from public.gastos where id = gid;
+  if n <> 1 then raise exception 'Repetir anotar_gasto duplicó el gasto (% filas)', n; end if;
+  select count(*) into n from public.partes where gasto = gid;
+  if n <> 2 then raise exception 'Repetir anotar_gasto cambió las partes (% partes)', n; end if;
   begin
     insert into public.gastos (titulo, monto, fecha, pagado_por, division) values ('Directo', 100, '2030-01-10', a, 'iguales');
     raise exception 'A escribió directo en gastos';
@@ -93,6 +109,19 @@ begin
   select count(*) into n from public.rendiciones;
   if n <> 0 then raise exception 'B ve lo que rinde A'; end if;
   if public.veo_gasto(g3.id) then raise exception 'veo_gasto dice que B ve el solo de A'; end if;
+  -- B no puede reusar el id de un gasto de A (ni para verlo ni para pisarlo)
+  begin
+    perform public.anotar_gasto('Con el id de A', 'otro', 500, '2030-01-12', b, 'solo', null, gid);
+    raise exception 'B anotó con el id de un gasto de A';
+  exception when unique_violation then null;
+  end;
+  begin
+    perform public.anotar_gasto('Con el id del café de A', 'otro', 500, '2030-01-12', b, 'solo', null, g3.id);
+    raise exception 'B anotó con el id del gasto solo de A';
+  exception when unique_violation then null;
+  end;
+  select count(*) into n from public.gastos where id = gid and titulo = 'Bicis sin señal' and pagado_por = a;
+  if n <> 1 then raise exception 'El intento de B cambió el gasto de A'; end if;
   select count(*) into n from storage.objects where bucket_id = 'boletas' and name in (g1.id || '/boleta.jpg', g3.id || '/boleta.jpg');
   if n <> 1 then raise exception 'B ve % boletas (esperaba 1: la del gasto solo de A no)', n; end if;
   begin

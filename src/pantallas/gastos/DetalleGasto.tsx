@@ -3,12 +3,15 @@ import { Avatar } from '../../componentes/Avatar.tsx'
 import { Atras, Aviso, BotonBorde, BotonPrincipal, Hoja, Interruptor, TituloHoja } from '../../componentes/Controles.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
 import { PanelEncima, PantallaConPie } from '../../componentes/Paneles.tsx'
+import { SinConexion } from '../../componentes/SinConexion.tsx'
 import { useAviso } from '../../componentes/useAviso.ts'
+import { useConectado } from '../../datos/conexion.ts'
 import { usePersonas } from '../../datos/consultas.ts'
 import { diaLargo, diaLocal } from '../../datos/fechas.ts'
 import { borrarGasto, conmigo, partesDe, plata, puedeCambiarGasto, rendir, usePartes, useRendiciones, type Gasto } from '../../datos/gastos.ts'
 import { primerNombre } from '../../datos/nombres.ts'
 import { useSesion } from '../../datos/sesion.tsx'
+import { useSinSubir } from '../../datos/sinSenal.ts'
 import { useTextos } from '../../textos.ts'
 import { iconoDe } from './categorias.ts'
 import { DetalleBoleta } from './DetalleBoleta.tsx'
@@ -32,6 +35,8 @@ function Detalle({ gasto, computador, onCerrar, onEditar, onEliminado }: Props) 
   const { data: partes } = usePartes()
   const { data: rendiciones } = useRendiciones()
   const aviso = useAviso()
+  const conectado = useConectado()
+  const sinSubir = useSinSubir().has(gasto.id)
   const [preguntando, setPreguntando] = useState(false)
   const [eliminando, setEliminando] = useState(false)
   // Mientras se guarda, el interruptor muestra lo que tocaste
@@ -94,6 +99,11 @@ function Detalle({ gasto, computador, onCerrar, onEditar, onEliminado }: Props) 
   const soloPuede = !puede && quienes.length > 0 ? d.soloPuede(textos.y(quienes), quienes.length > 1) : null
 
   // ---------- Acciones ----------
+  // Editar, la foto y eliminar necesitan conexión: sin señal se ven apagados y tocarlos avisa
+  const conConexion = (accion: () => void) => () => {
+    if (conectado) accion()
+    else aviso.mostrar(d.necesitasConexion)
+  }
   const cambiarRindo = async (si: boolean) => {
     if (rindiendo !== null) return
     setRindiendo(si)
@@ -135,6 +145,12 @@ function Detalle({ gasto, computador, onCerrar, onEditar, onEliminado }: Props) 
           <span className={estilos.monto}>{plata(gasto.monto)}</span>
         </span>
       </div>
+      {sinSubir && (
+        <div className={estilos.sinSubir}>
+          <Icono nombre="sinSubir" medida={15} trazo={2} />
+          {d.sinSubir}
+        </div>
+      )}
       {relacion && (
         <div className={estilos.resumen} data-tipo={relacion.tipo}>
           {relacion.tipo === 'solotuyo' && <Icono nombre="candado" medida={15} trazo={2.25} />}
@@ -184,7 +200,7 @@ function Detalle({ gasto, computador, onCerrar, onEditar, onEliminado }: Props) 
       {!computador && soloPuede && <div className={estilos.ajeno}>{soloPuede}</div>}
       {/* En el computador, la pregunta toma su lugar */}
       {puede && !(computador && preguntando) && (
-        <button ref={botonEliminar} type="button" className={estilos.eliminar} aria-haspopup={computador ? undefined : 'dialog'} onClick={() => setPreguntando(true)}>
+        <button ref={botonEliminar} type="button" className={estilos.eliminar} aria-disabled={!conectado} aria-haspopup={computador ? undefined : 'dialog'} onClick={conConexion(() => setPreguntando(true))}>
           {d.eliminar}
         </button>
       )}
@@ -192,7 +208,7 @@ function Detalle({ gasto, computador, onCerrar, onEditar, onEliminado }: Props) 
   )
 
   const editar = (
-    <button type="button" className={computador ? estilos.editarPc : estilos.editar} onClick={onEditar}>
+    <button type="button" className={computador ? estilos.editarPc : estilos.editar} aria-disabled={!conectado} onClick={conConexion(onEditar)}>
       <Icono nombre="lapiz" medida={18} trazo={2} />
       {d.editar}
     </button>
@@ -201,7 +217,13 @@ function Detalle({ gasto, computador, onCerrar, onEditar, onEliminado }: Props) 
   // ---------- Computador ----------
   if (computador) {
     return (
-      <PanelEncima etiqueta={gasto.titulo} onCerrar={onCerrar} cabecera={puede ? editar : undefined} pie={soloPuede && <div className={estilos.soloPuede}>{soloPuede}</div>}>
+      <PanelEncima etiqueta={gasto.titulo} onCerrar={onCerrar} cabecera={
+          <div className={estilos.cabeceraPc}>
+            {puede && editar}
+            <SinConexion />
+          </div>
+        }
+        pie={soloPuede && <div className={estilos.soloPuede}>{soloPuede}</div>}>
         {encabezado}
         {cuerpo}
         {preguntando && (
@@ -241,7 +263,10 @@ function Detalle({ gasto, computador, onCerrar, onEditar, onEliminado }: Props) 
       <div className={estilos.franja}>
         <div className={estilos.cabecera}>
           <Atras texto={t.titulo} onClick={onCerrar} />
-          {puede && editar}
+          <span className={estilos.cabeceraDerecha}>
+            <SinConexion sobrePanel />
+            {puede && editar}
+          </span>
         </div>
         {encabezado}
       </div>

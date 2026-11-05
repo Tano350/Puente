@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Avatar } from '../../componentes/Avatar.tsx'
 import { BotonBorde, BotonPrincipal, Hoja, TituloHoja } from '../../componentes/Controles.tsx'
 import { PanelEncima } from '../../componentes/Paneles.tsx'
+import { useConectado } from '../../datos/conexion.ts'
 import { plata, type Transferencia } from '../../datos/gastos.ts'
 import { useTextos } from '../../textos.ts'
 import type { Saldos } from './SaldosDatos.ts'
@@ -32,6 +33,7 @@ type Props = {
 export function Saldar({ datos, computador, marcando, onMarcar, onCerrar }: Props) {
   const textos = useTextos()
   const t = textos.gastos.saldos
+  const conectado = useConectado()
   const [elegido, setElegido] = useState<string | null>(null)
   const contenido = useRef<HTMLDivElement>(null)
   const actual = marcando ?? datos.pagables.find((x) => x.a === elegido) ?? datos.pagables[0]
@@ -70,9 +72,10 @@ export function Saldar({ datos, computador, marcando, onMarcar, onCerrar }: Prop
       <div className={estilos.monto}>{plata(actual.monto)}</div>
       <div className={estilos.explica}>{t.explica}</div>
       <div className={estilos.marcar}>
-        <BotonPrincipal ocupado={marcando !== null} onClick={() => onMarcar(actual)}>
+        <BotonPrincipal apagado={!conectado} ocupado={marcando !== null} onClick={() => onMarcar(actual)}>
           {t.marcarPagado}
         </BotonPrincipal>
+        {!conectado && <div className={estilos.necesita}>{t.necesitasConexion}</div>}
       </div>
       {computador ? (
         <div className={estilos.cancelarBorde}>

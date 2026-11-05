@@ -2,6 +2,8 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { BotonBorde, BotonPrincipal, Hoja, TituloHoja } from '../../componentes/Controles.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
+import { SinConexion } from '../../componentes/SinConexion.tsx'
+import { useConectado } from '../../datos/conexion.ts'
 import { PantallaConPie } from '../../componentes/Paneles.tsx'
 import type { TablesUpdate } from '../../datos/base.ts'
 import { cambiarContacto, puedeCambiar, seAgenda, type Contacto } from '../../datos/contactos.ts'
@@ -54,6 +56,7 @@ function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCrea
   const textos = useTextos()
   const sesion = useSesion()
   const { data: asistentes } = useAsistentes()
+  const sinRed = !useConectado()
   const t = textos.agenda.crear
   const te = textos.agenda.editar
   const [borrador, setBorrador] = useState<Borrador>(() => (editando ? borradorDe(editando) : borradorInicial(t, desdeContacto, dia)))
@@ -190,10 +193,12 @@ function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCrea
     </div>
   )
   const boton = (
-    <BotonPrincipal onClick={() => void guardar()} ocupado={guardando}>
+    <BotonPrincipal apagado={sinRed} onClick={() => void guardar()} ocupado={guardando}>
       {editando ? te.guardar : evento ? t.crearEvento : t.marcarOcupado}
     </BotonPrincipal>
   )
+  // Sin conexión el botón queda apagado y lo escrito se queda donde está
+  const notaSinRed = sinRed && <div className={estilos.fallo}>{editando ? te.sinRedGuardar : evento ? t.sinRedCrear : t.sinRedMarcar}</div>
   const noSeGuardo = fallo && (
     <div className={estilos.fallo} role="alert">
       {textos.noSeGuardo}
@@ -204,14 +209,15 @@ function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCrea
   // Cancelar el evento, mientras no termine: primero pregunta
   const paraCancelar = editando && Date.parse(editando.fin) >= Date.parse(ahora()) && (
     <>
-      <button type="button" className={estilos.cancelarEvento} aria-haspopup="dialog" onClick={() => setCancelando(true)}>
+      <button type="button" className={estilos.cancelarEvento} aria-haspopup="dialog" aria-disabled={sinRed} onClick={() => !sinRed && setCancelando(true)}>
         {te.cancelarEvento}
       </button>
+      {sinRed && <div className={estilos.notaCancelar}>{te.sinRedCancelar}</div>}
       <Hoja abierta={cancelando} etiqueta={te.cancelarPregunta(editando.titulo)} alerta onCerrar={() => setCancelando(false)}>
         <TituloHoja>{te.cancelarPregunta(editando.titulo)}</TituloHoja>
         <p className={estilos.explica}>{te.desaparece}</p>
         <div className={estilos.hojaBotones}>
-          <BotonPrincipal peligro ocupado={guardando} onClick={() => void cancelar()}>
+          <BotonPrincipal peligro apagado={sinRed} ocupado={guardando} onClick={() => void cancelar()}>
             {te.cancelarEvento}
           </BotonPrincipal>
           <BotonBorde onClick={() => setCancelando(false)}>{textos.volver}</BotonBorde>
@@ -273,6 +279,9 @@ function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCrea
   if (computador) {
     return (
       <div className={estilos.formulario} data-computador="true">
+        <div className={estilos.fichaPc}>
+          <SinConexion sobrePanel />
+        </div>
         <div className={estilos.tituloFila}>
           <h2 className={estilos.tituloPanel}>{editando ? te.titulo : t.titulo}</h2>
           {selector}
@@ -282,6 +291,7 @@ function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCrea
           {boton}
           <BotonBorde onClick={onCerrar}>{textos.cancelar}</BotonBorde>
         </div>
+        {notaSinRed}
         {noSeGuardo}
         {paraCancelar}
       </div>
@@ -294,6 +304,7 @@ function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCrea
       pie={
         <>
           {boton}
+          {notaSinRed}
           {noSeGuardo}
         </>
       }
@@ -303,6 +314,7 @@ function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCrea
           <button type="button" className={estilos.cancelar} onClick={onCerrar}>
             {textos.cancelar}
           </button>
+          <SinConexion />
         </div>
         <div className={estilos.tituloFila}>
           <h1 className={estilos.titulo}>{editando ? te.titulo : t.titulo}</h1>

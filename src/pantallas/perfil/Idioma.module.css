@@ -1,0 +1,80 @@
+/* ---------- Celular: la hoja ---------- */
+.lista {
+  margin-top: 8px;
+}
+
+.opcion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 56px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 17px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.opcion + .opcion {
+  border-top: 1px solid var(--borde);
+}
+
+.marca {
+  display: flex;
+  color: var(--acento);
+}
+
+/* ---------- Computador: el menú junto a la fila ---------- */
+.ancla {
+  position: relative;
+}
+
+/* Tocar fuera cierra el menú */
+.velo {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: default;
+}
+
+.menu {
+  position: absolute;
+  top: 114px;
+  right: 12px;
+  z-index: 6;
+  width: 220px;
+  border: 1px solid var(--regla);
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: 0 12px 32px var(--sombra);
+  overflow: hidden;
+}
+
+.menuOpcion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menuOpcion + .menuOpcion {
+  border-top: 1px solid var(--borde);
+}
+
+.menuOpcion:focus-visible {
+  outline-offset: -3px;
+}

@@ -50,6 +50,86 @@ export type Database = {
           },
         ]
       }
+      avisos: {
+        Row: {
+          contacto: string | null
+          creado_en: string
+          datos: Json | null
+          descartado: string | null
+          enviado_en: string | null
+          evento: string | null
+          id: string
+          intentos: number
+          pago: string | null
+          persona: string
+          reclamado_hasta: string | null
+          sale_en: string
+          tipo: string
+          ultimo_error: string | null
+        }
+        Insert: {
+          contacto?: string | null
+          creado_en?: string
+          datos?: Json | null
+          descartado?: string | null
+          enviado_en?: string | null
+          evento?: string | null
+          id?: string
+          intentos?: number
+          pago?: string | null
+          persona: string
+          reclamado_hasta?: string | null
+          sale_en?: string
+          tipo: string
+          ultimo_error?: string | null
+        }
+        Update: {
+          contacto?: string | null
+          creado_en?: string
+          datos?: Json | null
+          descartado?: string | null
+          enviado_en?: string | null
+          evento?: string | null
+          id?: string
+          intentos?: number
+          pago?: string | null
+          persona?: string
+          reclamado_hasta?: string | null
+          sale_en?: string
+          tipo?: string
+          ultimo_error?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avisos_contacto_fkey"
+            columns: ["contacto"]
+            isOneToOne: false
+            referencedRelation: "contactos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "avisos_evento_fkey"
+            columns: ["evento"]
+            isOneToOne: false
+            referencedRelation: "eventos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "avisos_pago_fkey"
+            columns: ["pago"]
+            isOneToOne: false
+            referencedRelation: "pagos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "avisos_persona_fkey"
+            columns: ["persona"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendarios: {
         Row: {
           google_id: string
@@ -685,6 +765,7 @@ export type Database = {
           categoria: string
           division: string
           fecha: string
+          id?: string
           monto: number
           pagado_por: string
           partes: Json
@@ -716,6 +797,7 @@ export type Database = {
         Args: { google_id: string; persona: string }
         Returns: undefined
       }
+      avisos_en_pausa: { Args: never; Returns: boolean }
       borrar_gasto: { Args: { gasto: string }; Returns: undefined }
       buscar_calendarios: { Args: never; Returns: undefined }
       calendario_conectado: { Args: never; Returns: boolean }
@@ -769,8 +851,20 @@ export type Database = {
       }
       cambio_gasto: { Args: { gasto: string }; Returns: boolean }
       deshacer_pago: { Args: { pago: string }; Returns: undefined }
+      despertar_avisos: { Args: never; Returns: undefined }
       devolver: { Args: { persona: string }; Returns: undefined }
       devolver_gasto: { Args: { gasto: string }; Returns: undefined }
+      encolar_aviso: {
+        Args: {
+          contacto?: string
+          datos?: Json
+          evento?: string
+          pago?: string
+          persona: string
+          tipo: string
+        }
+        Returns: boolean
+      }
       esperar: { Args: { evento: string }; Returns: number }
       esta_alla: {
         Args: { momento: string; persona: string }
@@ -868,6 +962,11 @@ export type Database = {
         Returns: undefined
       }
       pulso: { Args: never; Returns: string }
+      quiere_aviso: {
+        Args: { persona: string; tipo: string }
+        Returns: boolean
+      }
+      reloj_de_avisos: { Args: never; Returns: undefined }
       sacar: { Args: { persona: string }; Returns: undefined }
       sacar_de_evento: {
         Args: { evento: string; persona: string }

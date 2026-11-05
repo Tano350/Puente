@@ -2,7 +2,9 @@ import { useQuery } from '@tanstack/react-query'
 import type { Enums, Tables, TablesInsert, TablesUpdate } from './base.ts'
 import { consultas, type Persona } from './consultas.ts'
 import { ahora, diaEn } from './fechas.ts'
+import { conNotaReunion } from './enEspera.ts'
 import { datosDeMaqueta, modoMaqueta, personaDeMaqueta } from './maqueta.ts'
+import { asegurarSesion, conPendientes, escribir, registrarEscritura } from './sinSenal.ts'
 import { supabase } from './supabase.ts'
 
 // Agenda: eventos, quiénes van (y la lista de espera), tus ratos ocupados y las notas de reunión.
@@ -38,11 +40,12 @@ function consulta<K extends 'eventos' | 'asistentes' | 'ocupados' | 'notasReunio
       if (import.meta.env.DEV && modoMaqueta) {
         const datos = datosDeMaqueta()
         // Como en la base: los eventos cancelados no se ven
-        return (deMaqueta === 'eventos' ? datos.eventos.filter((e) => !e.cancelado_en) : datos[deMaqueta]) as Maqueta[K]
+        return conPendientes(clave, (deMaqueta === 'eventos' ? datos.eventos.filter((e) => !e.cancelado_en) : datos[deMaqueta]) as Maqueta[K])
       }
       const { data, error } = await buscar()
       if (error) throw error
-      return data ?? ([] as Maqueta[K])
+      // Con lo escrito sin señal que todavía no sube (las notas de reunión)
+      return conPendientes(clave, data ?? ([] as Maqueta[K]))
     },
   }
 }
@@ -279,19 +282,32 @@ export async function borrarOcupado(id: string): Promise<void> {
 }
 
 // ---------- Notas de reunión: qué aprendiste y qué sigue (una por persona y evento) ----------
-export async function guardarNotaReunion(yo: string, evento: string, nota: { aprendi: string | null; sigue: string | null }): Promise<void> {
-  const escrita = { ...nota, escrita_en: ahora() }
-  if (import.meta.env.DEV && modoMaqueta) {
-    const datos = datosDeMaqueta()
-    datos.notasReunion = [...datos.notasReunion.filter((n) => !(n.evento === evento && n.autor === yo)), { evento, autor: yo, ...escrita }]
-  } else {
-    // Primero se cambia la tuya; si no había, se crea
-    const { data, error } = await supabase.from('notas_reunion').update(escrita).eq('evento', evento).eq('autor', yo).select('evento')
-    if (error) throw error
-    if (data.length === 0) {
-      const creada = await supabase.from('notas_reunion').insert({ evento, autor: yo, ...escrita })
-      if (creada.error) throw creada.error
+// Se escriben sin señal: quedan en espera y suben después. Repetir deja lo mismo (cambia la tuya o la crea).
+registrarEscritura<NotaReunion, void>('notaReunion', {
+  hacer: async (nota) => {
+    if (import.meta.env.DEV && modoMaqueta) {
+      const datos = datosDeMaqueta()
+      datos.notasReunion = conNotaReunion(datos.notasReunion, nota)
+      return
     }
-  }
-  await recargar('notas_reunion')
+    await asegurarSesion()
+    const { evento, autor, aprendi, sigue, escrita_en } = nota
+    const cambiar = async () => {
+      const { data, error } = await supabase.from('notas_reunion').update({ aprendi, sigue, escrita_en }).eq('evento', evento).eq('autor', autor).select('evento')
+      if (error) throw error
+      return data.length > 0
+    }
+    // Primero se cambia la tuya; si no había, se crea (y si justo la creó otro intento, se cambia)
+    if (await cambiar()) return
+    const creada = await supabase.from('notas_reunion').insert(nota)
+    if (creada.error?.code === '23505') await cambiar()
+    else if (creada.error) throw creada.error
+  },
+  sobre: { notas_reunion: (lista: NotaReunion[], nota) => conNotaReunion(lista, nota) },
+  id: (nota) => `reunion:${nota.evento}`,
+  recargar: ['notas_reunion'],
+})
+
+export function guardarNotaReunion(yo: string, evento: string, nota: { aprendi: string | null; sigue: string | null }): Promise<void> {
+  return escribir<NotaReunion, void>('notaReunion', { evento, autor: yo, ...nota, escrita_en: ahora() }, undefined)
 }

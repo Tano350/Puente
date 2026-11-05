@@ -1,0 +1,18 @@
+.ficha {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 14px;
+  background: var(--panel);
+  color: var(--tinta);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ficha[data-sobre-panel='true'] {
+  background: var(--fondo);
+}

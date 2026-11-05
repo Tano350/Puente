@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Persona } from '../../datos/consultas.ts'
 import { asistentesDe, estaAllaEse, type Asistente, type Evento, type Ocupado } from '../../datos/eventos.ts'
+import { idiomaActual } from '../../datos/idioma.ts'
 import { ahora, conMayuscula, diaEn, diasEntre, hora, sumarDias, VIAJE } from '../../datos/fechas.ts'
 
 // Lo que muestran las vistas de la Agenda: eventos y ratos ocupados con su día y sus minutos en California.
@@ -186,11 +187,14 @@ export function diasDe(vista: Vista, dia: string): string[] {
   return diasDelMes(dia).filter((d) => d.slice(0, 7) === dia.slice(0, 7))
 }
 
-const formatoMes = new Intl.DateTimeFormat('es-CL', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+const formatosMes = {
+  es: new Intl.DateTimeFormat('es-CL', { month: 'long', year: 'numeric', timeZone: 'UTC' }),
+  en: new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }),
+}
 
-// "Enero de 2027"
+// "Enero de 2027" o "January 2027"
 export function tituloMes(dia: string): string {
-  return conMayuscula(formatoMes.format(new Date(`${dia}T00:00:00Z`)))
+  return conMayuscula(formatosMes[idiomaActual()].format(new Date(`${dia}T00:00:00Z`)))
 }
 
 // La hora de ahora, al minuto, para que "ahora" avance solo

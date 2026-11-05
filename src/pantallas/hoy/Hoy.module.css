@@ -277,3 +277,11 @@
     column-gap: 32px;
   }
 }
+
+/* Sin conexión: la nota bajo los "Voy" apagados */
+.notaRed {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec);
+}

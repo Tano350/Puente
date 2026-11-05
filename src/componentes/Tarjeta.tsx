@@ -15,6 +15,7 @@ function enlaceLinkedin(linkedin: string): string {
 
 // La tarjeta de presentación de una persona: así se ve cada uno en Puente
 export function Tarjeta({ persona }: { persona: Persona }) {
+  const textos = useTextos()
   const estado = estadia(persona.llega, persona.vuelve)
   return (
     <div className={estilos.tarjeta}>
@@ -38,10 +39,10 @@ export function Tarjeta({ persona }: { persona: Persona }) {
           </span>
           <span className={estilos.linkedinTexto}>
             <span className={estilos.linkedinEtiqueta}>LinkedIn</span>
-            <span>Perfil de {primerNombre(persona)}</span>
+            <span>{textos.perfilDe(primerNombre(persona))}</span>
           </span>
           <a className={estilos.abrir} href={enlaceLinkedin(persona.linkedin)} target="_blank" rel="noreferrer">
-            Abrir
+            {textos.abrir}
           </a>
         </div>
       )}

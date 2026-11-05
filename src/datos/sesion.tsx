@@ -2,7 +2,9 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type { Session } from '@supabase/supabase-js'
 import type { TablesUpdate } from './base.ts'
 import { consultas, type Persona } from './consultas.ts'
+import { cambiarIdioma } from './idioma.ts'
 import { modoMaqueta, personaDeMaqueta } from './maqueta.ts'
+import { limpiarEsteDispositivo } from './sinSenal.ts'
 import { supabase } from './supabase.ts'
 
 export type { Persona }
@@ -90,6 +92,12 @@ export function SesionProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // Al entrar, la app queda en el idioma de tu perfil
+  const idioma = estado.tipo === 'dentro' ? estado.persona.idioma : null
+  useEffect(() => {
+    if (idioma) cambiarIdioma(idioma === 'en' ? 'en' : 'es')
+  }, [idioma])
+
   const entrar = async () => {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -98,6 +106,7 @@ export function SesionProvider({ children }: { children: ReactNode }) {
   }
   const salir = async () => {
     guardarPersona(null)
+    await limpiarEsteDispositivo()
     await supabase.auth.signOut()
     setEstado({ tipo: 'fuera' })
   }

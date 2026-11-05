@@ -190,3 +190,17 @@ button.chip[aria-disabled='true'] {
 .cambiar svg {
   color: var(--sec);
 }
+
+/* Sin conexión: sumar o sacar gente queda apagado, con su nota */
+.cambiar[aria-disabled='true'],
+.chip[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.notaRed {
+  margin: 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec);
+}

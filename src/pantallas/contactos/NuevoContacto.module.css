@@ -11,6 +11,7 @@
 .cabezaFila {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   height: 44px;
 }
 
@@ -447,4 +448,11 @@
   .notas {
     font-size: 16px;
   }
+}
+
+/* Computador: el título y, a su lado, la ficha "Sin conexión" */
+.cabeceraPc {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }

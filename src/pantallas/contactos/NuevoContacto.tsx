@@ -4,7 +4,9 @@ import { BotonBorde, BotonPrincipal } from '../../componentes/Controles.tsx'
 import { ElegirPersona } from '../../componentes/ElegirPersona.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
 import { PanelEncima, PantallaConPie } from '../../componentes/Paneles.tsx'
+import { SinConexion } from '../../componentes/SinConexion.tsx'
 import type { TablesUpdate } from '../../datos/base.ts'
+import { useConectado } from '../../datos/conexion.ts'
 import { usePersonas } from '../../datos/consultas.ts'
 import { agregarContacto, cambiarContacto, useContactos, type Canal, type Contacto } from '../../datos/contactos.ts'
 import { plano } from '../../datos/grupo.ts'
@@ -53,6 +55,7 @@ function FormularioContacto({ computador, contacto, onCerrar, onListo }: Props) 
   const navigate = useNavigate()
   const { data: personas } = usePersonas()
   const { data: contactos } = useContactos()
+  const sinRed = !useConectado()
   const [borrador, setBorrador] = useState(() => borradorDe(contacto, sesion.tipo === 'dentro' ? sesion.persona.id : ''))
   const [errores, setErrores] = useState<Errores>({})
   const [eligiendo, setEligiendo] = useState(false)
@@ -80,9 +83,14 @@ function FormularioContacto({ computador, contacto, onCerrar, onListo }: Props) 
   const avisa = !tuyo && aCargo !== contacto?.responsable
   const puedeSerPersonal = !contacto || contacto.creado_por === yo.id
 
-  // Avisa si ya hay otro contacto con ese nombre, pero no impide agregarlo
+  // Avisa si ya hay otro contacto con ese nombre, pero no impide agregarlo. Mientras se guarda, la lista se recarga con
+  // el contacto nuevo: ese no cuenta como "ya existe"
+  const creado = useRef<string | null>(null)
   const buscado = comparable(borrador.nombre)
-  const existente = buscado && (!contacto || buscado !== comparable(contacto.nombre)) ? contactos?.find((c) => c.id !== contacto?.id && comparable(c.nombre) === buscado) : undefined
+  const existente =
+    buscado && !guardando && (!contacto || buscado !== comparable(contacto.nombre))
+      ? contactos?.find((c) => c.id !== contacto?.id && c.id !== creado.current && comparable(c.nombre) === buscado)
+      : undefined
 
   const validar = (): Errores => {
     const dato = borrador.dato.trim()
@@ -117,8 +125,10 @@ function FormularioContacto({ computador, contacto, onCerrar, onListo }: Props) 
     setFallo(false)
     let listo: Contacto
     try {
-      if (!contacto) listo = await agregarContacto(datos, { texto: borrador.notas, personal: borrador.personal })
-      else if (cambiados.length) listo = await cambiarContacto(contacto.id, Object.fromEntries(cambiados.map((campo) => [campo, datos[campo]])) as TablesUpdate<'contactos'>)
+      if (!contacto) {
+        listo = await agregarContacto(datos, { texto: borrador.notas, personal: borrador.personal })
+        creado.current = listo.id
+      } else if (cambiados.length) listo = await cambiarContacto(contacto.id, Object.fromEntries(cambiados.map((campo) => [campo, datos[campo]])) as TablesUpdate<'contactos'>)
       else listo = contacto
     } catch {
       setFallo(true)
@@ -132,10 +142,12 @@ function FormularioContacto({ computador, contacto, onCerrar, onListo }: Props) 
 
   const titulo = contacto ? t.editar : t.titulo
   const boton = (
-    <BotonPrincipal onClick={() => void guardar()} ocupado={guardando}>
+    <BotonPrincipal apagado={sinRed} onClick={() => void guardar()} ocupado={guardando}>
       {contacto ? t.guardar : t.agregar}
     </BotonPrincipal>
   )
+  // Sin conexión el botón queda apagado y lo escrito se queda donde está
+  const notaSinRed = sinRed && <div className={estilos.nota}>{contacto ? t.sinRedGuardar : t.sinRedAgregar}</div>
   const noSeGuardo = fallo && (
     <div className={estilos.nota} role="alert">
       {textos.noSeGuardo}
@@ -320,13 +332,19 @@ function FormularioContacto({ computador, contacto, onCerrar, onListo }: Props) 
         <PanelEncima
           etiqueta={titulo}
           onCerrar={onCerrar}
-          cabecera={<h2 className={estilos.tituloPanel}>{titulo}</h2>}
+          cabecera={
+            <div className={estilos.cabeceraPc}>
+              <h2 className={estilos.tituloPanel}>{titulo}</h2>
+              <SinConexion sobrePanel />
+            </div>
+          }
           pie={
             <>
               <div className={estilos.botones}>
                 {boton}
                 <BotonBorde onClick={onCerrar}>{textos.cancelar}</BotonBorde>
               </div>
+              {notaSinRed}
               {noSeGuardo}
             </>
           }
@@ -345,6 +363,7 @@ function FormularioContacto({ computador, contacto, onCerrar, onListo }: Props) 
         pie={
           <>
             {boton}
+            {notaSinRed}
             {noSeGuardo}
           </>
         }
@@ -354,6 +373,7 @@ function FormularioContacto({ computador, contacto, onCerrar, onListo }: Props) 
             <button type="button" className={estilos.cancelar} onClick={onCerrar}>
               {textos.cancelar}
             </button>
+            <SinConexion />
           </div>
           <h1 className={estilos.titulo}>{titulo}</h1>
         </div>

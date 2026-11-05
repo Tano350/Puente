@@ -1,17 +1,9 @@
 import { createBrowserRouter, Navigate } from 'react-router'
 import { Marco } from './componentes/Marco.tsx'
-import { Agenda } from './pantallas/agenda/Agenda.tsx'
-import { Contactos } from './pantallas/contactos/Contactos.tsx'
-import { Gastos } from './pantallas/gastos/Gastos.tsx'
 import { Puerta } from './componentes/Puerta.tsx'
-import { Grupo } from './pantallas/grupo/Grupo.tsx'
-import { Hoy } from './pantallas/hoy/Hoy.tsx'
-import { Invitados } from './pantallas/perfil/Invitados.tsx'
-import { TuPerfil } from './pantallas/perfil/TuPerfil.tsx'
-import { Privacidad } from './pantallas/Privacidad.tsx'
 
 export const rutas = createBrowserRouter([
-  { path: 'privacidad', element: <Privacidad /> },
+  { path: 'privacidad', lazy: () => import('./pantallas/Privacidad.tsx').then((m) => ({ Component: m.Privacidad })) },
   {
     element: <Puerta />,
     children: [
@@ -19,16 +11,16 @@ export const rutas = createBrowserRouter([
         element: <Marco />,
         children: [
           { index: true, element: <Navigate to="/hoy" replace /> },
-          { path: 'hoy', element: <Hoy /> },
+          { path: 'hoy', lazy: () => import('./pantallas/hoy/Hoy.tsx').then((m) => ({ Component: m.Hoy })) },
           // /agenda, /agenda/nuevo, /agenda/:id y /agenda/:id/editar: una sola ruta, para no perder la vista ni la semana
-          { path: 'agenda/:id?/:accion?', element: <Agenda /> },
+          { path: 'agenda/:id?/:accion?', lazy: () => import('./pantallas/agenda/Agenda.tsx').then((m) => ({ Component: m.Agenda })) },
           // /contactos, /contactos/nuevo, /contactos/:id y /contactos/:id/editar: una sola ruta, para no perder la búsqueda
-          { path: 'contactos/:id?/:accion?', element: <Contactos /> },
-          { path: 'gastos/:id?/:accion?', element: <Gastos /> },
+          { path: 'contactos/:id?/:accion?', lazy: () => import('./pantallas/contactos/Contactos.tsx').then((m) => ({ Component: m.Contactos })) },
+          { path: 'gastos/:id?/:accion?', lazy: () => import('./pantallas/gastos/Gastos.tsx').then((m) => ({ Component: m.Gastos })) },
           // Una sola ruta, para que elegir a alguien no reinicie la búsqueda
-          { path: 'grupo/:id?', element: <Grupo /> },
-          { path: 'perfil', element: <TuPerfil /> },
-          { path: 'perfil/invitados', element: <Invitados /> },
+          { path: 'grupo/:id?', lazy: () => import('./pantallas/grupo/Grupo.tsx').then((m) => ({ Component: m.Grupo })) },
+          { path: 'perfil', lazy: () => import('./pantallas/perfil/TuPerfil.tsx').then((m) => ({ Component: m.TuPerfil })) },
+          { path: 'perfil/invitados', lazy: () => import('./pantallas/perfil/Invitados.tsx').then((m) => ({ Component: m.Invitados })) },
           { path: '*', element: <Navigate to="/hoy" replace /> },
         ],
       },

@@ -6,7 +6,7 @@ import estilos from './DetalleEtapas.module.css'
 
 // Las cinco etapas como tuercas en línea: las hechas en tinta, la actual en acento (con su fecha) y las que faltan huecas.
 // Descartado no está en la línea: todas quedan huecas. Tocar una tuerca cambia la etapa, si se puede cambiar el contacto.
-export function DetalleEtapas({ etapa, etapaEn, activa, onElegir }: { etapa: Etapa; etapaEn: string; activa: boolean; onElegir: (etapa: Etapa) => void }) {
+export function DetalleEtapas({ etapa, etapaEn, activa, apagada = false, onElegir }: { etapa: Etapa; etapaEn: string; activa: boolean; apagada?: boolean; onElegir: (etapa: Etapa) => void }) {
   const textos = useTextos()
   const t = textos.contactos
   const actual = ETAPAS.findIndex((e) => e === etapa)
@@ -19,7 +19,7 @@ export function DetalleEtapas({ etapa, etapaEn, activa, onElegir }: { etapa: Eta
       {ETAPAS.map((e, i) => {
         const paso = i === actual ? 'actual' : i < actual ? 'hecha' : 'falta'
         return (
-          <button key={e} type="button" className={estilos.estacion} data-paso={paso} aria-current={paso === 'actual' ? 'step' : undefined} disabled={!activa} onClick={() => onElegir(e)}>
+          <button key={e} type="button" className={estilos.estacion} data-paso={paso} aria-current={paso === 'actual' ? 'step' : undefined} disabled={!activa || apagada} onClick={() => onElegir(e)}>
             <span className={estilos.tuerca}>
               <span className={paso === 'falta' ? estilos.hueco : estilos.agujero} />
             </span>

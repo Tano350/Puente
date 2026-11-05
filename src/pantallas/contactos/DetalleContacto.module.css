@@ -237,3 +237,28 @@ button.responsable {
     min-height: 44px;
   }
 }
+
+/* ---------- Sin conexión ---------- */
+.derecha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* La nota bajo el botón apagado */
+.notaRed {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 18px;
+  text-align: center;
+  color: var(--sec);
+}
+
+.descartar[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+button.responsable[aria-disabled='true'] {
+  cursor: default;
+}

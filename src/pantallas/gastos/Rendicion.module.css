@@ -84,6 +84,15 @@
   cursor: default;
 }
 
+/* Sin señal, bajo "Descargar rendición" */
+.necesita {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 18px;
+  text-align: center;
+  color: var(--sec);
+}
+
 /* ---------- Los gastos ---------- */
 .lista {
   margin-top: 14px;

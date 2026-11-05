@@ -11,6 +11,7 @@
 .cabezaFila {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   height: 44px;
 }
 
@@ -241,4 +242,26 @@
   .notas {
     font-size: 16px;
   }
+}
+
+/* Sin conexión: "Cancelar evento" queda apagado, con su nota */
+.cancelarEvento[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.notaCancelar {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sec);
+}
+
+.fichaPc {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.fichaPc:empty {
+  display: none;
 }

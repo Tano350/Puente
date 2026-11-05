@@ -4,9 +4,11 @@ import { Avatar } from '../../componentes/Avatar.tsx'
 import { Buscador } from '../../componentes/Buscador.tsx'
 import { Atras, Aviso, BotonBorde, BotonPrincipal, CampoTexto, Etiqueta, Hoja, Pie, Titulo, TituloHoja } from '../../componentes/Controles.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
+import { SinConexion } from '../../componentes/SinConexion.tsx'
 import { useAviso } from '../../componentes/useAviso.ts'
 import { useEsComputador } from '../../componentes/useEsComputador.ts'
 import escritorio from '../../componentes/Escritorio.module.css'
+import { useConectado } from '../../datos/conexion.ts'
 import { usePersonas, type Persona } from '../../datos/consultas.ts'
 import { diaCorto, diaLocal, hoyAqui } from '../../datos/fechas.ts'
 import { coincide, porNombre } from '../../datos/grupo.ts'
@@ -62,6 +64,7 @@ export function Invitados() {
   const esComputador = useEsComputador()
   const { data: personas } = usePersonas()
   const aviso = useAviso()
+  const conectado = useConectado()
   const [busqueda, setBusqueda] = useState('')
   // En el celular las acciones van en hojas; en el computador, en el panel de la derecha
   const [hoja, setHoja] = useState<'invitar' | 'opciones' | 'sacar' | null>(null)
@@ -103,6 +106,7 @@ export function Invitados() {
     void copiar(p.correo, t.copiasteCorreo(primerNombre(p)))
   }
   const abrirInvitar = () => {
+    if (!conectado) return aviso.mostrar(t.necesitasInvitar)
     setCorreo('')
     setError(null)
     aviso.cerrar()
@@ -132,11 +136,18 @@ export function Invitados() {
       aviso.mostrar(t.noSePudo)
     }
   }
+  // Sacar a alguien necesita conexión: sin señal, en vez de la pregunta sale el aviso
+  const pedirSacar = (seguir: () => void) => {
+    if (conectado) return seguir()
+    setHoja(null)
+    aviso.mostrar(t.necesitasSacar)
+  }
   const enviar = async () => {
     const limpio = correo.trim().toLowerCase()
     if (!limpio) return setError(t.faltaCorreo)
     if (!CORREO_VALIDO.test(limpio)) return setError(t.correoIncompleto)
     if (activas.some((p) => p.correo === limpio)) return setError(t.yaInvitado)
+    if (!conectado) return setError(t.necesitasInvitar)
     setOcupado(true)
     try {
       const nueva = await invitar(limpio)
@@ -283,7 +294,7 @@ export function Invitados() {
             <div className={estilos.datoLado}>{invitadoEl(elegida)}</div>
             <div className={estilos.botones}>
               <BotonBorde icono="copiar" onClick={copiarEnlace}>{t.copiarEnlace}</BotonBorde>
-              <button type="button" className={estilos.rojo} onClick={() => void sacarA(elegida)}>
+              <button type="button" className={estilos.rojo} aria-disabled={!conectado} onClick={() => pedirSacar(() => void sacarA(elegida))}>
                 <Icono nombre="cerrar" medida={18} trazo={2} />
                 {t.sacarInvitacion}
               </button>
@@ -304,7 +315,7 @@ export function Invitados() {
           <div className={estilos.botones}>
             <BotonBorde icono="copiar" onClick={() => copiarCorreo(elegida)}>{t.copiarCorreo}</BotonBorde>
             {elegida.id !== yo.id && (
-              <button type="button" className={estilos.rojo} onClick={() => setPanel('sacar')}>
+              <button type="button" className={estilos.rojo} aria-disabled={!conectado} onClick={() => pedirSacar(() => setPanel('sacar'))}>
                 <Icono nombre="sacar" medida={18} />
                 {t.sacar}
               </button>
@@ -325,8 +336,9 @@ export function Invitados() {
             <div className={escritorio.linea1}>{resumen}</div>
           </div>
           <div className={estilos.acciones}>
+            <SinConexion />
             <Buscador valor={busqueda} onCambio={setBusqueda} clase={estilos.buscadorPc} />
-            <button type="button" className={estilos.invitarPc} onClick={abrirInvitar}>
+            <button type="button" className={estilos.invitarPc} aria-disabled={!conectado} onClick={abrirInvitar}>
               <Icono nombre="mas" medida={20} trazo={2.25} />
               {t.invitar}
             </button>
@@ -347,10 +359,11 @@ export function Invitados() {
 
   // ---------- Celular ----------
   return (
-    <div className={estilos.pantalla}>
+    <div className={estilos.pantalla} data-sin-red={!conectado}>
       <div className={estilos.desplazable}>
         <div className={estilos.volver}>
           <Atras texto={t.tuPerfil} onClick={() => navigate('/perfil')} />
+          <SinConexion />
         </div>
         <div className={estilos.titulo}>
           <Titulo>{t.titulo}</Titulo>
@@ -360,9 +373,10 @@ export function Invitados() {
         {lista}
       </div>
       <Pie>
-        <BotonPrincipal icono="mas" onClick={abrirInvitar}>
+        <BotonPrincipal icono="mas" apagado={!conectado} onClick={abrirInvitar}>
           {t.invitar}
         </BotonPrincipal>
+        {!conectado && <div className={estilos.nota}>{t.necesitasInvitar}</div>}
       </Pie>
       <Hoja abierta={hoja === 'invitar'} etiqueta={t.invitarA} onCerrar={cerrar}>
         <TituloHoja>{t.invitarA}</TituloHoja>
@@ -383,7 +397,7 @@ export function Invitados() {
                 <Icono nombre="copiar" medida={22} />
                 {t.copiarCorreo}
               </button>
-              <button type="button" className={estilos.opcion} data-peligro="true" onClick={() => setHoja('sacar')}>
+              <button type="button" className={estilos.opcion} data-peligro="true" onClick={() => pedirSacar(() => setHoja('sacar'))}>
                 <Icono nombre="sacar" medida={22} />
                 {t.sacar}
               </button>

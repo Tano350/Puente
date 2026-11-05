@@ -75,6 +75,14 @@ const trazos = {
       <path d="M9 17v1a3 3 0 0 0 6 0v-1" />
     </>
   ),
+  sinSenal: <path d="M12 18h.01M9.17 15.17a4 4 0 0 1 5.66 0M6.34 12.34a8 8 0 0 1 3.87-2.14M14.37 10.36a8 8 0 0 1 3.29 2M3.52 9.52a12 12 0 0 1 3.54-2.46M10.16 6.14a12 12 0 0 1 10.32 3.37M3 3l18 18" />,
+  // Nube tachada: lo anotado sin señal que todavía no sube
+  sinSubir: (
+    <>
+      <path d="M9.6 5.5a6 6 0 0 1 7.6 5h1A3.5 3.5 0 0 1 21 16.4M17.5 18H6.5A4.5 4.5 0 0 1 5.7 9.1" />
+      <path d="M3 3l18 18" />
+    </>
+  ),
   instalar: (
     <>
       <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />

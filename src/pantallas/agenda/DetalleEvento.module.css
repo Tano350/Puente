@@ -286,3 +286,30 @@
   font-size: 15px;
   font-weight: 500;
 }
+
+/* ---------- Sin conexión ---------- */
+.derecha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.arribaPc {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.arribaPc > :only-child {
+  margin-left: auto;
+}
+
+/* La nota bajo el botón apagado */
+.notaRed {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 18px;
+  text-align: center;
+  color: var(--sec);
+}

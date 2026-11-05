@@ -6,6 +6,8 @@ import { Icono } from '../../componentes/Icono.tsx'
 import { PantallaConPie } from '../../componentes/Paneles.tsx'
 import { useAviso } from '../../componentes/useAviso.ts'
 import { consultas, usePersonas, type Persona } from '../../datos/consultas.ts'
+import { SinConexion } from '../../componentes/SinConexion.tsx'
+import { useConectado } from '../../datos/conexion.ts'
 import { useContactos } from '../../datos/contactos.ts'
 import {
   asistentesDe,
@@ -105,6 +107,7 @@ function Boleto({ evento, computador, atras, conNota, onCerrar, onEditar }: Prop
   const { data: notas } = useNotasReunion()
   const [horaDeChile] = useHoraDeChile()
   const aviso = useAviso()
+  const sinRed = !useConectado()
   const [confirmar, setConfirmar] = useState<'soltar' | 'dejar' | null>(null)
   const [ocupado, setOcupado] = useState(false)
   const enCurso = useRef(false)
@@ -263,18 +266,23 @@ function Boleto({ evento, computador, atras, conNota, onCerrar, onEditar }: Prop
   }
 
   // ---------- La acción de abajo (o tu estado) ----------
-  const enEstado = (icono: 'check' | 'reloj', texto: string, boton: string, onClick: () => void) => (
-    <div className={estilos.estado}>
-      <span className={estilos.estadoTexto}>
-        <span className={icono === 'check' ? estilos.check : estilos.reloj}>
-          {icono === 'check' ? <Icono nombre="check" medida={20} trazo={2.5} /> : <Icono nombre="reloj" medida={20} trazo={2} />}
+  // Sin conexión, lo que cambia tu lugar queda apagado y una nota debajo dice por qué
+  const nota = (texto: string) => <p className={estilos.notaRed}>{texto}</p>
+  const enEstado = (icono: 'check' | 'reloj', texto: string, boton: string, onClick: () => void, sinConexion: string) => (
+    <>
+      <div className={estilos.estado}>
+        <span className={estilos.estadoTexto}>
+          <span className={icono === 'check' ? estilos.check : estilos.reloj}>
+            {icono === 'check' ? <Icono nombre="check" medida={20} trazo={2.5} /> : <Icono nombre="reloj" medida={20} trazo={2} />}
+          </span>
+          {texto}
         </span>
-        {texto}
-      </span>
-      <button ref={botonEstado} type="button" className={estilos.botonEstado} aria-disabled={ocupado} onClick={() => !ocupado && onClick()}>
-        {boton}
-      </button>
-    </div>
+        <button ref={botonEstado} type="button" className={estilos.botonEstado} aria-disabled={ocupado || sinRed} onClick={() => !ocupado && !sinRed && onClick()}>
+          {boton}
+        </button>
+      </div>
+      {sinRed && nota(sinConexion)}
+    </>
   )
   const info = (texto: string) => <div className={estilos.info}>{texto}</div>
   let accion: ReactNode = null
@@ -290,22 +298,29 @@ function Boleto({ evento, computador, atras, conNota, onCerrar, onEditar }: Prop
   } else if (estado?.tipo === 'paso') {
     if (estado.fui) accion = <BotonPrincipal onClick={abrirNota}>{miNota ? t.editarNota : t.escribirNota}</BotonPrincipal>
   } else if (estado?.tipo === 'tienes') {
-    accion = enEstado('check', t.tienesCupo, t.soltarCupo, () => setConfirmar('soltar'))
+    accion = enEstado('check', t.tienesCupo, t.soltarCupo, () => setConfirmar('soltar'), t.sinRedSoltar)
   } else if (estado?.tipo === 'vas') {
-    accion = enEstado('check', t.vas, t.yaNoVoy, yaNoVoy)
+    accion = enEstado('check', t.vas, t.yaNoVoy, yaNoVoy, t.sinRedYaNoVoy)
   } else if (estado?.tipo === 'espera') {
-    accion = enEstado('reloj', t.estasEnLista(estado.puesto), t.salir, salirDeLaLista)
+    accion = enEstado('reloj', t.estasEnLista(estado.puesto), t.salir, salirDeLaLista, t.sinRedSalir)
   } else if (estado?.tipo === 'fuera') {
     accion = info(estado.cuando === 'antes' ? t.todaviaNoLlegas : estado.cuando === 'despues' ? t.yaVolviste : t.sinFechas)
   } else if (estado?.tipo === 'cerrada') {
     accion = info(soloAgrega)
   } else if (estado) {
-    const principal = { voy: [t.voy, voy], lleno: [t.anotarme, anotarme], hay: [t.tomarCupo, tomar] } as const
-    const [texto, alTocar] = principal[estado.tipo]
+    const principal = {
+      voy: [t.voy, voy, t.sinRedVoy],
+      lleno: [t.anotarme, anotarme, t.sinRedLista],
+      hay: [t.tomarCupo, tomar, t.sinRedTomar],
+    } as const
+    const [texto, alTocar, sinConexion] = principal[estado.tipo]
     accion = (
-      <BotonPrincipal ocupado={ocupado} onClick={alTocar}>
-        {texto}
-      </BotonPrincipal>
+      <>
+        <BotonPrincipal apagado={sinRed} ocupado={ocupado} onClick={alTocar}>
+          {texto}
+        </BotonPrincipal>
+        {sinRed && nota(sinConexion)}
+      </>
     )
   }
 
@@ -371,6 +386,7 @@ function Boleto({ evento, computador, atras, conNota, onCerrar, onEditar }: Prop
         puedeCambiar={puedeCambiar}
         cambiando={cambiando}
         ocupado={ocupado}
+        sinRed={sinRed}
         onCambiando={setCambiando}
         onAgregar={() => setAgregando(true)}
         onSacar={sacar}
@@ -398,7 +414,10 @@ function Boleto({ evento, computador, atras, conNota, onCerrar, onEditar }: Prop
   if (computador) {
     return (
       <div className={estilos.pc}>
-        {editar}
+        <div className={estilos.arribaPc}>
+          {editar}
+          <SinConexion sobrePanel />
+        </div>
         {cuerpo}
         {(accion || pregunta) && (
           <div ref={acciones} className={estilos.acciones}>
@@ -442,7 +461,10 @@ function Boleto({ evento, computador, atras, conNota, onCerrar, onEditar }: Prop
     <PantallaConPie pie={accion}>
       <div className={estilos.cabecera}>
         <Atras texto={atras ?? textos.agenda.titulo} onClick={onCerrar} />
-        {editar}
+        <div className={estilos.derecha}>
+          <SinConexion />
+          {editar}
+        </div>
       </div>
       {cuerpo}
       <Hoja abierta={pregunta !== null} etiqueta={pregunta?.titulo ?? ''} alerta onCerrar={() => setConfirmar(null)}>

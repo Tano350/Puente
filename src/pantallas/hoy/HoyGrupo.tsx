@@ -1,4 +1,5 @@
 import { Icono } from '../../componentes/Icono.tsx'
+import { useConectado } from '../../datos/conexion.ts'
 import { miLugar, type Asistente, type Evento } from '../../datos/eventos.ts'
 import { CHILE, hora } from '../../datos/fechas.ts'
 import { useTextos } from '../../textos.ts'
@@ -29,6 +30,8 @@ export function TambienHoy({
   onVoy: (evento: Evento) => void
 }) {
   const t = useTextos().hoy.viaje
+  // Sin conexión, "Voy" queda apagado; al tocarlo, un aviso dice por qué
+  const sinRed = !useConectado()
   return (
     <ul className={estilos.lista} data-computador={computador}>
       {eventos.map((e) => {
@@ -48,7 +51,7 @@ export function TambienHoy({
               <span className={estilos.detalle}>{detalle}</span>
             </button>
             {puesto === null && (
-              <button type="button" className={estilos.voy} aria-label={t.voyA(e.titulo)} aria-disabled={ocupado} onClick={() => !ocupado && onVoy(e)}>
+              <button type="button" className={estilos.voy} aria-label={t.voyA(e.titulo)} aria-disabled={ocupado || sinRed} data-sin-red={sinRed} onClick={() => !ocupado && onVoy(e)}>
                 {ocupado ? (
                   <>
                     <Icono nombre="check" medida={18} trazo={2} />

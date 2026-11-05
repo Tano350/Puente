@@ -6,6 +6,7 @@ import { Icono } from '../../componentes/Icono.tsx'
 import { Tuerca } from '../../componentes/Tuerca.tsx'
 import { useAviso } from '../../componentes/useAviso.ts'
 import { useEsComputador } from '../../componentes/useEsComputador.ts'
+import { estaConectado, useConectado } from '../../datos/conexion.ts'
 import { usePersonas } from '../../datos/consultas.ts'
 import { useContactos } from '../../datos/contactos.ts'
 import { ErrorDeEvento, ir, noIr, useAsistentes, useEventos, useNotasReunion, type Evento } from '../../datos/eventos.ts'
@@ -46,6 +47,7 @@ export function Hoy() {
   const ahora = useAhora()
   const [chile, setChile] = useHoraDeChile()
   const aviso = useAviso()
+  const sinRed = !useConectado()
   const { data: contactos } = useContactos()
   const { data: eventos } = useEventos()
   const { data: asistentes } = useAsistentes()
@@ -124,6 +126,7 @@ export function Hoy() {
     else setHoja('reuniones')
   }
   const sumarme = async (evento: Evento) => {
+    if (!estaConectado()) return aviso.mostrar(v.sinRedVoy)
     setYendo(evento.id)
     try {
       await ir(evento.id)
@@ -165,6 +168,7 @@ export function Hoy() {
         {v.tambienHoy}
       </h2>
       <TambienHoy eventos={tambien} asistentes={van} yo={persona.id} chile={chile} computador={computador} elegido={idElegido} yendo={yendo} onAbrir={abrir} onVoy={(e) => void sumarme(e)} />
+      {sinRed && <p className={estilos.notaRed}>{v.sinRedVoy}</p>}
     </section>
   )
   const seccionPendientes = (

@@ -13,7 +13,24 @@
 }
 
 .volver {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   margin-top: -8px;
+}
+
+/* Sin señal, el botón de abajo trae su nota: el aviso sube lo mismo */
+.pantalla[data-sin-red='true'] > [role='status'] {
+  bottom: calc(190px + env(safe-area-inset-bottom));
+}
+
+.nota {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 18px;
+  text-align: center;
+  color: var(--sec);
 }
 
 .titulo {
@@ -273,6 +290,7 @@ button.elegir {
 
 .acciones {
   display: flex;
+  align-items: center;
   gap: 10px;
 }
 
@@ -294,6 +312,11 @@ button.elegir {
   font-weight: 700;
   font-size: 19px;
   cursor: pointer;
+}
+
+.invitarPc[aria-disabled='true'],
+.rojo[aria-disabled='true'] {
+  opacity: 0.45;
 }
 
 .cuerpoPc {

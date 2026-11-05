@@ -1,5 +1,9 @@
-// Textos de la app. Cada idioma usa las mismas claves.
-const es = {
+import { useIdioma } from './datos/idioma.ts'
+import { en } from './textos.en.ts'
+
+// Textos de la app. Cada idioma usa las mismas claves. Se exporta el español porque la rendición en PDF va
+// siempre en español (es para la Universidad), aunque la app esté en inglés.
+export const es = {
   navegacion: 'Secciones',
   secciones: {
     hoy: 'Hoy',
@@ -24,6 +28,10 @@ const es = {
   cancelar: 'Cancelar',
   cerrar: 'Cerrar',
   deshacer: 'Deshacer',
+  opcional: '(opcional)',
+  elegir: 'Elegir',
+  abrir: 'Abrir',
+  perfilDe: (nombre: string) => `Perfil de ${nombre}`,
   buscar: 'Buscar',
   borrarBusqueda: 'Borrar búsqueda',
   nadieCoincide: (busqueda: string) => `Nadie coincide con “${busqueda}”.`,
@@ -71,6 +79,7 @@ const es = {
       vas: 'Vas',
       voyA: (titulo: string) => `Voy a ${titulo}`,
       vasA: (titulo: string) => `Vas a ${titulo}.`,
+      sinRedVoy: 'Necesitas conexión para sumarte.',
       noSePudoIr: {
         lleno: 'Ya no quedan cupos.',
         no_estas: 'Ese día no estás allá.',
@@ -192,7 +201,7 @@ const es = {
       enEsperaArriba: 'En espera',
       enLaLista: 'en la lista',
       puesto: (n: number) => `${n}.º`,
-      van: (n: number) => (n === 1 ? 'Va' : 'Van'),
+      van: (n: number): string => (n === 1 ? 'Va' : 'Van'),
       delGrupo: 'del grupo',
       vas: 'Vas',
       conMas: (n: number) => `con ${n} más`,
@@ -245,6 +254,14 @@ const es = {
       yaVolviste: 'Ese día ya volviste a Chile.',
       todaviaNoLlegas: 'Ese día todavía no llegas.',
       sinFechas: 'Pon tus fechas en tu perfil para sumarte.',
+      // Sin conexión: lo que pide conexión queda apagado, con su nota debajo
+      sinRedTomar: 'Necesitas conexión para tomar un cupo.',
+      sinRedVoy: 'Necesitas conexión para sumarte.',
+      sinRedLista: 'Necesitas conexión para anotarte en la lista.',
+      sinRedSoltar: 'Necesitas conexión para soltar tu cupo.',
+      sinRedSalir: 'Necesitas conexión para salir de la lista.',
+      sinRedYaNoVoy: 'Necesitas conexión para cambiar tu respuesta.',
+      sinRedQuienes: 'Necesitas conexión para cambiar quiénes van.',
       escribirNota: 'Escribir nota',
       editarNota: 'Editar tu nota',
       guardarNota: 'Guardar nota',
@@ -332,6 +349,8 @@ const es = {
       faltaFin: 'Elige a qué hora termina.',
       alReves: 'Tiene que terminar después de empezar.',
       marcaste: 'Marcaste ese rato como ocupado.',
+      sinRedCrear: 'Necesitas conexión para crearlo. Lo que escribiste no se pierde.',
+      sinRedMarcar: 'Necesitas conexión para marcarlo. Lo que escribiste no se pierde.',
     },
     // Editar o cancelar un evento: quien organiza o quien administra
     editar: {
@@ -345,6 +364,8 @@ const es = {
       desaparece: 'Desaparece de la Agenda de todos.',
       guardaste: 'Guardaste los cambios.',
       cancelaste: (titulo: string) => `Cancelaste ${titulo}.`,
+      sinRedGuardar: 'Necesitas conexión para guardar los cambios. Lo que escribiste no se pierde.',
+      sinRedCancelar: 'Necesitas conexión para cancelar el evento.',
     },
     // Un rato ocupado abierto desde el Día o la Semana
     rato: {
@@ -355,6 +376,7 @@ const es = {
       soloTu: 'Solo tú lo ves.',
       borrar: 'Borrar rato ocupado',
       borraste: (titulo: string) => `Borraste ${titulo}.`,
+      sinRedBorrar: 'Necesitas conexión para borrar el rato.',
     },
   },
   contactos: {
@@ -397,6 +419,7 @@ const es = {
       vacio: 'Todavía no hay contactos.',
       agregar: 'Agregar contacto',
       agregaste: (nombre: string) => `Agregaste a ${nombre}.`,
+      sinRedNuevo: 'Necesitas conexión para agregar contactos.',
     },
     detalle: {
       editar: 'Editar',
@@ -404,6 +427,7 @@ const es = {
       hoy: 'hoy',
       perfilLinkedin: 'Perfil de LinkedIn',
       acciones: { correo: 'Escribir', linkedin: 'Abrir', telefono: 'Llamar' },
+      sinRedEstado: 'Necesitas conexión para cambiar el estado.',
       marcarContactado: 'Marcar como contactado',
       marcarRespondio: 'Marcar que respondió',
       agendarReunion: 'Agendar reunión',
@@ -442,6 +466,8 @@ const es = {
         responsable ? `${nombre} ya está en Contactos, a cargo de ${responsable}.` : `${nombre} ya está en Contactos.`,
       yaExisteTuyo: (nombre: string) => `${nombre} ya está en Contactos, a tu cargo.`,
       verContacto: 'Ver contacto',
+      sinRedAgregar: 'Necesitas conexión para agregarlo. Lo que escribiste no se pierde.',
+      sinRedGuardar: 'Necesitas conexión para guardar los cambios. Lo que escribiste no se pierde.',
     },
   },
   invitados: {
@@ -463,6 +489,8 @@ const es = {
     correoIncompleto: 'Escribe el correo completo, como nombre@gmail.com.',
     yaInvitado: 'Ese correo ya está invitado.',
     noSePudo: 'No se pudo. Revisa tu conexión y vuelve a intentar.',
+    necesitasInvitar: 'Necesitas conexión para invitar.',
+    necesitasSacar: 'Necesitas conexión para sacar a alguien.',
     invitaste: (correo: string) => `Invitaste a ${correo}.`,
     copiarEnlace: 'Copiar enlace',
     copiasteEnlace: 'Copiaste el enlace de Puente.',
@@ -526,7 +554,22 @@ const es = {
     invitados: 'Invitados',
     deTotal: (n: number, total: number) => `${n} de ${total}`,
     salirPregunta: '¿Salir de Puente?',
+    salirIgual: 'Salir igual',
+    // Lo anotado sin señal que no ha subido se borra al salir
+    salirPendiente: (gastos: number, notas: number, otros: number) => {
+      const partes = [
+        gastos ? `${gastos} ${gastos === 1 ? 'gasto' : 'gastos'}` : '',
+        notas ? `${notas} ${notas === 1 ? 'nota' : 'notas'}` : '',
+        otros ? `${otros} ${otros === 1 ? 'cambio' : 'cambios'}` : '',
+      ].filter(Boolean)
+      const lista = partes.length === 1 ? partes[0] : `${partes.slice(0, -1).join(', ')} y ${partes[partes.length - 1]}`
+      return `Tienes ${lista} sin subir. Si sales ahora, ${gastos + notas + otros === 1 ? 'se pierde' : 'se pierden'}.`
+    },
     tuTarjeta: 'Tu tarjeta',
+    idioma: 'Idioma',
+    // El aviso al elegir: queda en el idioma que elegiste
+    idiomaCambiado: { es: 'Puente quedó en español.', en: 'Puente is now in English.' },
+    necesitaConexion: 'Necesitas conexión para cambiar tu perfil.',
   },
   fechas: {
     titulo: 'Tus fechas',
@@ -588,9 +631,13 @@ const es = {
       manana: 'Mañana',
       pagaste: (monto: string) => `Pagaste ${monto}`,
       pago: (nombre: string, monto: string) => `${nombre} pagó ${monto}`,
+      // Lo anotado sin señal, mientras no sube
+      sinSubirPagaste: (monto: string) => `Sin subir, pagaste ${monto}`,
+      sinSubirPago: (nombre: string, monto: string) => `Sin subir, ${nombre} pagó ${monto}`,
       alguien: 'Alguien',
       conmigo: { prestaste: 'prestaste', teprestaron: 'te prestaron', noparticipas: 'no participas', solotuyo: 'solo tuyo' },
       anotaste: (titulo: string) => `Anotaste ${titulo}.`,
+      anotasteSinSenal: (titulo: string) => `Anotaste ${titulo}. Se sube cuando tengas señal.`,
       guardaste: 'Guardaste los cambios.',
       eliminaste: (titulo: string) => `Eliminaste ${titulo}.`,
     },
@@ -601,8 +648,10 @@ const es = {
       guardar: 'Guardar cambios',
       queFue: 'Qué fue',
       monto: 'Monto en dólares',
+      cero: '0,00',
       categoria: 'Categoría',
       cambiarCategoria: (categoria: string) => `Categoría: ${categoria}`,
+      seSube: 'Se sube cuando tengas señal.',
       // "Pagado por [ti] y dividido [en partes iguales]."; tocar "dividido" pasa por las tres formas
       pagadoPor: 'Pagado por',
       yDividido: 'y dividido',
@@ -666,6 +715,8 @@ const es = {
       eliminarPregunta: (titulo: string) => `¿Eliminar ${titulo}?`,
       seAjustan: (n: number) => (n > 1 ? `Se ajustan los saldos de las ${n} personas.` : 'No cambia ningún saldo.'),
       soloLoVes: 'Solo lo ves tú, así que no cambia ningún saldo.',
+      sinSubir: 'Sin subir',
+      necesitasConexion: 'Necesitas conexión para cambiar este gasto.',
     },
     saldos: {
       // Tu tarjeta: debes, te deben o estás al día, y con quiénes (hasta dos nombres; si son más, cuántos)
@@ -696,6 +747,7 @@ const es = {
       lePagas: (nombre: string) => `Le pagas a ${nombre}`,
       explica: 'Transfiere desde tu banco y márcalo aquí.',
       marcarPagado: 'Marcar como pagado',
+      necesitasConexion: 'Necesitas conexión para marcar pagos.',
       pagaste: (nombre: string) => `Marcaste que le pagaste a ${nombre}.`,
     },
     rendicion: {
@@ -704,6 +756,7 @@ const es = {
       marca: 'Marca los gastos que rindes.',
       sinFoto: (n: number) => `${n} sin foto de la boleta`,
       descargar: 'Descargar rendición',
+      necesitasConexion: 'Necesitas conexión para descargarla.',
       descargando: 'Descargando…',
       descargaste: (n: number, monto: string) => `Descargaste tu rendición: ${n === 1 ? '1 gasto' : `${n} gastos`}, ${monto}.`,
       noSeDescargo: 'No se pudo descargar. Revisa tu conexión y vuelve a intentar.',
@@ -770,6 +823,7 @@ const es = {
     noSeBusco: 'No se pudo buscar. Revisa tu conexión y vuelve a intentar.',
   },
   noSeGuardo: 'No se pudo guardar. Revisa tu conexión y vuelve a intentar.',
+  sinConexion: 'Sin conexión',
   privacidad: {
     titulo: 'Privacidad',
     parrafos: [
@@ -786,6 +840,7 @@ const es = {
 
 export type Textos = typeof es
 
+// El español o el inglés, según el idioma de la app
 export function useTextos(): Textos {
-  return es
+  return useIdioma() === 'en' ? en : es
 }
