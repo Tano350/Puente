@@ -558,6 +558,7 @@ export const en: Textos = {
     tuTarjeta: 'Your card',
     idioma: 'Language',
     idiomaCambiado: { es: 'Puente quedó en español.', en: 'Puente is now in English.' },
+    modoOscuro: 'Dark mode',
     necesitaConexion: 'You need a connection to change your profile.',
   },
   fechas: {

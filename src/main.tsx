@@ -11,6 +11,8 @@ import '@fontsource/barlow-semi-condensed/latin-700.css'
 import '@fontsource/barlow-semi-condensed/latin-ext-700.css'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import './estilos/base.css'
+// El modo oscuro o claro de este dispositivo (index.html ya lo puso antes de dibujar)
+import './datos/tema.ts'
 import { consultas } from './datos/consultas.ts'
 import { SesionProvider } from './datos/sesion.tsx'
 import { alRestaurar, guardadoEnDispositivo } from './datos/sinSenal.ts'

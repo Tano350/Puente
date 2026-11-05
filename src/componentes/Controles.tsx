@@ -160,6 +160,18 @@ export function Interruptor({ etiqueta, activo, onCambio, ultimo = false }: { et
   )
 }
 
+// La misma fila de un Grupo, con un interruptor en vez de la flecha: toda la fila lo cambia
+export function FilaInterruptor({ etiqueta, activo, onCambio }: { etiqueta: string; activo: boolean; onCambio: (activo: boolean) => void }) {
+  return (
+    <button type="button" role="switch" aria-checked={activo} className={estilos.fila} onClick={() => onCambio(!activo)}>
+      <span className={estilos.filaEtiqueta}>{etiqueta}</span>
+      <span className={estilos.pista} data-activo={activo}>
+        <span className={estilos.perilla} />
+      </span>
+    </button>
+  )
+}
+
 export function Grupo({ children, arriba = 20 }: { children: ReactNode; arriba?: number }) {
   return (
     <div className={estilos.grupo} style={{ marginTop: arriba }}>

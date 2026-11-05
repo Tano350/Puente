@@ -85,8 +85,6 @@
   cursor: pointer;
 }
 
-@media (prefers-color-scheme: light) {
-  .google {
-    border-color: #dadce0;
-  }
+:global(:root[data-tema='claro']) .google {
+  border-color: #dadce0;
 }

@@ -40,6 +40,33 @@ test.describe('Tu perfil', () => {
     await expect(page.getByRole('button', { name: new RegExp(`^${es.fechas.titulo}`) })).toContainText('5 ene – 28 ene')
   })
 
+  test('el modo oscuro va por defecto y se cambia con su interruptor', async ({ page }) => {
+    const raiz = page.locator('html')
+    const fondo = page.locator('body')
+    // Aunque el dispositivo esté en claro, Puente parte en oscuro
+    await page.emulateMedia({ colorScheme: 'light' })
+    await abrir(page, LISTA)
+    await expect(fondo).toHaveCSS('background-color', 'rgb(30, 36, 44)')
+    await irAlPerfil(page)
+    const interruptor = page.getByRole('switch', { name: p.modoOscuro })
+    await expect(interruptor).toHaveAttribute('aria-checked', 'true')
+    await interruptor.click()
+    await expect(interruptor).toHaveAttribute('aria-checked', 'false')
+    await expect(raiz).toHaveAttribute('data-tema', 'claro')
+    await expect(fondo).toHaveCSS('background-color', 'rgb(238, 241, 244)')
+    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#EEF1F4')
+    // Este dispositivo lo recuerda: al volver a abrir Puente sigue en claro, aunque el dispositivo pase a oscuro
+    await page.emulateMedia({ colorScheme: 'dark' })
+    await abrir(page, LISTA)
+    await expect(raiz).toHaveAttribute('data-tema', 'claro')
+    await expect(fondo).toHaveCSS('background-color', 'rgb(238, 241, 244)')
+    await irAlPerfil(page)
+    await page.getByRole('switch', { name: p.modoOscuro }).click()
+    await expect(raiz).toHaveAttribute('data-tema', 'oscuro')
+    await expect(fondo).toHaveCSS('background-color', 'rgb(30, 36, 44)')
+    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#1E242C')
+  })
+
   test('quien administra ve Invitados y puede abrirlos', async ({ page }) => {
     await abrir(page, LISTA)
     await irAlPerfil(page)

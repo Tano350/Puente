@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router'
-import { Atras, Aviso, Bajada, BotonBorde, BotonPrincipal, Fila, Grupo, Hoja, Pie, Titulo, TituloHoja } from '../../componentes/Controles.tsx'
+import { Atras, Aviso, Bajada, BotonBorde, BotonPrincipal, Fila, FilaInterruptor, Grupo, Hoja, Pie, Titulo, TituloHoja } from '../../componentes/Controles.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
 import { SinConexion } from '../../componentes/SinConexion.tsx'
 import { DetallePersona, Tarjeta } from '../../componentes/Tarjeta.tsx'
@@ -14,6 +14,7 @@ import { rangoCorto } from '../../datos/fechas.ts'
 import { useIdioma, type Idioma } from '../../datos/idioma.ts'
 import { useSesion, type Persona } from '../../datos/sesion.tsx'
 import { useCuantoSinSubir } from '../../datos/sinSenal.ts'
+import { cambiarTema, useTema } from '../../datos/tema.ts'
 import { useTextos } from '../../textos.ts'
 import {
   borradorPerfil,
@@ -261,6 +262,7 @@ export function TuPerfil() {
   const esComputador = useEsComputador()
   const dispositivo = useDispositivo()
   const idioma = useIdioma()
+  const tema = useTema()
   const hayConexion = useConectado()
   const { data: personas = [] } = usePersonas()
   const aviso = useAviso()
@@ -296,7 +298,7 @@ export function TuPerfil() {
     if (texto) aviso.mostrar(texto)
   }
 
-  // Cambiar el perfil necesita conexión; el idioma y la instalación no
+  // Cambiar el perfil necesita conexión; el idioma, el modo oscuro y la instalación no
   const abrir = (ajuste: Abierto) => (hayConexion ? setAbierto(ajuste) : aviso.mostrar(t.necesitaConexion))
   const elegir = (nuevo: Idioma) => {
     const texto = elegirIdioma(nuevo, idioma, sesion.actualizar, t.idiomaCambiado)
@@ -308,6 +310,8 @@ export function TuPerfil() {
     <>
       <Fila etiqueta={textos.fechas.titulo} valor={persona.llega && persona.vuelve ? rangoCorto(persona.llega, persona.vuelve) : t.falta} onClick={() => abrir('fechas')} />
       <Fila etiqueta={t.idioma} valor={nombreDelIdioma(idioma)} onClick={() => setEligiendoIdioma((abierta) => !abierta)} />
+      {/* Solo en este dispositivo, como el teléfono: se puede querer claro en uno y oscuro en otro */}
+      <FilaInterruptor etiqueta={t.modoOscuro} activo={tema === 'oscuro'} onCambio={(oscuro) => cambiarTema(oscuro ? 'oscuro' : 'claro')} />
       <Fila etiqueta={textos.avisos.titulo} valor={dispositivo.avisos ? t.activados : t.apagados} onClick={() => abrir('avisos')} />
       {!dispositivo.instalada && <Fila etiqueta={textos.primeraVez.tareas.instalar} onClick={() => setAbierto('instalar')} />}
       {persona.administra && <Fila etiqueta={t.invitados} valor={t.deTotal(entraron, activos.length)} onClick={() => (hayConexion ? navigate('/perfil/invitados') : aviso.mostrar(t.necesitaConexion))} />}

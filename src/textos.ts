@@ -570,6 +570,7 @@ export const es = {
     idioma: 'Idioma',
     // El aviso al elegir: queda en el idioma que elegiste
     idiomaCambiado: { es: 'Puente quedó en español.', en: 'Puente is now in English.' },
+    modoOscuro: 'Modo oscuro',
     necesitaConexion: 'Necesitas conexión para cambiar tu perfil.',
   },
   fechas: {

@@ -1,4 +1,5 @@
-/* Colores del lienzo de diseño. El oscuro es el principal; el claro sigue al dispositivo. */
+/* Colores del lienzo de diseño. El oscuro va por defecto; el claro se elige en Tu perfil (src/datos/tema.ts),
+   sin importar cómo esté el dispositivo. */
 :root {
   color-scheme: dark;
   --fondo: #1e242c;
@@ -32,33 +33,31 @@
   --letra-titulo: 'Barlow Semi Condensed', 'Arial Narrow', sans-serif;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color-scheme: light;
-    --fondo: #eef1f4;
-    --agujero: #dce2e8;
-    --tinta: #1e242c;
-    --sec: #56606b;
-    --apagado: #b7c0c9;
-    --interruptor: #9aa5b1;
-    --acento: #1a6db8;
-    --sobre: #ffffff;
-    --ahora: #1a6db8;
-    --panel: #ffffff;
-    --borde: #d5dce3;
-    --regla: #aeb8c3;
-    --trazo: #c2cbd5;
-    --sec-tarjeta: #333b45;
-    --barra-fondo: #ffffff;
-    --barra-texto: #56606b;
-    --barra-activo: #1a6db8;
-    --activo-fondo: #eef1f4;
-    --en-contra: #c2410c;
-    --a-favor: #0f7b5a;
-    --error: #b42318;
-    --sobre-error: #ffffff;
-    --sombra: rgba(30, 36, 44, 0.18);
-  }
+:root[data-tema='claro'] {
+  color-scheme: light;
+  --fondo: #eef1f4;
+  --agujero: #dce2e8;
+  --tinta: #1e242c;
+  --sec: #56606b;
+  --apagado: #b7c0c9;
+  --interruptor: #9aa5b1;
+  --acento: #1a6db8;
+  --sobre: #ffffff;
+  --ahora: #1a6db8;
+  --panel: #ffffff;
+  --borde: #d5dce3;
+  --regla: #aeb8c3;
+  --trazo: #c2cbd5;
+  --sec-tarjeta: #333b45;
+  --barra-fondo: #ffffff;
+  --barra-texto: #56606b;
+  --barra-activo: #1a6db8;
+  --activo-fondo: #eef1f4;
+  --en-contra: #c2410c;
+  --a-favor: #0f7b5a;
+  --error: #b42318;
+  --sobre-error: #ffffff;
+  --sombra: rgba(30, 36, 44, 0.18);
 }
 
 *,
