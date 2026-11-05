@@ -23,7 +23,7 @@ test.describe('Tu perfil', () => {
     await page.getByRole('textbox', { name: p.emprendimiento }).first().fill('Agua Limpia')
     await page.getByRole('textbox', { name: p.objetivos }).fill('Conocer inversionistas.')
     await page.getByRole('button', { name: es.guardar }).click()
-    await expect(page.getByRole('status')).toContainText(p.guardado)
+    await expect(page.getByRole('status').filter({ hasText: p.guardado })).toBeVisible()
     // Al abrir de nuevo el perfil, quedó lo que escribí
     await page.getByRole('button', { name: p.editarCorto, exact: true }).click()
     await expect(page.getByRole('textbox', { name: p.emprendimiento }).first()).toHaveValue('Agua Limpia')
@@ -36,7 +36,7 @@ test.describe('Tu perfil', () => {
     await page.getByRole('button', { name: new RegExp(`^${es.fechas.titulo}`) }).click()
     await page.getByLabel(es.fechas.vuelves).fill('2027-01-28')
     await page.getByRole('button', { name: es.guardar }).click()
-    await expect(page.getByRole('status')).toContainText(es.fechas.guardado)
+    await expect(page.getByRole('status').filter({ hasText: es.fechas.guardado })).toBeVisible()
     await expect(page.getByRole('button', { name: new RegExp(`^${es.fechas.titulo}`) })).toContainText('5 ene – 28 ene')
   })
 

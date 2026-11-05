@@ -61,8 +61,8 @@ test.describe('Agenda', () => {
     const d = detalle(page)
     await expect(d.getByRole('heading', { name: 'Charla en Stripe' })).toBeVisible()
     await d.getByRole('button', { name: ev.tomarCupo }).click()
-    const aviso = page.getByRole('status')
-    await expect(aviso).toContainText(ev.tomaste)
+    const aviso = page.getByRole('status').filter({ hasText: ev.tomaste })
+    await expect(aviso).toBeVisible()
     await expect(d.getByText(ev.tienesCupo)).toBeVisible()
     await aviso.getByRole('button', { name: es.deshacer }).click()
     await expect(d.getByRole('button', { name: ev.tomarCupo })).toBeVisible()
@@ -77,7 +77,7 @@ test.describe('Agenda', () => {
     const d = detalle(page)
     await expect(d.getByText(ev.llenoEspera(2))).toBeVisible()
     await d.getByRole('button', { name: ev.anotarme }).click()
-    await expect(page.getByRole('status')).toContainText(ev.quedaste(3))
+    await expect(page.getByRole('status').filter({ hasText: ev.quedaste(3) })).toBeVisible()
     await expect(d.getByText(ev.estasEnLista(3))).toBeVisible()
   })
 
@@ -93,11 +93,17 @@ test.describe('Agenda', () => {
     await panel.getByRole('button', { name: a.crear.agregaLugar }).click()
     await page.getByRole('dialog', { name: a.crear.lugar }).getByLabel(a.crear.nombreLugar).fill('Oficina de prueba')
     await page.getByRole('dialog', { name: a.crear.lugar }).getByRole('button', { name: a.crear.listo }).click()
-    await panel.getByRole('radio', { name: a.crear.modos.con_cupo }).check({ force: true })
+    // Con la máquina cargada, la hoja del lugar tarda en cerrarse y devuelve el foco: se espera antes de seguir
+    await expect(page.getByRole('dialog', { name: a.crear.lugar })).toBeHidden()
+    const conCupo = panel.getByRole('radio', { name: a.crear.modos.con_cupo })
+    await expect(async () => {
+      await conCupo.check({ force: true })
+      await expect(conCupo).toBeChecked({ timeout: 1000 })
+    }).toPass()
     await panel.getByRole('button', { name: a.crear.crearEvento }).click()
 
     // Queda abierto el evento nuevo, con el aviso
-    await expect(page.getByRole('status')).toContainText(a.vista.creaste('Visita de prueba'))
+    await expect(page.getByRole('status').filter({ hasText: a.vista.creaste('Visita de prueba') })).toBeVisible()
     await expect(detalle(page).getByRole('heading', { name: 'Visita de prueba' })).toBeVisible()
     await expect(detalle(page).getByText(ev.organizasTu)).toBeVisible()
 
@@ -105,7 +111,7 @@ test.describe('Agenda', () => {
     await detalle(page).getByRole('button', { name: a.editar.editar }).click()
     await detalle(page).getByLabel(a.crear.nombreEvento).fill('Visita cambiada')
     await detalle(page).getByRole('button', { name: a.editar.guardar }).click()
-    await expect(page.getByRole('status')).toContainText(a.editar.guardaste)
+    await expect(page.getByRole('status').filter({ hasText: a.editar.guardaste })).toBeVisible()
     await expect(detalle(page).getByRole('heading', { name: 'Visita cambiada' })).toBeVisible()
 
     // Cancelarlo y deshacer
@@ -114,8 +120,8 @@ test.describe('Agenda', () => {
     const pregunta = page.getByRole('alertdialog')
     await expect(pregunta).toContainText(a.editar.cancelarPregunta('Visita cambiada'))
     await pregunta.getByRole('button', { name: a.editar.cancelarEvento }).click()
-    const aviso = page.getByRole('status')
-    await expect(aviso).toContainText(a.editar.cancelaste('Visita cambiada'))
+    const aviso = page.getByRole('status').filter({ hasText: a.editar.cancelaste('Visita cambiada') })
+    await expect(aviso).toBeVisible()
     await aviso.getByRole('button', { name: es.deshacer }).click()
     await expect(detalle(page).getByRole('heading', { name: 'Visita cambiada' })).toBeVisible()
   })

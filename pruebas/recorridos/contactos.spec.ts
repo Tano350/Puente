@@ -65,7 +65,7 @@ test.describe('Contactos', () => {
     await d.getByRole('group', { name: c.nuevo.canal }).getByRole('button', { name: c.canales.correo }).click()
     await d.getByLabel(c.canales.correo, { exact: true }).last().fill('prueba@example.com')
     await d.getByRole('button', { name: c.nuevo.agregar }).click()
-    await expect(page.getByRole('status')).toContainText(c.lista.agregaste('Persona de Prueba'))
+    await expect(page.getByRole('status').filter({ hasText: c.lista.agregaste('Persona de Prueba') })).toBeVisible()
     await expect(fila(page, 'Persona de Prueba')).toBeVisible()
   })
 
@@ -74,7 +74,7 @@ test.describe('Contactos', () => {
     await fila(page, 'Rodrigo Pérez').click()
     const d = detalle(page)
     await d.getByRole('button', { name: c.detalle.marcarRespondio }).click()
-    await expect(page.getByRole('status')).toContainText(c.paso('Rodrigo', c.etapas.respondio))
+    await expect(page.getByRole('status').filter({ hasText: c.paso('Rodrigo', c.etapas.respondio) })).toBeVisible()
     await expect(d.getByRole('group', { name: c.detalle.estado }).getByRole('button', { name: c.etapas.respondio })).toHaveAttribute('aria-current', 'step')
     // Ahora el paso siguiente es agendar la reunión
     await expect(d.getByRole('button', { name: c.detalle.agendarReunion })).toBeVisible()
@@ -87,7 +87,7 @@ test.describe('Contactos', () => {
     await d.getByRole('button', { name: c.detalle.agregarNota }).click()
     await d.getByLabel(c.detalle.notaNueva).fill('Quedamos en escribirle el lunes.')
     await d.getByRole('button', { name: c.detalle.guardarNota }).click()
-    await expect(page.getByRole('status')).toContainText(c.detalle.agregasteNota)
+    await expect(page.getByRole('status').filter({ hasText: c.detalle.agregasteNota })).toBeVisible()
     await expect(d.getByText('Quedamos en escribirle el lunes.')).toBeVisible()
   })
 
@@ -103,7 +103,7 @@ test.describe('Contactos', () => {
     await nuevo.getByLabel(es.agenda.crear.empieza).fill('11:00')
     await nuevo.getByLabel(es.agenda.crear.termina).fill('12:00')
     await nuevo.getByRole('button', { name: es.agenda.crear.crearEvento }).click()
-    await expect(page.getByRole('status')).toContainText(es.agenda.vista.creaste(es.agenda.crear.reunionCon('Felipe Araya')))
+    await expect(page.getByRole('status').filter({ hasText: es.agenda.vista.creaste(es.agenda.crear.reunionCon('Felipe Araya')) })).toBeVisible()
     // El contacto quedó con la reunión agendada
     await page.getByRole('navigation', { name: es.navegacion }).getByRole('link', { name: es.secciones.contactos }).click()
     await fila(page, 'Felipe Araya').click()

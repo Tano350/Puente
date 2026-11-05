@@ -37,7 +37,7 @@ test.describe('Hoy durante el viaje', () => {
   test('sumarse a un evento del grupo desde Hoy', async ({ page }) => {
     await abrir(page, LISTA)
     await page.getByRole('button', { name: v.voyA('Charla en Stripe') }).click()
-    await expect(page.getByRole('status')).toContainText(v.vasA('Charla en Stripe'))
+    await expect(page.getByRole('status').filter({ hasText: v.vasA('Charla en Stripe') })).toBeVisible()
     await expect(page.getByRole('region', { name: v.tuDia }).getByRole('button', { name: /Charla en Stripe/ })).toBeVisible()
   })
 })

@@ -161,12 +161,13 @@ export async function noIr(evento: string): Promise<void> {
 }
 
 // Quien organiza suma o saca gente a mano
-export async function sumarAEvento(evento: string, persona: string): Promise<void> {
+// Con { avisar: false } la persona no recibe "te sumó" (para devolverla tras sacarla, cuando nunca supo que la sacaron)
+export async function sumarAEvento(evento: string, persona: string, opciones?: { avisar?: boolean }): Promise<void> {
   if (import.meta.env.DEV && modoMaqueta) {
     const datos = datosDeMaqueta()
     datos.asistentes = [...datos.asistentes.filter((a) => !(a.evento === evento && a.persona === persona)), { evento, persona, estado: 'va', desde: ahora() }]
   } else {
-    const { error } = await supabase.rpc('sumar_a_evento', { evento, persona })
+    const { error } = await supabase.rpc('sumar_a_evento', opciones?.avisar === false ? { evento, persona, avisar: false } : { evento, persona })
     if (error) throw error
   }
   await recargar('asistentes')

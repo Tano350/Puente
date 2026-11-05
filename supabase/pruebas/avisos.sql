@@ -30,6 +30,7 @@ declare
   e8 uuid;
   e9 uuid;
   e10 uuid;
+  e11 uuid;
   k1 uuid;
   k2 uuid;
   k3 uuid;
@@ -301,6 +302,41 @@ begin
   execute 'reset role';
   select count(*) into n from public.avisos v where v.evento = e10 and v.tipo = 'sumado';
   if n <> 0 then raise exception 'Se avisó que sumaron a alguien a un evento cancelado'; end if;
+
+  -- "Deshacer" después de sacar a alguien lo devuelve sin avisarle; sumar sin ese parámetro (o con true) sí avisa
+  execute como_usuario using ua;
+  execute 'set local role authenticated';
+  insert into public.eventos (titulo, inicio, fin, modo, organizador)
+  values ('Cerrado con deshacer', '2030-01-18 18:00Z', '2030-01-18 19:00Z', 'cerrado', a) returning id into e11;
+  perform public.sumar_a_evento(e11, b);
+  execute 'reset role';
+  update public.avisos set enviado_en = now() where evento = e11 and persona = b and tipo = 'sumado';
+  execute como_usuario using ua;
+  execute 'set local role authenticated';
+  perform public.sacar_de_evento(e11, b);
+  perform public.sumar_a_evento(e11, b, avisar => false);
+  execute 'reset role';
+  select count(*) into n from public.avisos v where v.evento = e11 and v.persona = b and v.tipo = 'sumado';
+  if n <> 1 then raise exception 'Deshacer sacar a B le dejó % avisos de "te sumó" (esperaba solo el primero, ya enviado)', n; end if;
+  if not exists (select 1 from public.asistentes s where s.evento = e11 and s.persona = b and s.estado = 'va') then
+    raise exception 'Deshacer sacar a B no lo devolvió al evento';
+  end if;
+  -- La pausa fue solo de esa llamada: sumarlo de nuevo sin el parámetro avisa, y con true también
+  execute como_usuario using ua;
+  execute 'set local role authenticated';
+  perform public.sacar_de_evento(e11, b);
+  perform public.sumar_a_evento(e11, b);
+  execute 'reset role';
+  select count(*) into n from public.avisos v where v.evento = e11 and v.persona = b and v.tipo = 'sumado';
+  if n <> 2 then raise exception 'Sumar a B sin el parámetro dejó % avisos de "te sumó" (esperaba 2)', n; end if;
+  update public.avisos set enviado_en = now() where evento = e11 and persona = b and tipo = 'sumado';
+  execute como_usuario using ua;
+  execute 'set local role authenticated';
+  perform public.sacar_de_evento(e11, b);
+  perform public.sumar_a_evento(e11, b, true);
+  execute 'reset role';
+  select count(*) into n from public.avisos v where v.evento = e11 and v.persona = b and v.tipo = 'sumado';
+  if n <> 3 then raise exception 'Sumar a B con avisar => true dejó % avisos de "te sumó" (esperaba 3)', n; end if;
 
   -- Nunca a quien fue sacada ni a quien no tiene dispositivos
   select count(*) into n from public.avisos v where v.persona in (e, g);

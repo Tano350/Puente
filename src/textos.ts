@@ -827,6 +827,28 @@ export const es = {
   },
   noSeGuardo: 'No se pudo guardar. Revisa tu conexión y vuelve a intentar.',
   sinConexion: 'Sin conexión',
+  // Lo escrito sin señal que la base rechazó al subir (por ejemplo, borraron el contacto)
+  rechazos: {
+    uno: {
+      gasto: (nombre: string | null) => (nombre ? `No se pudo subir el gasto «${nombre}». Vuelve a anotarlo.` : 'No se pudo subir un gasto que anotaste sin señal. Vuelve a anotarlo.'),
+      boleta: (nombre: string | null) => (nombre ? `No se pudo subir la foto de la boleta de «${nombre}». Vuelve a subirla.` : 'No se pudo subir la foto de una boleta. Vuelve a subirla.'),
+      rendicion: (nombre: string | null) => (nombre ? `No se pudo guardar tu rendición de «${nombre}». Vuelve a marcarla.` : 'No se pudo guardar lo que marcaste para rendir. Vuelve a marcarlo.'),
+      nota: (nombre: string | null) => (nombre ? `No se pudo subir tu nota sobre ${nombre}. Vuelve a escribirla.` : 'No se pudo subir una nota que escribiste sin señal. Vuelve a escribirla.'),
+      reunion: (nombre: string | null) => (nombre ? `No se pudo subir tu nota de «${nombre}». Vuelve a escribirla.` : 'No se pudo subir una nota de reunión. Vuelve a escribirla.'),
+      otro: () => 'No se pudo subir algo que anotaste sin señal. Vuelve a anotarlo.',
+    },
+    cosa: {
+      gasto: (nombre: string | null) => (nombre ? `el gasto «${nombre}»` : 'un gasto'),
+      boleta: (nombre: string | null) => (nombre ? `la foto de la boleta de «${nombre}»` : 'la foto de una boleta'),
+      rendicion: (nombre: string | null) => (nombre ? `tu rendición de «${nombre}»` : 'una rendición'),
+      nota: (nombre: string | null) => (nombre ? `tu nota sobre ${nombre}` : 'una nota'),
+      reunion: (nombre: string | null) => (nombre ? `tu nota de «${nombre}»` : 'una nota de reunión'),
+      otro: () => 'algo más',
+    },
+    varios: (cuantas: number, cosas: string) => `No se pudieron subir ${cuantas} cosas: ${cosas}. Vuelve a anotarlas.`,
+    mas: (cuantas: number) => `${cuantas} más`,
+    entendido: 'Entendido',
+  },
   privacidad: {
     titulo: 'Privacidad',
     parrafos: [

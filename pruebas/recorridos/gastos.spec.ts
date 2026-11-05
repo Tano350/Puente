@@ -29,7 +29,7 @@ test.describe('Gastos', () => {
     await p.getByRole('textbox', { name: an.queFue }).fill('Taxi de prueba')
     await p.getByRole('textbox', { name: an.monto }).fill('30')
     await soloEntre(p, ['Tú', 'Andrés', 'Benjamín'])
-    await expect(p.getByRole('status')).toContainText(an.cadaUna(3, 'US$ 10,00'))
+    await expect(p.getByRole('status').filter({ hasText: an.cadaUna(3, 'US$ 10,00') })).toBeVisible()
     await p.getByRole('button', { name: an.anotar }).click()
     await expect(page.getByRole('status').filter({ hasText: g.lista.anotaste('Taxi de prueba') })).toBeVisible()
     // Pagaste los 30 y prestaste los 20 de los otros dos

@@ -373,6 +373,23 @@
   }
 }
 
+/* Arriba, para el aviso que se queda hasta que lo cierran: el texto puede ocupar varias líneas */
+.avisoArriba {
+  top: calc(12px + env(safe-area-inset-top));
+  bottom: auto;
+  z-index: 25;
+}
+
+@media (min-width: 1024px) {
+  .avisoArriba {
+    top: 22px;
+    bottom: auto;
+    width: max-content;
+    max-width: min(640px, 100vw - 232px - 48px);
+    white-space: normal;
+  }
+}
+
 .avisoTexto {
   padding: 8px 0;
 }

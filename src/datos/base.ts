@@ -974,7 +974,7 @@ export type Database = {
       }
       sincronizar_calendarios: { Args: { activa: boolean }; Returns: undefined }
       sumar_a_evento: {
-        Args: { evento: string; persona: string }
+        Args: { avisar?: boolean; evento: string; persona: string }
         Returns: undefined
       }
       veo_gasto: { Args: { gasto: string }; Returns: boolean }

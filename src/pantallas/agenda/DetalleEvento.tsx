@@ -251,7 +251,7 @@ function Boleto({ evento, computador, atras, conNota, onCerrar, onEditar }: Prop
   const sacar = (id: string) =>
     void hacer(async () => {
       await sacarDeEvento(evento.id, id)
-      aviso.mostrar(t.sacaste(nombreDe(id)), conDeshacer(() => sumarAEvento(evento.id, id)))
+      aviso.mostrar(t.sacaste(nombreDe(id)), conDeshacer(() => sumarAEvento(evento.id, id, { avisar: false })))
     })
 
   const abrirNota = () => setBorrador({ aprendi: miNota?.aprendi ?? '', sigue: miNota?.sigue ?? '' })

@@ -3,10 +3,12 @@ import { dehydrate, MutationObserver, type DehydrateOptions, type Mutation } fro
 import type { PersistedClient, PersistQueryClientOptions } from '@tanstack/react-query-persist-client'
 import { clear, createStore, del, get, set, type UseStore } from 'idb-keyval'
 import { useSyncExternalStore } from 'react'
+import { borrarBoletasDelDispositivo } from './boletasEnDispositivo.ts'
 import { estaConectado } from './conexion.ts'
 import { consultas, type Persona } from './consultas.ts'
 import { aplicarPendientes, esErrorDeRed, type Sobre } from './enEspera.ts'
 import { modoMaqueta, personaDeMaqueta } from './maqueta.ts'
+import { conRechazo, describirRechazo, rechazosValidos, type Nombres, type Rechazo } from './rechazos.ts'
 import { supabase } from './supabase.ts'
 
 // Sin señal: lo que se ve queda guardado en el dispositivo (IndexedDB) y lo que se escribe sin conexión (notas,
@@ -99,8 +101,22 @@ export type Escritura<V, R> = {
   recargar: string[]
 }
 
-type EscrituraGuardada = { sobre: Record<string, Sobre>; id: (variables: unknown) => string }
+type EscrituraGuardada = { sobre: Record<string, Sobre>; id: (variables: unknown) => string; recargar: string[] }
 const escrituras = new Map<string, EscrituraGuardada>()
+
+// Solo en desarrollo, con la maqueta: window.puenteRechazar(true) hace que lo que sube falle como si la base lo
+// rechazara (para revisar el aviso); puenteRechazar(false) lo vuelve a la normalidad
+let maquetaRechaza = false
+declare global {
+  interface Window {
+    puenteRechazar?: (si?: boolean) => void
+  }
+}
+if (import.meta.env.DEV && modoMaqueta) {
+  window.puenteRechazar = (si = true) => {
+    maquetaRechaza = si
+  }
+}
 
 type Mutacion = Mutation<unknown, Error, unknown, unknown>
 function nombreDe(mutacion: Mutacion): string {
@@ -110,7 +126,13 @@ function nombreDe(mutacion: Mutacion): string {
 export function registrarEscritura<V, R>(nombre: string, escritura: Escritura<V, R>): void {
   escrituras.set(nombre, escritura as unknown as EscrituraGuardada)
   consultas.setMutationDefaults<R, Error, V>([nombre], {
-    mutationFn: escritura.hacer,
+    mutationFn: (variables) => {
+      // Solo en desarrollo: window.puenteRechazar(true) hace que la maqueta rechace lo que sube, como la base
+      if (import.meta.env.DEV && modoMaqueta && maquetaRechaza) {
+        return Promise.reject(Object.assign(new Error('Rechazado en la maqueta'), { code: 'P0001' }))
+      }
+      return escritura.hacer(variables)
+    },
     scope: { id: 'sin-senal' },
     networkMode: 'online',
     // Sin señal o con señal mala se reintenta (cada vez más espaciado, hasta un minuto); si la base lo rechaza, no
@@ -264,6 +286,7 @@ function avisarSinSubir() {
   const ids: string[] = []
   for (const mutacion of enEsperaAhora()) {
     if (mutacion.state.isPaused || mutacion.state.failureCount > 0) esperaron.add(mutacion)
+    if (esperaron.has(mutacion)) recordarQueEra(mutacion)
     const escritura = escrituras.get(nombreDe(mutacion))
     if (escritura && esperaron.has(mutacion)) ids.push(escritura.id(mutacion.state.variables))
   }
@@ -316,14 +339,122 @@ export function useCuantoSinSubir(): CuantoSinSubir {
   return cuantoSinSubir()
 }
 
-// Al salir se borra lo guardado en este dispositivo (datos, lo que esperaba y las fotos), para que otra cuenta no lo vea
+// ---------- Rechazos ----------
+// Si algo que tuvo que esperar llega a la base y la base lo rechaza (no es la red: borraron el contacto, sacaron a la
+// persona, falló una validación…), sale de las listas. Para que no desaparezca en silencio queda anotado (en memoria
+// y en el dispositivo, así el aviso sigue aunque se cierre la app) hasta que se cierra el aviso.
+let rechazos: Rechazo[] = []
+const oyentesRechazos = new Set<() => void>()
+
+function ponerRechazos(lista: Rechazo[]) {
+  rechazos = lista
+  for (const oyente of oyentesRechazos) oyente()
+}
+
+async function guardarRechazos(): Promise<void> {
+  const de = dueno()
+  if (!de || guardarApagado) return
+  try {
+    if (rechazos.length > 0) await set(`rechazos.${de}`, rechazos, elAlmacen())
+    else await del(`rechazos.${de}`, elAlmacen())
+  } catch {
+    // Sin almacenamiento el aviso solo no sobrevive a cerrar la app
+  }
+}
+
+// Los que quedaron de antes (se leen una vez, al abrir la app)
+const rechazosCargados = (async () => {
+  const de = dueno()
+  if (!de) return
+  try {
+    const guardados = rechazosValidos(await get<unknown>(`rechazos.${de}`, elAlmacen()))
+    if (guardados.length > 0) ponerRechazos(rechazos.reduce(conRechazo, guardados))
+  } catch {
+    // Sin almacenamiento no había nada guardado
+  }
+})()
+
+// El nombre de lo que no subió, buscado en lo que ya está en el dispositivo
+function nombreEn(clave: string, campo: 'titulo' | 'nombre', id: string): string | null {
+  const fila = consultas.getQueryData<Record<string, unknown>[]>([clave])?.find((f) => f.id === id)
+  const valor = fila?.[campo]
+  return typeof valor === 'string' && valor !== '' ? valor : null
+}
+const nombres: Nombres = {
+  // Si el gasto tampoco subió, ya puede no estar en la lista: se busca también en lo rechazado
+  gasto: (id) => nombreEn('gastos', 'titulo', id) ?? rechazos.find((r) => r.tipo === 'gasto' && r.clave === id)?.nombre ?? null,
+  contacto: (id) => nombreEn('contactos', 'nombre', id),
+  evento: (id) => nombreEn('eventos', 'titulo', id),
+}
+
+// Qué era lo que espera, anotado cuando empieza a esperar (en "meta", que se guarda con la escritura): al subir, el
+// contacto o el evento puede ya no estar en las consultas (por ejemplo, porque lo borraron)
+function queEra(mutacion: Mutacion): Rechazo | null {
+  const escritura = escrituras.get(nombreDe(mutacion))
+  if (!escritura) return null
+  const variables = mutacion.state.variables
+  return describirRechazo(nombreDe(mutacion), variables, escritura.id(variables), nombres)
+}
+
+function recordarQueEra(mutacion: Mutacion) {
+  if (mutacion.options.meta?.queEra) return
+  const era = queEra(mutacion)
+  if (!era) return
+  mutacion.options.meta = { ...mutacion.options.meta, queEra: era }
+  void guardarYa()
+}
+
+consultas.getMutationCache().subscribe((evento) => {
+  if (evento.type !== 'updated' || evento.action.type !== 'error') return
+  const mutacion = evento.mutation
+  // Lo que sube al tiro con señal y falla lo avisa la pantalla que lo escribió
+  if (!esperaron.has(mutacion) || esErrorDeRed(evento.action.error)) return
+  const ahora = queEra(mutacion)
+  if (!ahora) return
+  const antes = rechazosValidos([mutacion.options.meta?.queEra])[0]
+  // El nombre de ahora (si cambió) o el de cuando empezó a esperar
+  const rechazo: Rechazo = { ...ahora, nombre: ahora.nombre ?? antes?.nombre ?? null }
+  const nombre = nombreDe(mutacion)
+  const variables = mutacion.state.variables
+  // La foto que no subió no se va a usar: no queda ocupando el dispositivo
+  if (nombre === 'subirBoleta') void soltarBoleta(String((variables as { gasto?: unknown }).gasto))
+  // Al recargar en onSettled todavía figuraba esperando (y se volvía a poner en la lista): ahora ya no
+  for (const clave of escrituras.get(nombre)?.recargar ?? []) void consultas.invalidateQueries({ queryKey: [clave] })
+  void rechazosCargados.then(() => {
+    ponerRechazos(conRechazo(rechazos, rechazo))
+    return guardarRechazos()
+  })
+})
+
+export function useRechazos(): Rechazo[] {
+  return useSyncExternalStore(
+    (oyente) => {
+      oyentesRechazos.add(oyente)
+      return () => {
+        oyentesRechazos.delete(oyente)
+      }
+    },
+    () => rechazos,
+  )
+}
+
+// "Entendido": el aviso se cierra y no vuelve
+export function olvidarRechazos(): void {
+  ponerRechazos([])
+  void guardarRechazos()
+}
+
+// Al salir se borra lo guardado en este dispositivo (datos, lo que esperaba, las fotos y los rechazos), para que otra cuenta no lo vea
 export async function limpiarEsteDispositivo(): Promise<void> {
   guardarApagado = true
   consultas.clear()
   boletasEnMemoria.clear()
+  ponerRechazos([])
   try {
     await clear(elAlmacen())
   } catch {
     // Sin almacenamiento no había nada guardado
   }
+  // Las fotos de boletas que se abrieron con señal (otra base del dispositivo)
+  await borrarBoletasDelDispositivo()
 }

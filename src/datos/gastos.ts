@@ -1,4 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
+import { boletaEnDispositivo, guardarBoletaDeDireccion } from './boletasEnDispositivo.ts'
 import type { Json, Tables } from './base.ts'
 import { consultas } from './consultas.ts'
 import { leerFoto } from './fotos.ts'
@@ -400,36 +402,59 @@ export async function quitarBoleta(gasto: Gasto): Promise<void> {
   await recargar('gastos')
 }
 
-// La foto que todavía espera en el dispositivo, para verla antes de que suba
-async function urlLocal(ruta: string): Promise<string | null> {
+// La foto que ya está en el dispositivo: la que todavía espera subir o una que se abrió antes con señal
+async function fotoLocal(ruta: string): Promise<Blob | null> {
   const guardada = await boletaGuardada(ruta.split('/')[0] ?? '')
-  return guardada?.ruta === ruta ? URL.createObjectURL(guardada.foto) : null
+  if (guardada?.ruta === ruta) return guardada.foto
+  return boletaEnDispositivo(ruta)
 }
 
-// Una dirección para ver la boleta por una hora (el espacio es privado); la que espera se ve desde el dispositivo
+// Una dirección para ver la boleta; la foto que está en el dispositivo se ve de ahí (también sin señal). Con señal
+// y sin copia, usa una dirección firmada (el espacio es privado) y deja la foto guardada para después. Las fotos
+// del dispositivo viajan como Blob en la consulta, y la dirección `blob:` se crea y se libera aquí.
 export function useUrlBoleta(ruta: string | null) {
-  return useQuery({
+  const consulta = useQuery({
     queryKey: ['boleta', ruta],
     enabled: Boolean(ruta),
     staleTime: 50 * 60_000,
-    // Sin señal también busca: la foto puede estar esperando aquí
+    // Puede traer la foto entera (Blob): se suelta de la memoria al rato de dejar de verla (no se guarda en el
+    // dispositivo con las consultas; la foto ya queda aparte, en boletasEnDispositivo.ts)
+    gcTime: 5 * 60_000,
+    // Sin señal también busca: la foto puede estar guardada aquí
     networkMode: 'always',
-    queryFn: async (): Promise<string> => {
-      const local = await urlLocal(ruta ?? '')
+    queryFn: async (): Promise<string | Blob> => {
+      const local = await fotoLocal(ruta ?? '')
       if (local) return local
       if (import.meta.env.DEV && modoMaqueta) return boletaDeMaqueta()
       const { data, error } = await supabase.storage.from('boletas').createSignedUrl(ruta ?? '', 3600)
       if (error) throw error
+      void guardarBoletaDeDireccion(ruta ?? '', data.signedUrl)
       return data.signedUrl
     },
   })
+  const foto = consulta.data instanceof Blob ? consulta.data : null
+  const [conDireccion, setConDireccion] = useState<{ foto: Blob; url: string } | null>(null)
+  useEffect(() => {
+    if (!foto) return
+    const url = URL.createObjectURL(foto)
+    setConDireccion({ foto, url })
+    return () => URL.revokeObjectURL(url)
+  }, [foto])
+  const data = typeof consulta.data === 'string' ? consulta.data : conDireccion?.foto === foto ? conDireccion?.url : undefined
+  return { ...consulta, data }
 }
 
 // Direcciones para bajar varias boletas a la vez (la rendición), en el mismo orden que las rutas
 export async function urlsDeBoletas(rutas: string[]): Promise<string[]> {
   if (!rutas.length) return []
-  // Las que esperan en el dispositivo no se piden a la base
-  const locales = await Promise.all(rutas.map(urlLocal))
+  // Las que ya están en el dispositivo no se piden a la base; su dirección `blob:` se libera al rato
+  const fotos = await Promise.all(rutas.map(fotoLocal))
+  const locales = fotos.map((foto) => {
+    if (!foto) return null
+    const url = URL.createObjectURL(foto)
+    setTimeout(() => URL.revokeObjectURL(url), 5 * 60_000)
+    return url
+  })
   const faltan = rutas.filter((_, i) => !locales[i])
   let firmadas: { path: string | null; signedUrl: string | null }[] = []
   if (import.meta.env.DEV && modoMaqueta) firmadas = faltan.map((ruta) => ({ path: ruta, signedUrl: boletaDeMaqueta() }))

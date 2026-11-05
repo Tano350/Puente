@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigationType } from 'react-router'
 import { sincronizarSuscripcion } from '../datos/dispositivo.ts'
 import { modoMaqueta } from '../datos/maqueta.ts'
 import { useSesion } from '../datos/sesion.tsx'
+import { AvisoRechazos } from './AvisoRechazos.tsx'
 import { BarraLateral } from './BarraLateral.tsx'
 import { BarraSecciones } from './BarraSecciones.tsx'
 import estilos from './Marco.module.css'
@@ -33,6 +34,7 @@ export function Marco() {
         <Outlet />
       </main>
       <BarraSecciones />
+      {personaId && <AvisoRechazos />}
     </div>
   )
 }

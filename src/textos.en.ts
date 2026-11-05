@@ -795,6 +795,27 @@ export const en: Textos = {
   },
   noSeGuardo: 'Couldn’t save. Check your connection and try again.',
   sinConexion: 'Offline',
+  rechazos: {
+    uno: {
+      gasto: (nombre: string | null) => (nombre ? `Couldn’t upload the expense “${nombre}”. Add it again.` : 'Couldn’t upload an expense you added offline. Add it again.'),
+      boleta: (nombre: string | null) => (nombre ? `Couldn’t upload the receipt photo for “${nombre}”. Upload it again.` : 'Couldn’t upload a receipt photo. Upload it again.'),
+      rendicion: (nombre: string | null) => (nombre ? `Couldn’t save your report mark on “${nombre}”. Mark it again.` : 'Couldn’t save what you marked to report. Mark it again.'),
+      nota: (nombre: string | null) => (nombre ? `Couldn’t upload your note about ${nombre}. Write it again.` : 'Couldn’t upload a note you wrote offline. Write it again.'),
+      reunion: (nombre: string | null) => (nombre ? `Couldn’t upload your note on “${nombre}”. Write it again.` : 'Couldn’t upload a meeting note. Write it again.'),
+      otro: () => 'Couldn’t upload something you added offline. Add it again.',
+    },
+    cosa: {
+      gasto: (nombre: string | null) => (nombre ? `the expense “${nombre}”` : 'an expense'),
+      boleta: (nombre: string | null) => (nombre ? `the receipt photo for “${nombre}”` : 'a receipt photo'),
+      rendicion: (nombre: string | null) => (nombre ? `your report mark on “${nombre}”` : 'a report mark'),
+      nota: (nombre: string | null) => (nombre ? `your note about ${nombre}` : 'a note'),
+      reunion: (nombre: string | null) => (nombre ? `your note on “${nombre}”` : 'a meeting note'),
+      otro: () => 'something else',
+    },
+    varios: (cuantas: number, cosas: string) => `Couldn’t upload ${cuantas} things: ${cosas}. Add them again.`,
+    mas: (cuantas: number) => `${cuantas} more`,
+    entendido: 'Got it',
+  },
   privacidad: {
     titulo: 'Privacy',
     parrafos: [

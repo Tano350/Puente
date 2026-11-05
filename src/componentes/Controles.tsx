@@ -220,15 +220,32 @@ export function TituloHoja({ children }: { children: ReactNode }) {
 
 // Aviso abajo, sobre la barra de secciones (o sobre el botón fijo de la pantalla, si tiene uno).
 // En el computador, con un panel encima abierto, se centra en lo que queda a la vista.
-export function Aviso({ texto, onDeshacer, sobrePie = false, conPanel = false }: { texto: string | null; onDeshacer?: () => void; sobrePie?: boolean; conPanel?: boolean }) {
+// Con "accion" lleva otro botón en vez de Deshacer (por ejemplo "Entendido"); "arriba" lo pone arriba, para un aviso
+// que se queda hasta que lo cierran sin tapar los avisos ni los botones de abajo (el texto puede ocupar varias líneas).
+export function Aviso({
+  texto,
+  onDeshacer,
+  accion,
+  sobrePie = false,
+  conPanel = false,
+  arriba = false,
+}: {
+  texto: string | null
+  onDeshacer?: () => void
+  accion?: { texto: string; alHacer: () => void }
+  sobrePie?: boolean
+  conPanel?: boolean
+  arriba?: boolean
+}) {
   const textos = useTextos()
   if (!texto) return null
+  const boton = accion ?? (onDeshacer && { texto: textos.deshacer, alHacer: onDeshacer })
   return (
-    <div role="status" className={`${estilos.aviso} ${sobrePie ? estilos.avisoSobrePie : ''} ${conPanel ? estilos.avisoConPanel : ''}`}>
+    <div role="status" className={`${estilos.aviso} ${sobrePie ? estilos.avisoSobrePie : ''} ${conPanel ? estilos.avisoConPanel : ''} ${arriba ? estilos.avisoArriba : ''}`}>
       <span className={estilos.avisoTexto}>{texto}</span>
-      {onDeshacer && (
-        <button type="button" className={estilos.deshacer} onClick={onDeshacer}>
-          {textos.deshacer}
+      {boton && (
+        <button type="button" className={estilos.deshacer} onClick={boton.alHacer}>
+          {boton.texto}
         </button>
       )}
     </div>
