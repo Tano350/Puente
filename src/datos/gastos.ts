@@ -422,6 +422,24 @@ export async function quitarBoleta(gasto: Gasto): Promise<void> {
   await recargar('gastos')
 }
 
+// Quita la foto y devuelve una copia, para que "Deshacer" la vuelva a subir. Si la foto no se puede leer, no la
+// quita: así quitarla siempre se puede deshacer.
+export async function quitarBoletaConCopia(gasto: Gasto): Promise<Blob> {
+  if (!gasto.boleta) throw new Error('El gasto no tiene foto')
+  const copia = await copiaDeBoleta(gasto.boleta)
+  await quitarBoleta(gasto)
+  return copia
+}
+
+async function copiaDeBoleta(ruta: string): Promise<Blob> {
+  const local = await fotoLocal(ruta)
+  if (local) return local
+  if (import.meta.env.DEV && modoMaqueta) return (await fetch(boletaDeMaqueta())).blob()
+  const { data, error } = await supabase.storage.from('boletas').download(ruta)
+  if (error) throw error
+  return data
+}
+
 // La foto que ya está en el dispositivo: la que todavía espera subir o una que se abrió antes con señal
 async function fotoLocal(ruta: string): Promise<Blob | null> {
   const guardada = await boletaGuardada(ruta.split('/')[0] ?? '')

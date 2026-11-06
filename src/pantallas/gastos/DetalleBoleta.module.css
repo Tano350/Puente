@@ -197,3 +197,48 @@
   font-size: 15px;
   line-height: 22px;
 }
+
+/* ---------- Debajo de la foto: "Quitar foto" y, si no se pudo, por qué ---------- */
+.visor[data-con-pie='true'] .visorFoto {
+  padding-bottom: 12px;
+}
+
+.visorPie {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  padding: 0 20px 16px;
+}
+
+/* Vacía no ocupa lugar */
+.visorNota {
+  max-width: 320px;
+  margin: 0;
+  text-align: center;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.visorQuitar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 14px;
+  border: none;
+  background: transparent;
+  color: #edf0f3;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.visorQuitar[aria-disabled='true'] {
+  cursor: default;
+}
+
+.visorQuitar[data-sin-red='true'] {
+  opacity: 0.45;
+}

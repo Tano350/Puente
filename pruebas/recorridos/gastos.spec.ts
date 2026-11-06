@@ -139,6 +139,22 @@ test.describe('Gastos', () => {
     await expect(p.getByRole('button', { name: g.detalle.verBoleta })).toHaveCount(0)
   })
 
+  test('la foto que puse la quito después desde el visor, y Deshacer la devuelve', async ({ page }) => {
+    await abrir(page, MIEMBRO)
+    await gasto(page, 'Caltrain a San Francisco').click()
+    const p = panel(page, 'Caltrain a San Francisco')
+    await page.locator('input[type="file"]').last().setInputFiles(FOTO)
+    await p.getByRole('button', { name: g.detalle.verBoleta }).click()
+    const visor = page.getByRole('dialog', { name: g.detalle.boletaDe('Caltrain a San Francisco') })
+    await visor.getByRole('button', { name: g.detalle.quitarFoto }).click()
+    // El visor se cierra y el foco queda en el botón, que ahora es el de agregar
+    await expect(visor).toHaveCount(0)
+    await expect(p.getByRole('button', { name: g.detalle.agregarFoto })).toBeFocused()
+    const aviso = page.getByRole('status').filter({ hasText: g.detalle.quitasteFoto })
+    await aviso.getByRole('button', { name: es.deshacer }).click()
+    await expect(p.getByRole('button', { name: g.detalle.verBoleta })).toBeVisible()
+  })
+
   test('la foto que puso otro la puedo ver, pero no quitarla ni cambiarla', async ({ page }) => {
     await abrir(page, MIEMBRO)
     // Diego pagó el supermercado y puso la foto; Tú tienes parte
@@ -150,8 +166,38 @@ test.describe('Gastos', () => {
     const visor = page.getByRole('dialog', { name: g.detalle.boletaDe('Supermercado') })
     await expect(visor.getByRole('img')).toBeVisible()
     await expect(visor.getByRole('button', { name: es.cerrar })).toBeVisible()
+    await expect(visor.getByRole('button', { name: g.detalle.quitarFoto })).toHaveCount(0)
     await expect(page.getByRole('button', { name: an.quitarFoto })).toHaveCount(0)
     await expect(page.getByRole('button', { name: g.detalle.agregarFoto })).toHaveCount(0)
+  })
+
+  test('quien administra quita cualquier foto desde el visor; sin señal no, y el visor dice por qué', async ({ page }) => {
+    await abrir(page, GASTOS)
+    await gasto(page, 'Supermercado').click()
+    const p = panel(page, 'Supermercado')
+    await p.getByRole('button', { name: g.detalle.verBoleta }).click()
+    const visor = page.getByRole('dialog', { name: g.detalle.boletaDe('Supermercado') })
+    const quitar = visor.getByRole('button', { name: g.detalle.quitarFoto })
+    // Tab pasa de "Cerrar" a "Quitar foto" y vuelve, sin salir del visor
+    await expect(visor.getByRole('button', { name: es.cerrar })).toBeFocused()
+    await page.keyboard.press('Tab')
+    await expect(quitar).toBeFocused()
+    await page.keyboard.press('Tab')
+    await expect(visor.getByRole('button', { name: es.cerrar })).toBeFocused()
+    // Sin señal se ve apagado; tocarlo lo explica y la foto sigue
+    await page.evaluate(() => window.puenteSenal?.(false))
+    await expect(quitar).toHaveAttribute('aria-disabled', 'true')
+    await quitar.click({ force: true })
+    await expect(visor.getByText(g.detalle.necesitasConexion)).toBeVisible()
+    await expect(visor.getByRole('img')).toBeVisible()
+    // Al volver la señal, el aviso se va y ya se puede
+    await page.evaluate(() => window.puenteSenal?.(true))
+    await expect(visor.getByText(g.detalle.necesitasConexion)).toHaveCount(0)
+    await quitar.click()
+    await expect(visor).toHaveCount(0)
+    await expect(p.getByRole('button', { name: g.detalle.agregarFoto })).toBeVisible()
+    await page.getByRole('status').filter({ hasText: g.detalle.quitasteFoto }).getByRole('button', { name: es.deshacer }).click()
+    await expect(p.getByRole('button', { name: g.detalle.verBoleta })).toBeVisible()
   })
 
   test('sin señal se edita y se elimina un gasto que todavía no sube', async ({ page }) => {
