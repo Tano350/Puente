@@ -7,8 +7,8 @@ function Nada() {
   return null
 }
 
+// Acerca y Privacidad no están aquí: son páginas fijas (public/acerca.html y public/privacidad.html)
 export const rutas = createBrowserRouter([
-  { path: 'privacidad', HydrateFallback: Nada, lazy: () => import('./pantallas/Privacidad.tsx').then((m) => ({ Component: m.Privacidad })) },
   {
     element: <Puerta />,
     HydrateFallback: Nada,

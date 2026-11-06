@@ -846,16 +846,4 @@ export const en: Textos = {
     mas: (cuantas: number) => `${cuantas} more`,
     entendido: 'Got it',
   },
-  privacidad: {
-    titulo: 'Privacy',
-    parrafos: [
-      'Puente is the app for The Bridge 2027 group. Only invited people can sign in, with their Google account.',
-      'We store your name, email and Google photo; what you write in your profile (major, startup, goals, LinkedIn and dates of your stay); the events, contacts, notes and expenses the group records; and the receipt photos you upload.',
-      'Only people invited to Puente can see all of that. What you mark as personal is visible only to you. We don’t sell or share your data.',
-      'From your Google account we use only your name, email and photo, so you can sign in and the group recognizes you. We don’t read your email or your calendars.',
-      'The data is stored in Supabase and the app is served from Vercel, both in the United States. Trip events are also written to the group’s Google calendar.',
-      'To correct or delete your data, ask the Puente admin.',
-    ],
-    actualizada: 'Updated on November 2, 2026.',
-  },
 }

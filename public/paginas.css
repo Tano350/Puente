@@ -1,0 +1,203 @@
+/* Las páginas públicas fuera de la app (Acerca y Privacidad): HTML fijo, para que se lean sin JavaScript (Google las
+   revisa así para mostrar "Puente" al entrar). Mismos colores y letras que la app: el oscuro va por defecto y el claro
+   sigue lo elegido en Tu perfil. */
+@font-face {
+  font-family: 'Barlow';
+  font-weight: 400;
+  font-display: swap;
+  src: url('/letras/barlow-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Barlow';
+  font-weight: 500;
+  font-display: swap;
+  src: url('/letras/barlow-500.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-weight: 700;
+  font-display: swap;
+  src: url('/letras/barlow-semi-condensed-700.woff2') format('woff2');
+}
+
+:root {
+  color-scheme: dark;
+  --fondo: #1e242c;
+  --agujero: #29313b;
+  --tinta: #edf0f3;
+  --acento: #3fa9f5;
+  --sobre: #1a1c1e;
+  --regla: #4d5866;
+  --sec-tarjeta: #d3dae2;
+  --titulo: 'Barlow Semi Condensed', 'Arial Narrow', sans-serif;
+}
+
+:root[data-tema='claro'] {
+  color-scheme: light;
+  --fondo: #eef1f4;
+  --agujero: #dce2e8;
+  --tinta: #1e242c;
+  --acento: #1a6db8;
+  --sobre: #ffffff;
+  --regla: #aeb8c3;
+  --sec-tarjeta: #333b45;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Barlow', system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 26px;
+  color: var(--tinta);
+  background-color: var(--fondo);
+  background-image:
+    radial-gradient(var(--agujero) 1.1px, transparent 1.3px),
+    radial-gradient(var(--agujero) 1.1px, transparent 1.3px);
+  background-size: 8px 8px;
+  background-position:
+    0 0,
+    4px 4px;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: calc(32px + env(safe-area-inset-top)) 20px calc(48px + env(safe-area-inset-bottom));
+}
+
+a {
+  color: var(--acento);
+  text-underline-offset: 3px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+/* ---------- Arriba: la marca y el paso al inglés ---------- */
+.cabeza {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: var(--tinta);
+  font-family: var(--titulo);
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.marca svg {
+  flex: none;
+}
+
+/* En Acerca, la marca es el título de la página */
+h1.marca {
+  gap: 14px;
+  font-size: 48px;
+}
+
+.idioma {
+  flex: none;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* ---------- Texto ---------- */
+h1,
+.titulo-idioma {
+  margin: 32px 0 0;
+  font-family: var(--titulo);
+  font-weight: 700;
+  font-size: 42px;
+  line-height: 1.05;
+}
+
+h2,
+h3 {
+  margin: 30px 0 0;
+  font-family: var(--titulo);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 30px;
+}
+
+p,
+ul {
+  margin: 12px 0 0;
+}
+
+ul {
+  padding-left: 22px;
+}
+
+li + li {
+  margin-top: 6px;
+}
+
+/* También es el título de la parte en inglés de Acerca (un h2 con la misma cara) */
+.bajada {
+  margin-top: 16px;
+  font-family: 'Barlow', system-ui, sans-serif;
+  font-weight: 400;
+  font-size: 21px;
+  line-height: 28px;
+  color: var(--sec-tarjeta);
+}
+
+.entrar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 320px;
+  height: 50px;
+  margin-top: 28px;
+  border-radius: 6px;
+  background: var(--acento);
+  color: var(--sobre);
+  font-family: var(--titulo);
+  font-weight: 700;
+  font-size: 19px;
+  text-decoration: none;
+}
+
+.enlace {
+  margin-top: 16px;
+}
+
+.fecha {
+  margin-top: 28px;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--sec-tarjeta);
+}
+
+/* ---------- La versión en inglés, debajo ---------- */
+.otro-idioma {
+  margin-top: 56px;
+  padding-top: 8px;
+  border-top: 1px solid var(--regla);
+}
+
+.otro-idioma > .titulo-idioma,
+.otro-idioma > .bajada {
+  margin-top: 32px;
+}

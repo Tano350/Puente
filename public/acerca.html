@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Puente, la app del grupo de The Bridge 2027</title>
+    <meta name="description" content="Con Puente, el grupo de The Bridge 2027 coordina su viaje a Silicon Valley: quién está allá, la agenda, los contactos y los gastos." />
+    <meta name="theme-color" content="#1E242C" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="/paginas.css" />
+    <script>
+      // El modo elegido en Tu perfil (oscuro por defecto), igual que la app
+      try {
+        if (localStorage.getItem('puente.tema') === 'claro') {
+          document.documentElement.dataset.tema = 'claro'
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#EEF1F4')
+        }
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <!-- La página principal de Puente para Google: dice qué hace la app y enlaza la política de privacidad -->
+    <main>
+      <header class="cabeza">
+        <h1 class="marca">
+          <svg width="48" height="42" viewBox="0 0 104 90" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M26 0H78L104 45L78 90H26L0 45ZM52 9A36 36 0 1 0 52 81A36 36 0 1 0 52 9Z" /></svg>
+          Puente
+        </h1>
+        <a class="idioma" href="#english" hreflang="en" lang="en">English</a>
+      </header>
+      <p class="bajada">La app del grupo de The Bridge 2027.</p>
+      <p>Con Puente, las 14 personas del grupo coordinan su viaje a Silicon Valley, en enero y febrero de 2027:</p>
+      <ul>
+        <li>quién está allá cada día;</li>
+        <li>la agenda de eventos y reuniones, con avisos en el celular;</li>
+        <li>los contactos de empresas y su seguimiento;</li>
+        <li>los gastos compartidos, cómo saldarlos y la rendición.</li>
+      </ul>
+      <p>Solo entran las personas invitadas, con su cuenta de Google.</p>
+      <a class="entrar" href="/">Entrar a Puente</a>
+      <p class="enlace"><a href="/privacidad">Privacidad</a></p>
+
+      <section id="english" class="otro-idioma" lang="en">
+        <h2 class="bajada">The app of The Bridge 2027 group.</h2>
+        <p>With Puente, the 14 people of the group coordinate their trip to Silicon Valley, in January and February 2027:</p>
+        <ul>
+          <li>who is there each day;</li>
+          <li>the schedule of events and meetings, with phone notifications;</li>
+          <li>company contacts and their follow-up;</li>
+          <li>shared expenses, how to settle them, and expense reports.</li>
+        </ul>
+        <p>Only invited people can sign in, with their Google account.</p>
+        <p class="enlace"><a href="/privacidad#english">Privacy policy</a></p>
+      </section>
+    </main>
+  </body>
+</html>

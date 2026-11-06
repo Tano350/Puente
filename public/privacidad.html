@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Privacidad de Puente</title>
+    <meta name="description" content="Qué datos guarda Puente, quién los ve y cómo usa tu cuenta de Google." />
+    <meta name="theme-color" content="#1E242C" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="/paginas.css" />
+    <script>
+      // El modo elegido en Tu perfil (oscuro por defecto), igual que la app
+      try {
+        if (localStorage.getItem('puente.tema') === 'claro') {
+          document.documentElement.dataset.tema = 'claro'
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#EEF1F4')
+        }
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <!-- La política de privacidad que enlaza Google al entrar. Si cambia lo que hace Puente con los datos, se cambia aquí. -->
+    <main>
+      <header class="cabeza">
+        <a class="marca" href="/acerca">
+          <svg width="30" height="26" viewBox="0 0 104 90" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M26 0H78L104 45L78 90H26L0 45ZM52 9A36 36 0 1 0 52 81A36 36 0 1 0 52 9Z" /></svg>
+          Puente
+        </a>
+        <a class="idioma" href="#english" hreflang="en" lang="en">English</a>
+      </header>
+
+      <h1>Privacidad</h1>
+      <p>Puente es la app del grupo de The Bridge 2027. Solo entran las personas invitadas, con su cuenta de Google.</p>
+
+      <h2>Qué datos guardamos</h2>
+      <p>Tu nombre, tu correo y tu foto de Google (o la que subas en su lugar); lo que escribes en tu perfil (carrera, emprendimiento, objetivos, LinkedIn y fechas de estadía); los eventos, contactos, notas y gastos que anota el grupo, y las fotos de boletas que se suben. Si activas los avisos, también la suscripción de tu dispositivo, para poder mandártelos.</p>
+
+      <h2>Quién los ve</h2>
+      <p>Solo las personas invitadas a Puente. Lo que marcas como personal lo ves solo tú. No vendemos tus datos: solo los usan los servicios que hacen funcionar Puente, que se nombran más abajo.</p>
+
+      <h2>Qué usamos de tu cuenta de Google</h2>
+      <p>Al entrar, Puente recibe de Google tu nombre, tu correo y tu foto, para que entres y el grupo te reconozca. No lee tu correo ni tus contactos de Google.</p>
+
+      <h2>Google Calendar</h2>
+      <p>Quien administra Puente puede conectar su Google Calendar. Con ese permiso, Puente revisa su lista de calendarios y trabaja solo con los del viaje («The Bridge»). Si compartes tu calendario del viaje con quien administra, Puente usa sus horas ocupadas para saber quién está libre, sin guardar títulos ni detalles, y escribe en él los eventos del viaje a los que vas. No usa los calendarios para nada más.</p>
+      <p>El uso que Puente hace de la información que recibe de las API de Google cumple la <a href="https://developers.google.com/terms/api-services-user-data-policy">Política de Datos de Usuario de los Servicios de API de Google</a>, incluidos los requisitos de Uso Limitado.</p>
+
+      <h2>Dónde se guardan</h2>
+      <p>En Supabase; la app se sirve desde Vercel. Ambos están en Estados Unidos. Guardamos una copia diaria de los datos por 30 días, para recuperar lo que se borre por error.</p>
+
+      <h2>Corregir o borrar tus datos</h2>
+      <p>Pídeselo a quien administra Puente.</p>
+
+      <p class="fecha">Actualizada el 5 de noviembre de 2026.</p>
+
+      <section id="english" class="otro-idioma" lang="en">
+        <h2 class="titulo-idioma">Privacy</h2>
+        <p>Puente is the app of The Bridge 2027 group. Only invited people can sign in, with their Google account.</p>
+
+        <h3>What we store</h3>
+        <p>Your Google name, email and photo (or the one you upload instead); what you write in your profile (major, startup, trip goals, LinkedIn and dates of your stay); the events, contacts, notes and expenses the group records, and uploaded receipt photos. If you turn on notifications, also your device’s subscription, so we can send them.</p>
+
+        <h3>Who can see it</h3>
+        <p>Only the people invited to Puente. What you mark as personal is visible only to you. We don’t sell your data: it’s only used by the services that run Puente, listed below.</p>
+
+        <h3>What we use from your Google account</h3>
+        <p>When you sign in, Puente receives your name, email and photo from Google, so you can sign in and the group recognizes you. It doesn’t read your email or your Google contacts.</p>
+
+        <h3>Google Calendar</h3>
+        <p>The Puente admin can connect their Google Calendar. With that permission, Puente checks their list of calendars and works only with the trip ones (“The Bridge”). If you share your trip calendar with the admin, Puente uses its busy times to know who is free, without storing titles or details, and adds the trip events you attend to it. It doesn’t use calendars for anything else.</p>
+        <p>Puente’s use and transfer of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
+
+        <h3>Where it’s stored</h3>
+        <p>In Supabase; the app is served from Vercel. Both are in the United States. We keep a daily backup of the data for 30 days, to recover anything deleted by mistake.</p>
+
+        <h3>Correcting or deleting your data</h3>
+        <p>Ask the Puente admin.</p>
+
+        <p class="fecha">Updated on November 5, 2026.</p>
+      </section>
+    </main>
+  </body>
+</html>

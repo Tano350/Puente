@@ -885,18 +885,6 @@ export const es = {
     mas: (cuantas: number) => `${cuantas} más`,
     entendido: 'Entendido',
   },
-  privacidad: {
-    titulo: 'Privacidad',
-    parrafos: [
-      'Puente es la app del grupo de The Bridge 2027. Solo entran las personas invitadas, con su cuenta de Google.',
-      'Guardamos tu nombre, tu correo y tu foto de Google; lo que escribes en tu perfil (carrera, emprendimiento, objetivos, LinkedIn y fechas de estadía); los eventos, contactos, notas y gastos que anota el grupo, y las fotos de boletas que subes.',
-      'Todo eso lo ven solo las personas invitadas a Puente. Lo que marcas como personal lo ves solo tú. No vendemos ni compartimos tus datos.',
-      'De tu cuenta de Google usamos solo tu nombre, tu correo y tu foto, para que entres y el grupo te reconozca. No leemos tu correo ni tus calendarios.',
-      'Los datos se guardan en Supabase y la app se sirve desde Vercel, ambos en Estados Unidos. Los eventos del viaje también se escriben en el calendario de Google del grupo.',
-      'Para corregir o borrar tus datos, pídeselo a quien administra Puente.',
-    ],
-    actualizada: 'Actualizada el 2 de noviembre de 2026.',
-  },
 }
 
 export type Textos = typeof es
