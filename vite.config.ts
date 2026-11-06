@@ -28,8 +28,8 @@ export default defineConfig({
         // Las letras y los íconos también quedan guardados, para abrir sin señal.
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         // Acerca y Privacidad son páginas fijas fuera de la app (public/): no se guardan con ella y siempre se piden
-        // al servidor, que las entrega tal cual (vercel.json)
-        globIgnores: ['acerca.html', 'privacidad.html', 'paginas.css', 'letras/**'],
+        // al servidor, que las entrega tal cual (vercel.json). Tampoco el archivo con que Google verifica el sitio.
+        globIgnores: ['acerca.html', 'privacidad.html', 'paginas.css', 'letras/**', 'google*.html'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/(acerca|privacidad)$/],
         // Los avisos push viven en public/avisos-sw.js
