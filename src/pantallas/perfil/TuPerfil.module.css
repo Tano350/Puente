@@ -208,7 +208,8 @@
   padding: 14px 28px 0;
   border-left: 1px solid var(--regla);
   border-radius: 12px 0 0 0;
-  background: var(--fondo);
+  background-color: var(--fondo);
+  background-image: var(--papel);
   box-shadow: -18px 0 40px var(--sombra);
 }
 
@@ -247,5 +248,6 @@
   margin-top: 16px;
   padding: 12px 0 20px;
   border-top: 1px solid var(--borde);
-  background: var(--fondo);
+  background-color: var(--fondo);
+  background-image: var(--papel);
 }

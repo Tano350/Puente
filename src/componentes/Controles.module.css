@@ -37,7 +37,8 @@
   flex: none;
   padding: 12px 20px calc(16px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--borde);
-  background: var(--fondo);
+  background-color: var(--fondo);
+  background-image: var(--papel);
 }
 
 .principal,
