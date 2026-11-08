@@ -115,7 +115,8 @@
   top: 7px;
   width: 42px;
   height: 42px;
-  background: var(--fondo);
+  background-color: var(--fondo);
+  background-image: var(--papel);
   clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
 }
 

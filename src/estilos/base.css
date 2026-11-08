@@ -3,7 +3,6 @@
 :root {
   color-scheme: dark;
   --fondo: #1e242c;
-  --agujero: #29313b;
   --tinta: #edf0f3;
   --sec: #a6b0bb;
   --apagado: #47515d;
@@ -29,6 +28,12 @@
   --sobre-error: #1a1c1e;
   --sombra: rgba(0, 0, 0, 0.45);
   --hundido-sombra: rgba(0, 0, 0, 0.5);
+  /* Fondo "Papel": grano fino, como algo impreso. El grano ya viene mezclado con --fondo (ruido gris en soft-light al
+     55 %; en claro, con más contraste): cada tabla da el color de un canal según el ruido, sin modos de mezcla, para
+     que se vea igual en todos los navegadores. Si cambia --fondo, hay que recalcular las tablas de los dos modos.
+     Lo que debe verse como la página (paneles encima, barras fijas) usa background-color: var(--fondo) y
+     background-image: var(--papel). */
+  --papel: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='p' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='table' tableValues='0.0606 0.1176 0.2347'/%3E%3CfeFuncG type='table' tableValues='0.0745 0.1412 0.2673'/%3E%3CfeFuncB type='table' tableValues='0.094 0.1725 0.306'/%3E%3CfeFuncA type='table' tableValues='1 1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
 
   --letra: 'Barlow', system-ui, sans-serif;
   --letra-titulo: 'Barlow Semi Condensed', 'Arial Narrow', sans-serif;
@@ -37,7 +42,6 @@
 :root[data-tema='claro'] {
   color-scheme: light;
   --fondo: #eef1f4;
-  --agujero: #dce2e8;
   --tinta: #1e242c;
   --sec: #56606b;
   --apagado: #b7c0c9;
@@ -60,6 +64,15 @@
   --sobre-error: #ffffff;
   --sombra: rgba(30, 36, 44, 0.18);
   --hundido-sombra: rgba(30, 36, 44, 0.3);
+  --papel: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='p' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='table' tableValues='0.8711 0.8711 0.8711 0.9333 0.9661 0.9661 0.9661'/%3E%3CfeFuncG type='table' tableValues='0.8932 0.8932 0.8932 0.9451 0.9722 0.9722 0.9722'/%3E%3CfeFuncB type='table' tableValues='0.9156 0.9156 0.9156 0.9569 0.9782 0.9782 0.9782'/%3E%3CfeFuncA type='table' tableValues='1 1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
+}
+
+/* Con alto contraste (Windows) o "más contraste", sin grano: la imagen taparía el color que elige el sistema */
+@media (forced-colors: active), (prefers-contrast: more) {
+  :root,
+  :root[data-tema] {
+    --papel: none;
+  }
 }
 
 *,
@@ -75,19 +88,13 @@ body,
   margin: 0;
 }
 
-/* Fondo de rejilla de rack: perforación fina escalonada */
+/* Fondo "Papel" (ver --papel) */
 body {
   font-family: var(--letra);
   font-size: 16px;
   color: var(--tinta);
   background-color: var(--fondo);
-  background-image:
-    radial-gradient(var(--agujero) 1.1px, transparent 1.3px),
-    radial-gradient(var(--agujero) 1.1px, transparent 1.3px);
-  background-size: 8px 8px;
-  background-position:
-    0 0,
-    4px 4px;
+  background-image: var(--papel);
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
 }
