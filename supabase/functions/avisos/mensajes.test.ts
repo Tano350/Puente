@@ -2,7 +2,7 @@
 // node --test "supabase/functions/avisos/*.test.ts"
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { armar, cuando, plata, type Fila } from './mensajes.ts'
+import { armar, cuando, diaDeTarea, plata, type Fila } from './mensajes.ts'
 
 // Lunes 11 de enero de 2027, 09:00 en California (17:00 UTC)
 const AHORA = new Date('2027-01-11T17:00:00Z')
@@ -41,6 +41,13 @@ function fila(cambios: Partial<Fila> = {}): Fila {
     monto: null,
     borrado_en: null,
     paga: null,
+    tarea_id: null,
+    tarea_titulo: null,
+    para: null,
+    tarea_borrada: null,
+    asignado: false,
+    hecha: false,
+    encarga: null,
     ...cambios,
   }
 }
@@ -240,6 +247,86 @@ test('Pago: quién te pagó y cuánto; abre Gastos; no se manda si lo deshizo', 
   })
   assert.equal(mensaje(fila({ ...pago, paga: null, idioma: 'en' })).titulo, 'Someone paid you US$25.50')
   assert.equal(descarta(fila({ ...pago, borrado_en: AHORA })), 'Se deshizo el pago.')
+})
+
+// Una tarea: sin evento, con la tarea y quien recibe asignado
+const deTarea = (c: Partial<Fila> = {}) =>
+  fila({ tipo: 'tarea', evento_id: null, titulo: null, inicio: null, fin: null, tarea_id: 't1', tarea_titulo: 'Reservar el auto', asignado: true, encarga: 'Diego Soto', datos: { quien: 'diego' }, ...c })
+
+test('Día de una tarea como en la app: cerca, el día de la semana; más lejos, con el mes', () => {
+  // Hoy es el lunes 11 de enero
+  assert.equal(diaDeTarea('2027-01-16', AHORA, 'es'), 'sábado 16')
+  assert.equal(diaDeTarea('2027-01-16', AHORA, 'en'), 'Saturday the 16th')
+  assert.equal(diaDeTarea('2027-01-12', AHORA, 'es'), 'martes 12')
+  assert.equal(diaDeTarea('2027-01-17', AHORA, 'es'), 'domingo 17')
+  assert.equal(diaDeTarea('2027-01-18', AHORA, 'es'), 'lunes 18 de enero')
+  assert.equal(diaDeTarea('2027-01-05', AHORA, 'es'), 'martes 5')
+  assert.equal(diaDeTarea('2027-02-02', AHORA, 'es'), 'martes 2 de febrero')
+  assert.equal(diaDeTarea('2027-02-02', AHORA, 'en'), 'Tuesday, February 2')
+  assert.deepEqual(['2027-01-11', '2027-01-12', '2027-01-13', '2027-01-21'].map((d) => diaDeTarea(d, new Date('2027-01-08T18:00:00Z'), 'en')), [
+    'Monday the 11th',
+    'Tuesday the 12th',
+    'Wednesday the 13th',
+    'Thursday, January 21',
+  ])
+  // A las 23:30 del lunes en California (ya martes en UTC), el domingo 17 sigue cerca
+  assert.equal(diaDeTarea('2027-01-17', new Date('2027-01-12T07:30:00Z'), 'es'), 'domingo 17')
+})
+
+test('Te asignaron una tarea: quién, el título y para cuándo; abre la tarea', () => {
+  assert.deepEqual(mensaje(deTarea({ para: '2027-01-16' })), {
+    titulo: 'Diego te asignó una tarea',
+    cuerpo: 'Reservar el auto · para el sábado 16',
+    url: '/tareas/t1',
+    etiqueta: 'tarea-t1',
+    ttl: 86400,
+    urgencia: 'normal',
+  })
+  assert.equal(mensaje(deTarea()).cuerpo, 'Reservar el auto')
+  assert.equal(mensaje(deTarea({ para: '2027-12-01' })).cuerpo, 'Reservar el auto · para el miércoles 1 de diciembre')
+  assert.equal(mensaje(deTarea({ encarga: null })).titulo, 'Te asignaron una tarea')
+  const en = mensaje(deTarea({ idioma: 'en', para: '2027-01-16' }))
+  assert.deepEqual([en.titulo, en.cuerpo], ['Diego assigned you a task', 'Reservar el auto · due Saturday the 16th'])
+  assert.equal(mensaje(deTarea({ idioma: 'en', encarga: null, para: '2027-12-01' })).titulo, 'You were assigned a task')
+  assert.equal(mensaje(deTarea({ idioma: 'en', para: '2027-12-01' })).cuerpo, 'Reservar el auto · due Wednesday, December 1')
+  // Aunque ya esté hecha, la asignación se avisa
+  assert.equal(mensaje(deTarea({ hecha: true })).titulo, 'Diego te asignó una tarea')
+})
+
+test('Te asignaron una tarea: no se manda si la borraron, si te sacaron o si apagaste los de tareas', () => {
+  assert.equal(descarta(deTarea({ tarea_borrada: AHORA })), 'Se borró la tarea.')
+  assert.equal(descarta(deTarea({ asignado: false })), 'Ya no está en la tarea.')
+  assert.equal(descarta(deTarea({ tarea_id: null, tarea_titulo: null })), 'La tarea ya no está.')
+  assert.equal(descarta(deTarea({ quiere: false })), 'Apagó este tipo de aviso.')
+  assert.equal(descarta(deTarea({ sacada: true })), 'Ya no está en Puente.')
+})
+
+test('Vence mañana: el título de la tarea; abre la tarea', () => {
+  const vence = (c: Partial<Fila> = {}) => deTarea({ tipo: 'vence', para: '2027-01-12', encarga: null, datos: { para: '2027-01-12' }, ...c })
+  assert.deepEqual(mensaje(vence()), {
+    titulo: 'Mañana vence una tarea tuya',
+    cuerpo: 'Reservar el auto',
+    url: '/tareas/t1',
+    etiqueta: 'tarea-t1',
+    ttl: 86400,
+    urgencia: 'normal',
+  })
+  assert.equal(mensaje(vence({ idioma: 'en' })).titulo, 'One of your tasks is due tomorrow')
+  // Hasta las 23:59 de California del día antes
+  assert.equal(mensaje(vence(), new Date('2027-01-12T07:30:00Z')).titulo, 'Mañana vence una tarea tuya')
+})
+
+test('Vence mañana: no se manda si ya no vence mañana, si está hecha, borrada o ya no es tuya', () => {
+  const vence = (c: Partial<Fila> = {}) => deTarea({ tipo: 'vence', para: '2027-01-12', encarga: null, datos: { para: '2027-01-12' }, ...c })
+  // Le cambiaron la fecha
+  assert.equal(descarta(vence({ para: '2027-01-13' })), 'La tarea ya no vence mañana.')
+  assert.equal(descarta(vence({ para: null })), 'La tarea ya no vence mañana.')
+  // Ya es el día (00:30 en California)
+  assert.equal(descarta(vence(), new Date('2027-01-12T08:30:00Z')), 'La tarea ya no vence mañana.')
+  assert.equal(descarta(vence({ hecha: true })), 'La tarea ya está hecha.')
+  assert.equal(descarta(vence({ tarea_borrada: AHORA })), 'Se borró la tarea.')
+  assert.equal(descarta(vence({ asignado: false })), 'Ya no está en la tarea.')
+  assert.equal(descarta(vence({ quiere: false })), 'Apagó este tipo de aviso.')
 })
 
 test('Nunca a quien sacaron, a quien apagó ese tipo, ni avisos de hace más de un día', () => {

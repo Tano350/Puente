@@ -2,9 +2,10 @@
 // validación…). Se guarda qué era y su nombre, no el texto del aviso: así el aviso se lee en el idioma de la app.
 // Son funciones puras (se prueban con node --test, en rechazos.test.ts).
 
-export type TipoRechazo = 'gasto' | 'boleta' | 'rendicion' | 'nota' | 'reunion' | 'otro'
+// Una marca de tarea se distingue por qué no subió: la tarea ya no está, ya no te toca u otra cosa
+export type TipoRechazo = 'gasto' | 'boleta' | 'rendicion' | 'nota' | 'reunion' | 'tarea' | 'tareaNoEsta' | 'tareaNoAsignada' | 'otro'
 // clave: el mismo id de "sin subir" (el del gasto, "boleta:<gasto>", "reunion:<evento>"…); nombre: el título del
-// gasto o del evento, o el nombre del contacto (null si no se encontró)
+// gasto, del evento o de la tarea, o el nombre del contacto (null si no se encontró)
 export type Rechazo = { clave: string; tipo: TipoRechazo; nombre: string | null }
 
 // Dónde buscar los nombres: lo que ya está en las consultas del dispositivo
@@ -12,6 +13,7 @@ export type Nombres = {
   gasto: (id: string) => string | null
   contacto: (id: string) => string | null
   evento: (id: string) => string | null
+  tarea: (id: string) => string | null
 }
 
 function texto(valor: unknown): string | null {
@@ -22,8 +24,9 @@ function campo(objeto: unknown, nombre: string): unknown {
   return typeof objeto === 'object' && objeto !== null ? (objeto as Record<string, unknown>)[nombre] : undefined
 }
 
-// Qué no subió, a partir de la escritura (su nombre, sus variables y su id de "sin subir")
-export function describirRechazo(escritura: string, variables: unknown, clave: string, nombres: Nombres): Rechazo {
+// Qué no subió, a partir de la escritura (su nombre, sus variables y su id de "sin subir") y, si ya se sabe, el
+// error con que la base la rechazó (su motivo viene en "motivo" o en "hint")
+export function describirRechazo(escritura: string, variables: unknown, clave: string, nombres: Nombres, error?: unknown): Rechazo {
   switch (escritura) {
     case 'anotarGasto': {
       const gasto = campo(variables, 'gasto')
@@ -37,6 +40,11 @@ export function describirRechazo(escritura: string, variables: unknown, clave: s
       return { clave, tipo: 'nota', nombre: nombres.contacto(String(campo(campo(variables, 'nota'), 'contacto'))) }
     case 'notaReunion':
       return { clave, tipo: 'reunion', nombre: nombres.evento(String(campo(variables, 'evento'))) }
+    case 'marcarTarea': {
+      const motivo = campo(error, 'motivo') ?? campo(error, 'hint')
+      const tipo: TipoRechazo = motivo === 'no_esta' ? 'tareaNoEsta' : motivo === 'no_asignado' ? 'tareaNoAsignada' : 'tarea'
+      return { clave, tipo, nombre: nombres.tarea(String(campo(variables, 'tarea'))) }
+    }
     default:
       return { clave, tipo: 'otro', nombre: null }
   }
@@ -50,7 +58,7 @@ export function conRechazo(lista: Rechazo[], nuevo: Rechazo): Rechazo[] {
 // Lo guardado en el dispositivo puede venir de otra versión: solo se quedan los que tienen la forma de ahora
 export function rechazosValidos(guardado: unknown): Rechazo[] {
   if (!Array.isArray(guardado)) return []
-  const tipos: TipoRechazo[] = ['gasto', 'boleta', 'rendicion', 'nota', 'reunion', 'otro']
+  const tipos: TipoRechazo[] = ['gasto', 'boleta', 'rendicion', 'nota', 'reunion', 'tarea', 'tareaNoEsta', 'tareaNoAsignada', 'otro']
   return guardado.filter(
     (r): r is Rechazo =>
       typeof r === 'object' && r !== null && typeof r.clave === 'string' && tipos.includes(r.tipo) && (r.nombre === null || typeof r.nombre === 'string'),

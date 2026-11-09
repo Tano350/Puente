@@ -9,7 +9,7 @@ import estilos from './BarraSecciones.module.css'
 export function BarraSecciones() {
   const textos = useTextos()
   const { pathname } = useLocation()
-  // Tu perfil no es una de las cinco secciones: ahí no queda marcada ninguna, y "volver" regresa a la última que se vio
+  // Tu perfil no es una de las seis secciones: ahí no queda marcada ninguna, y "volver" regresa a la última que se vio
   useEffect(() => recordarSeccion(pathname), [pathname])
   return (
     <nav aria-label={textos.navegacion} className={estilos.barra}>

@@ -1,8 +1,9 @@
 // Qué dice cada aviso, en español o en inglés, con las horas de California. También decide, justo antes de
-// mandarlo, si un aviso ya no tiene sentido (se deshizo lo que lo causó, el evento ya empezó, apagaste ese tipo…).
+// mandarlo, si un aviso ya no tiene sentido (se deshizo lo que lo causó, el evento ya empezó, la tarea ya está
+// hecha, apagaste ese tipo…).
 // Es puro: no lee la base ni la hora del sistema, así se prueba solo.
 
-export type Tipo = 'eventos' | 'cambios' | 'espera' | 'recordatorio' | 'contacto' | 'pago' | 'sumado'
+export type Tipo = 'eventos' | 'cambios' | 'espera' | 'recordatorio' | 'contacto' | 'pago' | 'sumado' | 'tarea' | 'vence'
 export type Idioma = 'es' | 'en'
 export type Urgencia = 'normal' | 'high'
 
@@ -15,10 +16,11 @@ export type Fila = {
   tipo: Tipo
   persona: string
   creado_en: Date
-  datos: { antes?: Antes | string | null; quien?: string | null } | null
+  // cambios: cómo era antes; sumado y tarea: quién lo hizo; vence: la fecha que se recordó
+  datos: { antes?: Antes | string | null; quien?: string | null; para?: string | null } | null
   idioma: string
   sacada: boolean
-  // Si no apagó este tipo ('sumado' sigue a 'cambios')
+  // Si no apagó este tipo ('sumado' sigue a 'cambios'; 'tarea' y 'vence', a 'tareas')
   quiere: boolean
   // El evento (eventos, cambios, espera, recordatorio y sumado)
   evento_id: string | null
@@ -47,6 +49,17 @@ export type Fila = {
   monto: number | null
   borrado_en: Date | null
   paga: string | null
+  // La tarea (tarea y vence)
+  tarea_id: string | null
+  tarea_titulo: string | null
+  // Para cuándo: "2027-01-18", un día de California
+  para: string | null
+  tarea_borrada: Date | null
+  // Si quien recibe sigue en la tarea y si su parte ya está hecha (si basta con uno, si alguien la marcó)
+  asignado: boolean
+  hecha: boolean
+  // Quién te asignó la tarea (tarea)
+  encarga: string | null
 }
 
 // Lo que recibe el service worker, más cómo lo trata el servicio de push
@@ -85,6 +98,35 @@ function enCalifornia(momento: Date) {
   const mes = Number(p.month) - 1
   const dia = Number(p.day)
   return { anio, mes, dia, semana: new Date(Date.UTC(anio, mes, dia)).getUTCDay(), hora: `${p.hour}:${p.minute}`, clave: Date.UTC(anio, mes, dia) }
+}
+
+// El día de una fecha sin hora ("2027-01-18"), con la misma forma que enCalifornia
+function deFecha(iso: string) {
+  const [anio, mes, dia] = iso.split('-').map(Number)
+  const clave = Date.UTC(anio, mes - 1, dia)
+  return { mes: mes - 1, dia, semana: new Date(clave).getUTCDay(), clave }
+}
+
+// Días de hoy (en California) a esa fecha: 1 es mañana
+function diasHasta(iso: string, ahora: Date): number {
+  return Math.round((deFecha(iso).clave - enCalifornia(ahora).clave) / (DIA_S * 1000))
+}
+
+// "1st", "2nd", "16th"
+function ordinal(n: number): string {
+  const resto = n % 100
+  if (resto >= 11 && resto <= 13) return `${n}th`
+  return `${n}${({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[n % 10] ?? 'th'}`
+}
+
+// El día de una tarea, como en la app: cerca de hoy, "lunes 16" ("Monday the 16th"); más lejos, con el mes,
+// "martes 1 de diciembre" ("Tuesday, December 1")
+export function diaDeTarea(iso: string, ahora: Date, idioma: Idioma): string {
+  const f = deFecha(iso)
+  const n = NOMBRES[idioma]
+  const dia = n.dias[f.semana]
+  if (Math.abs(diasHasta(iso, ahora)) <= 6) return idioma === 'en' ? `${dia} the ${ordinal(f.dia)}` : `${dia} ${f.dia}`
+  return idioma === 'en' ? `${dia}, ${n.meses[f.mes]} ${f.dia}` : `${dia} ${f.dia} de ${n.meses[f.mes]}`
 }
 
 // "10:00", en 24 horas en los dos idiomas, como la app
@@ -150,6 +192,9 @@ const TEXTOS = {
     tePago: (quien: string | null, monto: string) => `${quien ?? 'Alguien'} te pagó ${monto}`,
     saldos: 'Tus saldos ya están al día.',
     teSumo: (quien: string | null, t: string) => (quien ? `${quien} te sumó a ${t}` : `Te sumaron a ${t}`),
+    teAsignoTarea: (quien: string | null) => (quien ? `${quien} te asignó una tarea` : 'Te asignaron una tarea'),
+    paraEl: (dia: string) => `para el ${dia}`,
+    venceManana: 'Mañana vence una tarea tuya',
   },
   en: {
     nuevo: (t: string) => `New event: ${t}`,
@@ -171,11 +216,18 @@ const TEXTOS = {
     tePago: (quien: string | null, monto: string) => `${quien ?? 'Someone'} paid you ${monto}`,
     saldos: 'Your balances are up to date.',
     teSumo: (quien: string | null, t: string) => (quien ? `${quien} added you to ${t}` : `You were added to ${t}`),
+    teAsignoTarea: (quien: string | null) => (quien ? `${quien} assigned you a task` : 'You were assigned a task'),
+    paraEl: (dia: string) => `due ${dia}`,
+    venceManana: 'One of your tasks is due tomorrow',
   },
 }
 
 function deEvento(f: Fila, titulo: string, cuerpo: string, ttl = DIA_S, urgencia: Urgencia = 'normal'): Resultado {
   return { mensaje: { titulo: corto(titulo, 90), cuerpo: corto(cuerpo, 240), url: `/agenda/${f.evento_id}`, etiqueta: `evento-${f.evento_id}`, ttl, urgencia } }
+}
+
+function deTarea(f: Fila, titulo: string, cuerpo: string): Resultado {
+  return { mensaje: { titulo: corto(titulo, 90), cuerpo: corto(cuerpo, 240), url: `/tareas/${f.tarea_id}`, etiqueta: `tarea-${f.tarea_id}`, ttl: DIA_S, urgencia: 'normal' } }
 }
 
 function leerAntes(datos: Fila['datos']): Antes | null {
@@ -196,6 +248,22 @@ export function armar(f: Fila, ahora: Date): Resultado {
     if (f.responsable !== f.persona) return { descartar: 'El contacto ya es de otra persona.' }
     const quien = [limpio(f.contacto_nombre), limpio(f.organizacion)].filter(Boolean).join(' · ')
     return { mensaje: { titulo: t.teAsigno(pila(f.asigna)), cuerpo: corto(quien, 240), url: `/contactos/${f.contacto_id}`, etiqueta: `contacto-${f.contacto_id}`, ttl: DIA_S, urgencia: 'normal' } }
+  }
+
+  // Los de tareas, antes que los de eventos (no traen evento)
+  if (f.tipo === 'tarea' || f.tipo === 'vence') {
+    if (!f.tarea_id) return { descartar: 'La tarea ya no está.' }
+    if (f.tarea_borrada) return { descartar: 'Se borró la tarea.' }
+    if (!f.asignado) return { descartar: 'Ya no está en la tarea.' }
+    const titulo = limpio(f.tarea_titulo)
+    if (f.tipo === 'tarea') {
+      const cuerpo = f.para ? `${titulo} · ${t.paraEl(diaDeTarea(f.para, ahora, idioma))}` : titulo
+      return deTarea(f, t.teAsignoTarea(pila(f.encarga)), cuerpo)
+    }
+    // Se cambió la fecha o ya pasó el día
+    if (!f.para || diasHasta(f.para, ahora) !== 1) return { descartar: 'La tarea ya no vence mañana.' }
+    if (f.hecha) return { descartar: 'La tarea ya está hecha.' }
+    return deTarea(f, t.venceManana, titulo)
   }
 
   if (f.tipo === 'pago') {

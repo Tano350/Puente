@@ -1,0 +1,249 @@
+/* ---------- La franja de arriba: el color de las tarjetas, con "‹ Tareas" y "Editar" ---------- */
+.franja {
+  flex: none;
+  padding: 14px 20px 18px;
+  border-bottom: 1px solid var(--regla);
+  background: var(--panel);
+}
+
+/* En el celular sube hasta el borde: el contenedor desplazable le deja 24 px de aire */
+.franjaCel {
+  margin: -24px -20px 0;
+  padding: 20px 20px 16px;
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 32px;
+}
+
+.franjaCel .cabecera {
+  height: 44px;
+}
+
+.derecha {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.editar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  margin-left: auto;
+  margin-right: -8px;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.editar[aria-disabled='true'],
+.borrar[aria-disabled='true'],
+.enlace[aria-disabled='true'] {
+  opacity: 0.45;
+}
+
+/* ---------- Fecha grande, título y estado ---------- */
+.titular {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 6px;
+}
+
+/* No se toca: es un texto, sin borde ni fondo */
+.fecha {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  width: 58px;
+  line-height: 1;
+}
+
+.fecha small {
+  font-size: 15px;
+  color: var(--sec);
+}
+
+.fecha b {
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 46px;
+  line-height: 1.05;
+}
+
+.fecha em {
+  font-style: normal;
+  font-size: 14px;
+  color: var(--sec);
+}
+
+.fecha[data-atrasada='true'] small,
+.fecha[data-atrasada='true'] b,
+.fecha[data-atrasada='true'] em {
+  color: var(--en-contra);
+}
+
+.nombres {
+  flex: 1;
+  min-width: 0;
+}
+
+.titulo {
+  margin: 0;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 30px;
+  overflow-wrap: anywhere;
+}
+
+.estado {
+  margin-top: 2px;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--sec-tarjeta);
+}
+
+.estado svg {
+  vertical-align: -2px;
+}
+
+.estado[data-atrasada='true'] {
+  margin-top: 0;
+  color: var(--en-contra);
+}
+
+.sinSubir {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+/* ---------- Contenido ---------- */
+.cuerpo {
+  padding-top: 2px;
+}
+
+.seccion {
+  margin: 18px 0 6px;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 22px;
+}
+
+.texto {
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+  overflow-wrap: anywhere;
+}
+
+/* Las notas respetan los saltos de línea que se escribieron */
+.notas {
+  white-space: pre-line;
+}
+
+.plegable {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  margin-top: 6px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--sec);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.plegable + .texto {
+  margin-bottom: 4px;
+}
+
+.creo {
+  margin: 14px 0 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.creo + .creo {
+  margin-top: 4px;
+}
+
+.borrar,
+.enlace {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--sec);
+  font-size: 15px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.borrar {
+  margin-top: 4px;
+}
+
+/* ---------- Abajo ---------- */
+.pie {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.enlace {
+  align-self: center;
+  height: 36px;
+}
+
+/* ---------- Computador: una tarjeta que llena la columna ---------- */
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  border: 1px solid var(--regla);
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: var(--fondo);
+  background-image: var(--papel);
+}
+
+.contenido {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 0 20px 16px;
+}
+
+.pieTarjeta {
+  flex: none;
+  padding: 12px 20px 14px;
+  border-top: 1px solid var(--borde);
+  background-color: var(--fondo);
+  background-image: var(--papel);
+}

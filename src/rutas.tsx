@@ -22,6 +22,8 @@ export const rutas = createBrowserRouter([
           { path: 'agenda/:id?/:accion?', lazy: () => import('./pantallas/agenda/Agenda.tsx').then((m) => ({ Component: m.Agenda })) },
           // /contactos, /contactos/nuevo, /contactos/:id y /contactos/:id/editar: una sola ruta, para no perder la búsqueda
           { path: 'contactos/:id?/:accion?', lazy: () => import('./pantallas/contactos/Contactos.tsx').then((m) => ({ Component: m.Contactos })) },
+          // /tareas, /tareas/nueva, /tareas/:id y /tareas/:id/editar: una sola ruta, para no perder lo elegido
+          { path: 'tareas/:id?/:accion?', lazy: () => import('./pantallas/tareas/Tareas.tsx').then((m) => ({ Component: m.Tareas })) },
           { path: 'gastos/:id?/:accion?', lazy: () => import('./pantallas/gastos/Gastos.tsx').then((m) => ({ Component: m.Gastos })) },
           // Una sola ruta, para que elegir a alguien no reinicie la búsqueda
           { path: 'grupo/:id?', lazy: () => import('./pantallas/grupo/Grupo.tsx').then((m) => ({ Component: m.Grupo })) },

@@ -12,7 +12,7 @@ import { conRechazo, describirRechazo, rechazosValidos, type Nombres, type Recha
 import { supabase } from './supabase.ts'
 
 // Sin señal: lo que se ve queda guardado en el dispositivo (IndexedDB) y lo que se escribe sin conexión (notas,
-// gastos, boletas y rendición) queda en espera y sube solo al volver la señal, aunque la app se cierre entremedio.
+// gastos, boletas, rendición y marcar tareas) queda en espera y sube solo al volver la señal, aunque la app se cierre entremedio.
 // Cada escritura lleva un id creado en el dispositivo, así reintentar no duplica nada.
 
 const DIA = 24 * 60 * 60_000
@@ -276,7 +276,8 @@ export async function soltarBoleta(gasto: string): Promise<void> {
 
 // ---------- Sin subir ----------
 // Ids de lo que todavía no sube: ids de gastos, de notas de contactos, "reunion:<id del evento>" para notas de
-// reunión, "boleta:<id del gasto>" para fotos y "rendicion:<id del gasto>" para lo que marcaste que rindes.
+// reunión, "boleta:<id del gasto>" para fotos, "rendicion:<id del gasto>" para lo que marcaste que rindes y
+// "tarea:<id de la tarea>" para lo que marcaste o desmarcaste en una tarea.
 // Cuenta lo que tuvo que esperar (sin señal o reintentando), no lo que sube al tiro con señal.
 const esperaron = new WeakSet<Mutacion>()
 let sinSubir: ReadonlySet<string> = new Set()
@@ -315,7 +316,7 @@ export function useSinSubir(): ReadonlySet<string> {
 }
 
 // Cuánto falta subir, por tipo, para avisar antes de salir (salir lo borra): gastos (con su foto y su rendición),
-// notas (de contactos y de reunión) y otros cambios (la foto o la rendición de un gasto que ya subió)
+// notas (de contactos y de reunión) y otros cambios (la foto o la rendición de un gasto que ya subió, las tareas marcadas)
 export type CuantoSinSubir = { gastos: number; notas: number; otros: number }
 
 export function cuantoSinSubir(): CuantoSinSubir {
@@ -329,8 +330,10 @@ export function cuantoSinSubir(): CuantoSinSubir {
   const gastos = new Set(porNombre.get('anotarGasto'))
   // "boleta:<id>" y "rendicion:<id>" de un gasto que tampoco ha subido ya cuentan con ese gasto
   const otros = [...(porNombre.get('subirBoleta') ?? []), ...(porNombre.get('rendir') ?? [])].filter((id) => !gastos.has(id.slice(id.indexOf(':') + 1)))
+  // Marcar y desmarcar la misma tarea cuenta una vez
+  const tareas = new Set(porNombre.get('marcarTarea'))
   const notas = (porNombre.get('agregarNota')?.length ?? 0) + (porNombre.get('notaReunion')?.length ?? 0)
-  return { gastos: gastos.size, notas, otros: otros.length }
+  return { gastos: gastos.size, notas, otros: otros.length + tareas.size }
 }
 
 export function useCuantoSinSubir(): CuantoSinSubir {
@@ -385,15 +388,17 @@ const nombres: Nombres = {
   gasto: (id) => nombreEn('gastos', 'titulo', id) ?? rechazos.find((r) => r.tipo === 'gasto' && r.clave === id)?.nombre ?? null,
   contacto: (id) => nombreEn('contactos', 'nombre', id),
   evento: (id) => nombreEn('eventos', 'titulo', id),
+  tarea: (id) => nombreEn('tareas', 'titulo', id),
 }
 
 // Qué era lo que espera, anotado cuando empieza a esperar (en "meta", que se guarda con la escritura): al subir, el
-// contacto o el evento puede ya no estar en las consultas (por ejemplo, porque lo borraron)
-function queEra(mutacion: Mutacion): Rechazo | null {
+// contacto, el evento o la tarea puede ya no estar en las consultas (por ejemplo, porque lo borraron). Al rechazarse
+// lleva el error, que dice por qué (una tarea que ya no está o que ya no te toca)
+function queEra(mutacion: Mutacion, error?: unknown): Rechazo | null {
   const escritura = escrituras.get(nombreDe(mutacion))
   if (!escritura) return null
   const variables = mutacion.state.variables
-  return describirRechazo(nombreDe(mutacion), variables, escritura.id(variables), nombres)
+  return describirRechazo(nombreDe(mutacion), variables, escritura.id(variables), nombres, error)
 }
 
 function recordarQueEra(mutacion: Mutacion) {
@@ -409,7 +414,7 @@ consultas.getMutationCache().subscribe((evento) => {
   const mutacion = evento.mutation
   // Lo que sube al tiro con señal y falla lo avisa la pantalla que lo escribió
   if (!esperaron.has(mutacion) || esErrorDeRed(evento.action.error)) return
-  const ahora = queEra(mutacion)
+  const ahora = queEra(mutacion, evento.action.error)
   if (!ahora) return
   const antes = rechazosValidos([mutacion.options.meta?.queEra])[0]
   // El nombre de ahora (si cambió) o el de cuando empezó a esperar

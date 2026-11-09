@@ -11,16 +11,19 @@ import { useEsComputador } from '../../componentes/useEsComputador.ts'
 import { estaConectado, useConectado } from '../../datos/conexion.ts'
 import { usePersonas } from '../../datos/consultas.ts'
 import { useContactos } from '../../datos/contactos.ts'
+import { misPorHacer } from '../../datos/estadoTareas.ts'
 import { ErrorDeEvento, ir, noIr, useAsistentes, useEventos, useNotasReunion, type Evento } from '../../datos/eventos.ts'
 import { conMayuscula, diaEn, diaLargo, diasEntre, hora, hoyAqui, hoyEnCalifornia } from '../../datos/fechas.ts'
 import { comoSaldar, conmigo, plata, saldos, useGastos, usePagos, usePartes } from '../../datos/gastos.ts'
 import { estaAlla } from '../../datos/grupo.ts'
 import { primerNombre } from '../../datos/nombres.ts'
 import { useSesion, type Persona } from '../../datos/sesion.tsx'
+import { useAsignados, useTareas } from '../../datos/tareas.ts'
 import { useTextos, type Textos } from '../../textos.ts'
 import { DetalleEvento } from '../agenda/DetalleEvento.tsx'
 import { ResumenRendicion } from '../gastos/Rendicion.tsx'
 import { TarjetaSaldo } from '../gastos/Saldos.tsx'
+import { activosDe } from '../tareas/comun.ts'
 import { loProximo, momentoDelViaje, porConfirmar, reunionesSinNota, tambienHoy, tuDia, useAhora, type Parada } from './HoyDatos.ts'
 import { TambienHoy } from './HoyGrupo.tsx'
 import { armarEstaciones, Linea, Paradas, type MarcaAhora } from './HoyLinea.tsx'
@@ -58,6 +61,8 @@ export function Hoy() {
   const { data: gastos } = useGastos()
   const { data: partes } = usePartes()
   const { data: pagos } = usePagos()
+  const { data: tareas } = useTareas()
+  const { data: asignados } = useAsignados()
   const [elegido, setElegido] = useState<string | null>(null)
   const [cierreElegido, setCierreElegido] = useState<Cierre['id']>('notas')
   const [hoja, setHoja] = useState<'pendientes' | 'reuniones' | null>(null)
@@ -87,7 +92,9 @@ export function Hoy() {
   const estaciones = armarEstaciones(paradas, { textos, durante, chile, ahora, hoyCalifornia: hoyEnCalifornia(), yo: persona.id, asistentes: van, personas: personas ?? [], contactos: contactos ?? [], notas: notas ?? [] })
   const tambien = durante ? tambienHoy(lista, van, persona.id, hoy, ahora) : []
   const sinConfirmar = durante || momento === 'antes' ? porConfirmar(lista, van, persona, ahora, durante ? hoy : null) : []
-  const pendientes = pendientesDe(persona, contactos ?? [], sinConfirmar, textos, navigate)
+  // Tus tareas por hacer cuentan antes, durante y después del viaje
+  const misTareas = misPorHacer(tareas ?? [], asignados ?? [], persona.id, activosDe(personas))
+  const pendientes = pendientesDe(persona, contactos ?? [], sinConfirmar, misTareas, textos, navigate)
   const sinNota = momento === 'despues' ? reunionesSinNota(lista, van, notas ?? [], persona.id, ahora) : []
 
   // Para cerrar tu viaje: las notas que faltan, lo que debes transferir y elegir qué gastos rindes

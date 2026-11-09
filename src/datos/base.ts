@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      asignados: {
+        Row: {
+          asignado_en: string
+          hecha_en: string | null
+          persona: string
+          tarea: string
+          tomada: boolean
+        }
+        Insert: {
+          asignado_en?: string
+          hecha_en?: string | null
+          persona: string
+          tarea: string
+          tomada?: boolean
+        }
+        Update: {
+          asignado_en?: string
+          hecha_en?: string | null
+          persona?: string
+          tarea?: string
+          tomada?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asignados_persona_fkey"
+            columns: ["persona"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asignados_tarea_fkey"
+            columns: ["tarea"]
+            isOneToOne: false
+            referencedRelation: "tareas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asistentes: {
         Row: {
           desde: string
@@ -64,6 +103,7 @@ export type Database = {
           persona: string
           reclamado_hasta: string | null
           sale_en: string
+          tarea: string | null
           tipo: string
           ultimo_error: string | null
         }
@@ -80,6 +120,7 @@ export type Database = {
           persona: string
           reclamado_hasta?: string | null
           sale_en?: string
+          tarea?: string | null
           tipo: string
           ultimo_error?: string | null
         }
@@ -96,6 +137,7 @@ export type Database = {
           persona?: string
           reclamado_hasta?: string | null
           sale_en?: string
+          tarea?: string | null
           tipo?: string
           ultimo_error?: string | null
         }
@@ -126,6 +168,13 @@ export type Database = {
             columns: ["persona"]
             isOneToOne: false
             referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "avisos_tarea_fkey"
+            columns: ["tarea"]
+            isOneToOne: false
+            referencedRelation: "tareas"
             referencedColumns: ["id"]
           },
         ]
@@ -764,6 +813,50 @@ export type Database = {
           },
         ]
       }
+      tareas: {
+        Row: {
+          borrada_en: string | null
+          cada_uno: boolean
+          creada_en: string
+          creada_por: string
+          id: string
+          notas: string | null
+          para: string | null
+          personal: boolean
+          titulo: string
+        }
+        Insert: {
+          borrada_en?: string | null
+          cada_uno?: boolean
+          creada_en?: string
+          creada_por?: string
+          id?: string
+          notas?: string | null
+          para?: string | null
+          personal?: boolean
+          titulo: string
+        }
+        Update: {
+          borrada_en?: string | null
+          cada_uno?: boolean
+          creada_en?: string
+          creada_por?: string
+          id?: string
+          notas?: string | null
+          para?: string | null
+          personal?: boolean
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tareas_creada_por_fkey"
+            columns: ["creada_por"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -810,6 +903,7 @@ export type Database = {
       }
       avisos_en_pausa: { Args: never; Returns: boolean }
       borrar_gasto: { Args: { gasto: string }; Returns: undefined }
+      borrar_tarea: { Args: { tarea: string }; Returns: undefined }
       buscar_calendarios: { Args: never; Returns: undefined }
       calendario_conectado: { Args: never; Returns: boolean }
       calendarios_del_viaje: {
@@ -861,12 +955,70 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      cambiar_tarea: {
+        Args: {
+          cada_uno: boolean
+          notas?: string
+          para?: string
+          personal: boolean
+          personas: string[]
+          tarea: string
+          titulo: string
+        }
+        Returns: {
+          borrada_en: string | null
+          cada_uno: boolean
+          creada_en: string
+          creada_por: string
+          id: string
+          notas: string | null
+          para: string | null
+          personal: boolean
+          titulo: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "tareas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       cambio_boleta: { Args: { gasto: string }; Returns: boolean }
       cambio_gasto: { Args: { gasto: string }; Returns: boolean }
+      cambio_tarea: { Args: { tarea: string }; Returns: boolean }
+      crear_tarea: {
+        Args: {
+          cada_uno: boolean
+          id?: string
+          notas?: string
+          para?: string
+          personal: boolean
+          personas: string[]
+          titulo: string
+        }
+        Returns: {
+          borrada_en: string | null
+          cada_uno: boolean
+          creada_en: string
+          creada_por: string
+          id: string
+          notas: string | null
+          para: string | null
+          personal: boolean
+          titulo: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "tareas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       deshacer_pago: { Args: { pago: string }; Returns: undefined }
       despertar_avisos: { Args: never; Returns: undefined }
       devolver: { Args: { persona: string }; Returns: undefined }
       devolver_gasto: { Args: { gasto: string }; Returns: undefined }
+      devolver_tarea: { Args: { tarea: string }; Returns: undefined }
       encolar_aviso: {
         Args: {
           contacto?: string
@@ -874,9 +1026,14 @@ export type Database = {
           evento?: string
           pago?: string
           persona: string
+          tarea?: string
           tipo: string
         }
         Returns: boolean
+      }
+      encolar_recordatorios_de_tareas: {
+        Args: { ahora: string }
+        Returns: number
       }
       esperar: { Args: { evento: string }; Returns: number }
       esta_alla: {
@@ -899,6 +1056,7 @@ export type Database = {
         }
       }
       gasto_de_ruta: { Args: { ruta: string }; Returns: string }
+      gente_de_tarea: { Args: { personas: string[] }; Returns: string[] }
       guardar_acceso_google: { Args: { llave: string }; Returns: undefined }
       guardar_partes: {
         Args: {
@@ -968,6 +1126,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      marcar_tarea: {
+        Args: { hecha: boolean; tarea: string }
+        Returns: undefined
+      }
       mi_persona: { Args: never; Returns: string }
       no_ir: { Args: { evento: string }; Returns: undefined }
       poner_boleta: {
@@ -986,10 +1148,12 @@ export type Database = {
         Returns: undefined
       }
       sincronizar_calendarios: { Args: { activa: boolean }; Returns: undefined }
+      soltar_tarea: { Args: { tarea: string }; Returns: undefined }
       sumar_a_evento: {
         Args: { avisar?: boolean; evento: string; persona: string }
         Returns: undefined
       }
+      tomar_tarea: { Args: { tarea: string }; Returns: undefined }
       veo_gasto: { Args: { gasto: string }; Returns: boolean }
     }
     Enums: {
