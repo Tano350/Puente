@@ -16,11 +16,12 @@ import './datos/tema.ts'
 import { consultas } from './datos/consultas.ts'
 import { SesionProvider } from './datos/sesion.tsx'
 import { alRestaurar, guardadoEnDispositivo } from './datos/sinSenal.ts'
-// Lo que se escribe sin señal (notas, gastos, boletas y rendición) se registra al cargar estos archivos: tiene que
+// Lo que se escribe sin señal (notas, gastos, boletas, rendición y marcar tareas) se registra al cargar estos archivos: tiene que
 // estar antes de restaurar lo que esperaba en el dispositivo, aunque las pantallas carguen después
 import './datos/contactos.ts'
 import './datos/eventos.ts'
 import './datos/gastos.ts'
+import './datos/tareas.ts'
 import { rutas } from './rutas.tsx'
 
 createRoot(document.getElementById('raiz')!).render(

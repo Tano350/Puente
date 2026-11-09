@@ -3,7 +3,8 @@ import type { Contacto, Nota } from './contactos.ts'
 import type { Calendario, Sincronizacion } from './calendario.ts'
 import type { Asistente, Evento, NotaReunion, Ocupado } from './eventos.ts'
 import type { Gasto, Pago, Parte, Rendicion } from './gastos.ts'
-import { momento, sumarDias, VIAJE } from './fechas.ts'
+import type { Asignado, Tarea } from './estadoTareas.ts'
+import { hoyEnCalifornia, momento, sumarDias, VIAJE } from './fechas.ts'
 
 // Solo en desarrollo: personas de ejemplo del lienzo, para revisar pantallas sin entrar con Google.
 // Se activa con ?maqueta=nueva (primera vez), ?maqueta=lista (ya entró) o ?maqueta=miembro (sin administrar). Nunca llega a la app publicada:
@@ -288,4 +289,69 @@ export function boletaDeMaqueta(): string {
   const lineas = ['Leche', 'Pan', 'Frutas', 'Café', 'Agua', 'Huevos'].map((cosa, i) => `<text x="24" y="${118 + i * 26}">${cosa}</text><text x="216" y="${118 + i * 26}" text-anchor="end">${(8.5 + i * 3.7).toFixed(2)}</text>`)
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="380" font-family="monospace" font-size="15" fill="#222"><rect width="240" height="380" fill="#fbfaf6"/><text x="120" y="44" text-anchor="middle" font-size="19" font-weight="bold">SUPERMERCADO</text><text x="120" y="70" text-anchor="middle">Palo Alto, CA</text>${lineas.join('')}<text x="24" y="300" font-weight="bold">TOTAL</text><text x="216" y="300" text-anchor="end" font-weight="bold">126.80</text><text x="120" y="344" text-anchor="middle">Gracias</text></svg>`
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+}
+
+// ---------- Tareas de ejemplo (las del diseño; "Tú" es Josefa). Las fechas van contadas desde hoy ----------
+type DatosTareas = { tareas: Tarea[]; asignados: Asignado[] }
+let tareasMaqueta: DatosTareas | null = null
+
+function armarTareas(): DatosTareas {
+  const hoy = hoyEnCalifornia()
+  const dia = (n: number) => sumarDias(hoy, n)
+  const instante = (n: number, hora = '10:00') => momento(dia(n), hora)
+  const tarea = (id: string, titulo: string, para: string | null, creadaPor: string, creadaHace: number, extra: Partial<Tarea> = {}): Tarea => ({
+    id, titulo, notas: null, para, cada_uno: false, personal: false, creada_por: creadaPor, creada_en: instante(-creadaHace, '09:00'), borrada_en: null, ...extra,
+  })
+  const TOMAS = 'tomas.fuenzalida'
+  const MARTIN = 'martin.ossa'
+  const tareas = [
+    tarea('carta', 'Mandar la carta a la Escuela', dia(-2), DIEGO, 8, { notas: 'La firman los 14 y se manda en PDF.' }),
+    tarea('airbnb', 'Cotizar el Airbnb de Palo Alto', dia(1), DIEGO, 5, { notas: 'Para 14, del 5 al 30 de enero. Al menos tres opciones.' }),
+    tarea('seguro', 'Pagar el seguro de viaje', dia(3), CATALINA, 7, { cada_uno: true, notas: 'El que pide la Escuela. Mándale el comprobante a Catalina.' }),
+    tarea('auto', 'Reservar el auto', dia(6), DIEGO, 8, { notas: 'Un auto para 7, del 5 al 12 de enero.' }),
+    tarea('presentacion', 'Armar la presentación del grupo', dia(21), YO, 4, { notas: 'Una lámina por emprendimiento.' }),
+    tarea('regalos', 'Regalos para Plug and Play', dia(35), PAULA, 3, { notas: 'Algo chileno para el equipo de Laura Chen.' }),
+    tarea('adaptadores', 'Comprar adaptadores de enchufe', null, YO, 2, { personal: true, notas: 'Tipo A y B.' }),
+    tarea('whatsapp', 'Crear el grupo de WhatsApp', dia(-12), DIEGO, 14),
+    tarea('correos', 'Juntar los correos de los 14', dia(-9), DIEGO, 13),
+    tarea('fechas', 'Elegir las fechas del viaje', dia(-6), CATALINA, 12, { cada_uno: true }),
+  ]
+  const fila = (t: string, persona: string, creadaHace: number, extra: Partial<Asignado> = {}): Asignado => ({
+    tarea: t, persona, tomada: false, hecha_en: null, asignado_en: instante(-creadaHace, '09:00'), ...extra,
+  })
+  const hechasSeguro = [BENJAMIN, CATALINA, DIEGO, FLORENCIA, IGNACIO, JOAQUIN, MARTINA, PAULA, SOFIA]
+  const asignados = [
+    fila('carta', YO, 8),
+    fila('airbnb', CATALINA, 5),
+    ...[YO, ANDRES, ...hechasSeguro, VICENTE, TOMAS, MARTIN].map((p, i) => fila('seguro', p, 7, hechasSeguro.includes(p) ? { hecha_en: instante(-6 + (i % 4), '18:30') } : {})),
+    fila('auto', YO, 8),
+    fila('auto', DIEGO, 8),
+    fila('presentacion', MARTINA, 4),
+    fila('presentacion', TOMAS, 4),
+    fila('adaptadores', YO, 2),
+    fila('whatsapp', DIEGO, 14, { hecha_en: instante(-12, '20:00') }),
+    fila('correos', YO, 13, { hecha_en: instante(-10, '11:30') }),
+    ...[YO, DIEGO, CATALINA].map((p, i) => fila('fechas', p, 12, { hecha_en: instante(-7 + i, '19:00') })),
+  ]
+  return { tareas, asignados }
+}
+
+export function tareasDeMaqueta(): Tarea[] {
+  tareasMaqueta ??= armarTareas()
+  return tareasMaqueta.tareas
+}
+
+export function asignadosDeMaqueta(): Asignado[] {
+  tareasMaqueta ??= armarTareas()
+  return tareasMaqueta.asignados
+}
+
+export function cambiarTareasDeMaqueta(cambiar: (lista: Tarea[]) => Tarea[]) {
+  tareasMaqueta ??= armarTareas()
+  tareasMaqueta = { ...tareasMaqueta, tareas: cambiar(tareasMaqueta.tareas) }
+}
+
+export function cambiarAsignadosDeMaqueta(cambiar: (lista: Asignado[]) => Asignado[]) {
+  tareasMaqueta ??= armarTareas()
+  tareasMaqueta = { ...tareasMaqueta, asignados: cambiar(tareasMaqueta.asignados) }
 }

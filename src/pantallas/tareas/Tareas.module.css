@@ -1,0 +1,201 @@
+/* ---------- Celular ---------- */
+.celular {
+  padding: 28px 8px 24px;
+}
+
+.cabecera {
+  margin: -28px -8px 12px;
+  padding: 28px 20px 14px;
+  border-bottom: 1px solid var(--regla);
+  background: var(--panel);
+}
+
+.fichaCel {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.fichaCel:empty {
+  display: none;
+}
+
+/* Con la ficha arriba, la cabecera sube */
+.cabecera:has(.fichaCel:not(:empty)) {
+  padding-top: 12px;
+}
+
+.titular {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.titulo {
+  margin: 0;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 42px;
+  line-height: 1;
+}
+
+.controles {
+  margin-top: 12px;
+}
+
+.nuevo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  height: 44px;
+  padding: 0 16px 0 12px;
+  border: 2px solid var(--tinta);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--tinta);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.nuevo[aria-pressed='true'] {
+  background: var(--tinta);
+  color: var(--fondo);
+}
+
+/* Sin conexión queda apagado; al tocarlo, un aviso dice por qué */
+.nuevo[aria-disabled='true'],
+.agregar[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.segmento {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--sec);
+  border-radius: 8px;
+}
+
+.segmento button {
+  position: relative;
+  height: 36px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sec);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Se ve de 36 px, pero se toca en 44 */
+.segmento button::after {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
+}
+
+.segmento button[aria-pressed='true'] {
+  background: var(--tinta);
+  color: var(--fondo);
+}
+
+/* ---------- Sin tareas ---------- */
+.vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 96px 12px 0;
+  text-align: center;
+}
+
+.tuercaVacia {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  background: var(--regla);
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+}
+
+.tuercaVacia::after {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 7px;
+  width: 42px;
+  height: 42px;
+  background-color: var(--fondo);
+  background-image: var(--papel);
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+}
+
+.vacioTexto {
+  margin-top: 18px;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.agregar {
+  height: 50px;
+  margin-top: 20px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 6px;
+  background: var(--acento);
+  color: var(--sobre);
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 19px;
+  cursor: pointer;
+}
+
+.sinMias {
+  padding: 56px 8px 0;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+/* ---------- Computador ---------- */
+.cabeceraPc {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px 32px 0;
+}
+
+.derechaPc {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.columnas {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 410px;
+  grid-template-rows: minmax(0, 1fr);
+  column-gap: 36px;
+  padding: 0 32px;
+}
+
+.columna,
+.lado {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding-bottom: 24px;
+}
+
+.lado {
+  display: flex;
+  flex-direction: column;
+}

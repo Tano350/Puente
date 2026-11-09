@@ -146,7 +146,7 @@ export function FormularioFechas({ borrador, onCambio, errores, otros }: { borra
 }
 
 // ---------- Avisos ----------
-export const TIPOS_DE_AVISO = ['eventos', 'cambios', 'espera', 'recordatorio', 'contacto', 'pago'] as const
+export const TIPOS_DE_AVISO = ['eventos', 'cambios', 'espera', 'recordatorio', 'contacto', 'pago', 'tareas'] as const
 export type Preferencias = Record<(typeof TIPOS_DE_AVISO)[number], boolean>
 
 export function preferenciasDe(avisos: Json): Preferencias {

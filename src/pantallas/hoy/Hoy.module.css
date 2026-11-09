@@ -206,6 +206,22 @@
   line-height: 22px;
 }
 
+/* Una tarea con fecha: la segunda línea dice para cuándo; si ya venció, en naranjo */
+.pendienteTexto[data-detalle] {
+  padding: 10px 0;
+}
+
+.pendienteDetalle {
+  display: block;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.pendienteDetalle[data-atrasada] {
+  color: var(--en-contra);
+}
+
 .sinPendientes,
 .vacio {
   margin: 12px 0 0;

@@ -1,0 +1,148 @@
+/* "Para quién": la hoja del celular y el menú del computador comparten el contenido */
+
+/* El menú del computador, debajo de la fila "Para quién" */
+.menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 8;
+  width: min(360px, 100%);
+  padding: 12px;
+  border: 1px solid var(--regla);
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: 0 18px 40px var(--sombra);
+}
+
+.contenido {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Los campos van del color del fondo para que se distingan de la hoja; el borde, con --sec */
+.contenido .buscador {
+  margin: 12px 0 0;
+  border-color: var(--sec);
+  background: var(--fondo);
+}
+
+.contenido .buscador:focus-within,
+.contenido .buscador[data-lleno='true'] {
+  border-color: var(--acento);
+}
+
+/* La lista se desplaza y el botón queda a la vista */
+.lista {
+  max-height: min(46vh, 420px);
+  margin-top: 8px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.menu .lista {
+  max-height: 190px;
+  margin-top: 6px;
+}
+
+.fila {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 6px 0;
+  border-top: 1px solid var(--borde);
+  cursor: pointer;
+}
+
+.lista > .fila:first-child {
+  border-top: none;
+}
+
+.menu .fila {
+  min-height: 46px;
+}
+
+.nativa {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.circulo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--regla);
+  color: var(--tinta);
+}
+
+.textos {
+  flex: 1;
+  min-width: 0;
+}
+
+.nombre {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.nota {
+  display: block;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+/* La casilla cuadrada de siempre; marcada va en azul */
+.casilla {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--sec);
+  border-radius: 6px;
+  color: transparent;
+}
+
+.nativa:checked ~ .casilla {
+  border-color: var(--acento);
+  background: var(--acento);
+  color: var(--sobre);
+}
+
+.nativa:focus-visible ~ .casilla {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+.nadie {
+  padding: 16px 0 8px;
+  font-size: 15px;
+  line-height: 22px;
+  text-align: center;
+  color: var(--sec);
+}
+
+.pie {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--borde);
+}
+
+.menu .pie > button {
+  height: 44px;
+}

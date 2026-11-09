@@ -10,6 +10,7 @@ const nombres: Nombres = {
   gasto: (id) => ({ cena: 'Cena en Palo Alto' })[id] ?? null,
   contacto: (id) => ({ ana: 'Ana Rojas' })[id] ?? null,
   evento: (id) => ({ cafe: 'Café con Laura' })[id] ?? null,
+  tarea: (id) => ({ carta: 'Mandar la carta a la Escuela' })[id] ?? null,
 }
 
 test('cada escritura dice qué era, con su nombre', () => {
@@ -54,4 +55,25 @@ test('el aviso dice qué no subió y qué hacer, en los dos idiomas', () => {
   const muchos: Rechazo[] = [gasto, nota, { clave: 'reunion:cafe', tipo: 'reunion', nombre: 'Café con Laura' }, { clave: 'n2', tipo: 'nota', nombre: null }]
   assert.equal(textoRechazos(muchos, es.rechazos, es.y), 'No se pudieron subir 4 cosas: el gasto «Taxi al aeropuerto», tu nota sobre Ana Rojas y 2 más. Vuelve a anotarlas.')
   assert.equal(textoRechazos([{ clave: 'n2', tipo: 'nota', nombre: null }], en.rechazos, en.y), 'Couldn’t upload a note you wrote offline. Write it again.')
+})
+
+test('una marca de tarea rechazada dice por qué: ya no está, ya no te toca u otra cosa', () => {
+  const marca = { tarea: 'carta', hecha: true, persona: 'josefa', cadaUno: false, en: '2026-11-10T15:00:00Z' }
+  // El motivo llega en "motivo" (ErrorDeTarea) o en "hint" (el error de la base)
+  assert.deepEqual(describirRechazo('marcarTarea', marca, 'tarea:carta', nombres, { motivo: 'no_esta' }), { clave: 'tarea:carta', tipo: 'tareaNoEsta', nombre: 'Mandar la carta a la Escuela' })
+  assert.deepEqual(describirRechazo('marcarTarea', marca, 'tarea:carta', nombres, { hint: 'no_asignado', code: '42501' }), { clave: 'tarea:carta', tipo: 'tareaNoAsignada', nombre: 'Mandar la carta a la Escuela' })
+  assert.deepEqual(describirRechazo('marcarTarea', { ...marca, tarea: 'otra' }, 'tarea:otra', nombres, { code: 'P0001' }), { clave: 'tarea:otra', tipo: 'tarea', nombre: null })
+  // Antes de subir todavía no hay error
+  assert.equal(describirRechazo('marcarTarea', marca, 'tarea:carta', nombres).tipo, 'tarea')
+  assert.deepEqual(rechazosValidos([{ clave: 'tarea:carta', tipo: 'tareaNoEsta', nombre: 'X' }]), [{ clave: 'tarea:carta', tipo: 'tareaNoEsta', nombre: 'X' }])
+})
+
+test('el aviso de una tarea dice qué pasó, en los dos idiomas', () => {
+  const noEsta: Rechazo = { clave: 'tarea:carta', tipo: 'tareaNoEsta', nombre: 'Mandar la carta' }
+  const noTeToca: Rechazo = { clave: 'tarea:seguro', tipo: 'tareaNoAsignada', nombre: 'Pagar el seguro' }
+  assert.equal(textoRechazos([noEsta], es.rechazos, es.y), 'No se pudo marcar «Mandar la carta»: esa tarea ya no está.')
+  assert.equal(textoRechazos([noTeToca], es.rechazos, es.y), 'No se pudo marcar «Pagar el seguro»: esa tarea ya no te toca.')
+  assert.equal(textoRechazos([{ clave: 'tarea:x', tipo: 'tarea', nombre: null }], es.rechazos, es.y), 'No se pudo guardar una tarea que marcaste sin señal. Vuelve a marcarla.')
+  assert.equal(textoRechazos([noEsta], en.rechazos, en.y), 'Couldn’t check off “Mandar la carta”: that task no longer exists.')
+  assert.equal(textoRechazos([noEsta, noTeToca], es.rechazos, es.y), 'No se pudieron subir 2 cosas: tu marca en «Mandar la carta» (ya no está) y tu marca en «Pagar el seguro» (ya no te toca). Vuelve a anotarlas.')
 })

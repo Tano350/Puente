@@ -122,6 +122,13 @@ function pago(cambios: Partial<Fila> = {}): Fila {
     monto: 2500,
     borrado_en: null,
     paga: 'Diego Soto',
+    tarea_id: null,
+    tarea_titulo: null,
+    para: null,
+    tarea_borrada: null,
+    asignado: false,
+    hecha: false,
+    encarga: null,
     ...cambios,
   }
 }
@@ -224,11 +231,39 @@ test('"Te sumó": la consulta trae quién te sumó y usa el interruptor de cambi
   ])
   base.dispositivos = base.dispositivos.slice(0, 1)
   assert.deepEqual(await correr(), { estado: 200, cuerpo: { enviados: 1, descartados: 0, fallidos: 0, dispositivosBorrados: 0 } })
-  assert.match(base.reclamo, /case when r\.tipo = 'sumado' then 'cambios' else r\.tipo end/)
+  assert.match(base.reclamo, /case when r\.tipo = 'sumado' then 'cambios' when r\.tipo in \('tarea', 'vence'\) then 'tareas' else r\.tipo end/)
   assert.match(base.reclamo, /r\.datos ->> 'quien'.* as suma/)
   const aviso = JSON.parse(await descifrar(servicio.llegadas[0].body, celular))
   assert.deepEqual({ ...aviso, cuerpo: undefined }, { titulo: 'Diego te sumó a Visita a Stripe', cuerpo: undefined, url: '/agenda/e2', etiqueta: 'evento-e2' })
   assert.match(aviso.cuerpo, /, \d\d:\d\d\.$/)
+})
+
+test('Tareas: la consulta trae la tarea, quién la asignó y si sigue siendo tuya; el aviso abre la tarea', async () => {
+  await preparar([
+    pago({
+      tipo: 'tarea',
+      datos: { quien: 'diego' },
+      pago_id: null,
+      monto: null,
+      paga: null,
+      tarea_id: 't1',
+      tarea_titulo: 'Reservar el auto',
+      asignado: true,
+      encarga: 'Diego Soto',
+    }),
+    pago({ id: 'aviso-2', tipo: 'vence', pago_id: null, monto: null, paga: null, tarea_id: 't2', tarea_titulo: 'Comprar pasajes', para: '2020-01-01', asignado: true }),
+  ])
+  base.dispositivos = base.dispositivos.slice(0, 1)
+  assert.deepEqual(await correr(), { estado: 200, cuerpo: { enviados: 1, descartados: 1, fallidos: 0, dispositivosBorrados: 0 } })
+  assert.match(base.reclamo, /returning .*v\.tarea\b/)
+  assert.match(base.reclamo, /left join public\.tareas t on t\.id = r\.tarea/)
+  assert.match(base.reclamo, /t\.para::text as para/)
+  assert.match(base.reclamo, /r\.tipo = 'tarea' and q\.id = \(r\.datos ->> 'quien'\)::uuid\) as encarga/)
+  for (const columna of ['tarea_id', 'tarea_titulo', 'tarea_borrada', 'asignado', 'hecha']) assert.match(base.reclamo, new RegExp(` as ${columna}\\b`))
+  const aviso = JSON.parse(await descifrar(servicio.llegadas[0].body, celular))
+  assert.deepEqual(aviso, { titulo: 'Diego te asignó una tarea', cuerpo: 'Reservar el auto', url: '/tareas/t1', etiqueta: 'tarea-t1' })
+  // El "vence mañana" de una fecha que ya pasó no sale
+  assert.deepEqual(base.escrituras.find((e) => e.valores[1] === 'aviso-2')?.valores, ['La tarea ya no vence mañana.', 'aviso-2'])
 })
 
 test('Lo que ya no tiene sentido se descarta sin mandar nada', async () => {

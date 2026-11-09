@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import type { Tables } from './base.ts'
-import { aplicarPendientes, conBoleta, conGasto, conNota, conNotaReunion, conPartes, conRendicion, esErrorDeRed, sinNota, type Sobre } from './enEspera.ts'
+import { aplicarPendientes, conBoleta, conGasto, conMarca, conNota, conNotaReunion, conPartes, conRendicion, esErrorDeRed, sinNota, type Marca, type Sobre } from './enEspera.ts'
 
 // node --test src/datos/enEspera.test.ts
 
@@ -102,4 +102,58 @@ test('lo que espera se pone en orden sobre cada consulta, sin tocar las demás',
   assert.equal(aplicarPendientes('notas', notas, pendientes, buscar), notas)
   // Sin datos todavía (la consulta no se ha traído) no se inventa nada
   assert.equal(aplicarPendientes('rendiciones', undefined, pendientes, buscar), undefined)
+})
+
+type Asignado = Tables<'asignados'>
+
+function fila(tarea: string, persona: string, hecha_en: string | null = null): Asignado {
+  return { tarea, persona, tomada: false, hecha_en, asignado_en: '2026-11-01T10:00:00Z' }
+}
+const marca = (extra: Partial<Marca>): Marca => ({ tarea: 'carta', hecha: true, persona: 'josefa', cadaUno: false, en: '2026-11-10T15:00:00Z', ...extra })
+
+test('cada uno: marcar y desmarcar cambia solo tu fila, y repetirlo no cambia nada', () => {
+  const lista = [fila('seguro', 'josefa'), fila('seguro', 'diego', '2026-11-09T10:00:00Z'), fila('otra', 'josefa')]
+  const hecha = conMarca(lista, marca({ tarea: 'seguro', cadaUno: true }))
+  assert.deepEqual(hecha.map((a) => a.hecha_en), ['2026-11-10T15:00:00Z', '2026-11-09T10:00:00Z', null])
+  // Marcar de nuevo deja la fecha de la primera vez
+  assert.equal(conMarca(hecha, marca({ tarea: 'seguro', cadaUno: true, en: '2026-11-11T09:00:00Z' })), hecha)
+  const desmarcada = conMarca(hecha, marca({ tarea: 'seguro', cadaUno: true, hecha: false }))
+  assert.deepEqual(desmarcada.map((a) => a.hecha_en), [null, '2026-11-09T10:00:00Z', null])
+  assert.equal(conMarca(desmarcada, marca({ tarea: 'seguro', cadaUno: true, hecha: false })), desmarcada)
+})
+
+test('basta con uno: marcar pone la tuya solo si nadie la marcó', () => {
+  const lista = [fila('carta', 'josefa'), fila('carta', 'diego')]
+  const hecha = conMarca(lista, marca({}))
+  assert.deepEqual(hecha.map((a) => a.hecha_en), ['2026-11-10T15:00:00Z', null])
+  assert.equal(conMarca(hecha, marca({ en: '2026-11-11T09:00:00Z' })), hecha)
+  // Si Diego ya la marcó, queda como está
+  const deDiego = [fila('carta', 'josefa'), fila('carta', 'diego', '2026-11-09T10:00:00Z')]
+  assert.equal(conMarca(deDiego, marca({})), deDiego)
+})
+
+test('basta con uno: desmarcar la deja por hacer para todos', () => {
+  const lista = [fila('carta', 'josefa'), fila('carta', 'diego', '2026-11-09T10:00:00Z'), fila('otra', 'diego', '2026-11-09T11:00:00Z')]
+  const desmarcada = conMarca(lista, marca({ hecha: false }))
+  assert.deepEqual(desmarcada.map((a) => a.hecha_en), [null, null, '2026-11-09T11:00:00Z'])
+  assert.equal(conMarca(desmarcada, marca({ hecha: false })), desmarcada)
+})
+
+test('si la tarea no es tuya (o ya no está), la marca no cambia nada', () => {
+  const lista = [fila('carta', 'diego')]
+  assert.equal(conMarca(lista, marca({})), lista)
+  assert.equal(conMarca(lista, marca({ hecha: false })), lista)
+  assert.equal(conMarca(lista, marca({ tarea: 'borrada' })), lista)
+})
+
+test('marcar y desmarcar sin señal, en orden, deja lo último', () => {
+  const sobre = (nombre: string, clave: string) => (nombre === 'marcarTarea' && clave === 'asignados' ? (conMarca as Sobre) : undefined)
+  const lista = [fila('carta', 'josefa'), fila('carta', 'diego')]
+  const pendientes = [
+    { nombre: 'marcarTarea', variables: marca({}) },
+    { nombre: 'marcarTarea', variables: marca({ hecha: false }) },
+    { nombre: 'marcarTarea', variables: marca({ en: '2026-11-10T16:00:00Z' }) },
+  ]
+  assert.deepEqual(aplicarPendientes('asignados', lista, pendientes, sobre).map((a: Asignado) => a.hecha_en), ['2026-11-10T16:00:00Z', null])
+  assert.deepEqual(aplicarPendientes('asignados', lista, pendientes.slice(0, 2), sobre), lista)
 })

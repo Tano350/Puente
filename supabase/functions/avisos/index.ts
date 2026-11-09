@@ -79,25 +79,36 @@ async function reclamar(sql: Sql): Promise<Fila[]> {
           limit ${TANDA}
           for update skip locked
        )
-      returning v.id, v.tipo, v.persona, v.datos, v.creado_en, v.evento, v.contacto, v.pago
+      returning v.id, v.tipo, v.persona, v.datos, v.creado_en, v.evento, v.contacto, v.pago, v.tarea
     )
     select r.id, r.tipo, r.persona, r.datos, r.creado_en,
            p.idioma, p.sacada_en is not null as sacada,
-           -- 'sumado' se apaga con el interruptor de 'cambios'
-           (p.avisos -> case when r.tipo = 'sumado' then 'cambios' else r.tipo end) is distinct from 'false'::jsonb as quiere,
+           -- 'sumado' se apaga con el interruptor de 'cambios'; 'tarea' y 'vence', con el de 'tareas'
+           (p.avisos -> case when r.tipo = 'sumado' then 'cambios' when r.tipo in ('tarea', 'vence') then 'tareas' else r.tipo end)
+             is distinct from 'false'::jsonb as quiere,
            e.id as evento_id, e.titulo, e.lugar, e.direccion, e.inicio, e.fin, e.modo, e.cupos, e.cancelado_en,
            (select a.estado from public.asistentes a where a.evento = e.id and a.persona = r.persona) as estado,
            (select count(*)::int from public.asistentes a where a.evento = e.id and a.estado = 'va') as van,
            (select q.nombre from public.personas q where r.tipo = 'sumado' and q.id = (r.datos ->> 'quien')::uuid) as suma,
            c.id as contacto_id, c.nombre as contacto_nombre, c.organizacion, c.responsable, asigna.nombre as asigna,
-           g.id as pago_id, g.monto, g.borrado_en, de.nombre as paga
+           g.id as pago_id, g.monto, g.borrado_en, de.nombre as paga,
+           -- La fecha como texto ("2027-01-18"): es un día de California, sin hora
+           t.id as tarea_id, t.titulo as tarea_titulo, t.para::text as para, t.borrada_en as tarea_borrada,
+           exists (select 1 from public.asignados x where x.tarea = t.id and x.persona = r.persona) as asignado,
+           -- En "cada uno", su parte; si basta con uno, si alguien la marcó
+           case when t.cada_uno
+                then exists (select 1 from public.asignados x where x.tarea = t.id and x.persona = r.persona and x.hecha_en is not null)
+                else exists (select 1 from public.asignados x where x.tarea = t.id and x.hecha_en is not null)
+           end as hecha,
+           (select q.nombre from public.personas q where r.tipo = 'tarea' and q.id = (r.datos ->> 'quien')::uuid) as encarga
       from reclamados r
       join public.personas p on p.id = r.persona
       left join public.eventos e on e.id = r.evento
       left join public.contactos c on c.id = r.contacto
       left join public.personas asigna on asigna.id = c.asignado_por
       left join public.pagos g on g.id = r.pago
-      left join public.personas de on de.id = g.de`
+      left join public.personas de on de.id = g.de
+      left join public.tareas t on t.id = r.tarea`
 }
 
 async function mandarTanda(sql: Sql, vapid: Vapid, tanda: Fila[], cuenta: Cuenta): Promise<void> {
