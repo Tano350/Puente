@@ -157,27 +157,16 @@ export function diasDelMes(dia: string): string[] {
   return Array.from({ length: diasEntre(desde, sumarDias(lunesDe(ultimo), 6)) }, (_, i) => sumarDias(desde, i))
 }
 
-export function enElViaje(dia: string, viaje: Ventana): boolean {
-  return dia >= viaje.desde && dia <= viaje.hasta
-}
-
-const dentroDelViaje = (dia: string, viaje: Ventana) => (dia < viaje.desde ? viaje.desde : dia > viaje.hasta ? viaje.hasta : dia)
-
 // Se abre en hoy; antes del viaje, en el día que llegas; después, en el que volviste
 export function diaInicial(yo: Pick<Persona, 'llega' | 'vuelve'>, hoy: string, viaje: Ventana): string {
-  if (hoy < viaje.desde) return dentroDelViaje(yo.llega ?? viaje.desde, viaje)
-  if (hoy > viaje.hasta) return dentroDelViaje(yo.vuelve ?? viaje.hasta, viaje)
+  if (hoy < viaje.desde) return yo.llega ?? viaje.desde
+  if (hoy > viaje.hasta) return yo.vuelve ?? viaje.hasta
   return hoy
 }
 
-export function mover(vista: Vista, dia: string, paso: number, viaje: Ventana): string {
-  return dentroDelViaje(vista === 'dia' ? sumarDias(dia, paso) : vista === 'semana' ? sumarDias(dia, 7 * paso) : sumarMeses(dia, paso), viaje)
-}
-
-export function puedeMover(vista: Vista, dia: string, paso: number, viaje: Ventana): boolean {
-  if (vista === 'dia') return paso < 0 ? dia > viaje.desde : dia < viaje.hasta
-  if (vista === 'semana') return paso < 0 ? lunesDe(dia) > viaje.desde : sumarDias(lunesDe(dia), 6) < viaje.hasta
-  return paso < 0 ? dia.slice(0, 7) > viaje.desde.slice(0, 7) : dia.slice(0, 7) < viaje.hasta.slice(0, 7)
+// Sin límites: se puede ir a cualquier día, semana o mes, antes, durante o después del viaje
+export function mover(vista: Vista, dia: string, paso: number): string {
+  return vista === 'dia' ? sumarDias(dia, paso) : vista === 'semana' ? sumarDias(dia, 7 * paso) : sumarMeses(dia, paso)
 }
 
 // Los días que se ven en cada vista

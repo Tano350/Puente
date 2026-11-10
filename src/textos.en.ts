@@ -353,7 +353,6 @@ export const en: Textos = {
       faltaNombre: 'Give the event a name.',
       faltaQue: 'Write what you have at that time.',
       faltaDia: 'Choose the day.',
-      fueraDelViaje: (rango: string) => `Choose a day from ${rango}.`,
       faltaInicio: 'Choose when it starts.',
       faltaFin: 'Choose when it ends.',
       alReves: 'It has to end after it starts.',

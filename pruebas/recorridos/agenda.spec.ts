@@ -43,6 +43,33 @@ test.describe('Agenda', () => {
     }
   })
 
+  test('la agenda no se limita a enero y febrero', async ({ page }) => {
+    await abrir(page, AGENDA)
+    const vistas = page.getByRole('tablist', { name: a.vista.vistas })
+    await vistas.getByRole('tab', { name: a.vista.nombres.mes }).click()
+    // Antes del viaje: diciembre se abre y sus días se pueden tocar
+    await page.getByRole('button', { name: a.vista.anterior.mes }).click()
+    await expect(page.getByText('Diciembre de 2026')).toBeVisible()
+    await expect(page.getByRole('button', { name: /15 de diciembre/ })).toBeEnabled()
+    // Después del viaje: marzo y abril también
+    for (let i = 0; i < 4; i++) await page.getByRole('button', { name: a.vista.siguiente.mes }).click()
+    await expect(page.getByText('Abril de 2027')).toBeVisible()
+    await expect(page.getByRole('button', { name: /20 de abril/ })).toBeEnabled()
+  })
+
+  test('crear un evento antes del viaje', async ({ page }) => {
+    await abrir(page, AGENDA)
+    await page.getByRole('button', { name: /^Nuevo/ }).first().click()
+    const panel = detalle(page)
+    await panel.getByLabel(a.crear.nombreEvento).fill('Reunión de preparación')
+    await panel.getByLabel(a.crear.dia, { exact: true }).fill('2026-12-15')
+    await panel.getByLabel(a.crear.empieza).fill('18:00')
+    await panel.getByLabel(a.crear.termina).fill('19:00')
+    await panel.getByRole('button', { name: a.crear.crearEvento }).click()
+    await expect(page.getByRole('status').filter({ hasText: a.vista.creaste('Reunión de preparación') })).toBeVisible()
+    await expect(detalle(page).getByRole('heading', { name: 'Reunión de preparación' })).toBeVisible()
+  })
+
   test('el boleto de un evento al que voy', async ({ page }) => {
     await abrir(page, AGENDA)
     await evento(page, 'Plug and Play').click()

@@ -360,7 +360,6 @@ export const es = {
       faltaNombre: 'Ponle un nombre al evento.',
       faltaQue: 'Escribe qué tienes a esa hora.',
       faltaDia: 'Elige el día.',
-      fueraDelViaje: (rango: string) => `Elige un día del ${rango}.`,
       faltaInicio: 'Elige a qué hora empieza.',
       faltaFin: 'Elige a qué hora termina.',
       alReves: 'Tiene que terminar después de empezar.',

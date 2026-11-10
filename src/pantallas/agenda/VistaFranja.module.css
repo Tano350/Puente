@@ -68,21 +68,12 @@
   color: inherit;
 }
 
-.dia:disabled {
-  color: var(--apagado);
-  cursor: default;
-}
-
-.dia:disabled .etiqueta {
-  color: var(--apagado);
-}
-
 @media (hover: hover) {
-  .dia:not(:disabled, [aria-pressed='true']):hover {
+  .dia:not([aria-pressed='true']):hover {
     background: var(--activo-fondo);
   }
 
-  .franjaPc .dia:not(:disabled, [aria-pressed='true']):hover {
+  .franjaPc .dia:not([aria-pressed='true']):hover {
     background: var(--fondo);
   }
 }

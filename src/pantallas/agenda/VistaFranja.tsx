@@ -1,11 +1,10 @@
 import { useRef } from 'react'
-import { conMayuscula, diaLargo, type Ventana } from '../../datos/fechas.ts'
+import { conMayuscula, diaLargo } from '../../datos/fechas.ts'
 import { useTextos } from '../../textos.ts'
-import { enElViaje } from './AgendaDatos.ts'
 import estilos from './VistaFranja.module.css'
 
 // La semana como franja de días: el elegido va lleno y hoy dice "hoy". En el celular se desliza a otra semana.
-export function VistaFranja({ dias, elegido, hoy, computador, viaje, onElegir, onSemana }: { dias: string[]; elegido: string; hoy: string; computador: boolean; viaje: Ventana; onElegir: (dia: string) => void; onSemana?: (paso: number) => void }) {
+export function VistaFranja({ dias, elegido, hoy, computador, onElegir, onSemana }: { dias: string[]; elegido: string; hoy: string; computador: boolean; onElegir: (dia: string) => void; onSemana?: (paso: number) => void }) {
   const tv = useTextos().agenda.vista
   const toque = useRef<{ x: number; y: number } | null>(null)
   return (
@@ -34,7 +33,6 @@ export function VistaFranja({ dias, elegido, hoy, computador, viaje, onElegir, o
             aria-pressed={dia === elegido}
             aria-current={esHoy ? 'date' : undefined}
             aria-label={esHoy ? tv.hoyEs(diaLargo(dia)) : largo}
-            disabled={!enElViaje(dia, viaje)}
             onClick={() => onElegir(dia)}
           >
             <span className={estilos.etiqueta}>{esHoy ? tv.hoy : tv.diasCortos[i]}</span>

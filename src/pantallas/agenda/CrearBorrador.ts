@@ -1,6 +1,6 @@
 import type { Contacto } from '../../datos/contactos.ts'
 import type { Evento, ModoEvento, TipoEvento } from '../../datos/eventos.ts'
-import { diaEn, hora, momento, rango, type Ventana } from '../../datos/fechas.ts'
+import { diaEn, hora, momento } from '../../datos/fechas.ts'
 import type { Textos } from '../../textos.ts'
 
 // Lo que se va llenando en "Nuevo" (un evento o un rato ocupado) o al editar un evento. Las horas son de California.
@@ -78,12 +78,11 @@ export function conInicio(b: Borrador, empieza: string | null): Partial<Borrador
 
 export const alReves = (b: Pick<Borrador, 'empieza' | 'termina'>) => Boolean(b.empieza && b.termina && b.termina <= b.empieza)
 
-export function validar(b: Borrador, t: TextosCrear, viaje: Ventana): Errores {
-  // Escribiendo con el teclado se puede salir del viaje, aunque el calendario no lo deje
-  const fuera = b.dia && (b.dia < viaje.desde || b.dia > viaje.hasta)
+// Cualquier día sirve: antes, durante o después del viaje
+export function validar(b: Borrador, t: TextosCrear): Errores {
   return {
     titulo: b.titulo.trim() ? undefined : b.clase === 'evento' ? t.faltaNombre : t.faltaQue,
-    dia: !b.dia ? t.faltaDia : fuera ? t.fueraDelViaje(rango(viaje.desde, viaje.hasta)) : undefined,
+    dia: b.dia ? undefined : t.faltaDia,
     hora: !b.empieza ? t.faltaInicio : !b.termina ? t.faltaFin : alReves(b) ? t.alReves : undefined,
   }
 }

@@ -11,15 +11,19 @@ export const ZONA = 'America/Los_Angeles'
 export type Ventana = { desde: string; hasta: string }
 const DIA = 86_400_000
 
-// La ventana que cubre DESDE–HASTA y también las estadías de todos. llegaMin y vuelveMax son días 'AAAA-MM-DD' (o null):
-// la llegada más temprana y la vuelta más tardía. Se abre un día antes de la llegada y dos después de la vuelta, en UTC,
-// para que ningún día de California quede afuera. Sin fechas (o con una inválida), queda DESDE–HASTA.
-export function ventanaDeCruce(llegaMin: string | null | undefined, vuelveMax: string | null | undefined): Ventana {
+// La ventana que cubre DESDE–HASTA, las estadías de todos y todos los eventos de Puente, sean de la fecha que sean (la
+// Agenda no limita las fechas). llegaMin y vuelveMax son días 'AAAA-MM-DD' (o null): la llegada más temprana y la vuelta
+// más tardía. Se abre un día antes del primer día y dos después del último, en UTC, para que ningún día de California
+// quede afuera. Sin fechas ni eventos (o con una fecha inválida), queda DESDE–HASTA.
+export function ventanaDeCruce(llegaMin: string | null | undefined, vuelveMax: string | null | undefined, eventos: Pick<Evento, 'inicio' | 'fin'>[] = []): Ventana {
   const dia = (fecha: string | null | undefined) => (fecha && /^\d{4}-\d{2}-\d{2}$/.test(fecha) ? Date.parse(`${fecha}T00:00:00Z`) : NaN)
-  const llega = dia(llegaMin)
-  const vuelve = dia(vuelveMax)
-  const desde = Number.isNaN(llega) ? DESDE : new Date(Math.min(Date.parse(DESDE), llega - DIA)).toISOString().replace('.000Z', 'Z')
-  const hasta = Number.isNaN(vuelve) ? HASTA : new Date(Math.max(Date.parse(HASTA), vuelve + 2 * DIA)).toISOString().replace('.000Z', 'Z')
+  const validos = (dias: number[]) => dias.filter((d) => !Number.isNaN(d))
+  // Las horas de los eventos vienen en ISO y en UTC: su día UTC basta, con el margen de abajo
+  const primeros = validos([dia(llegaMin), ...eventos.map((e) => dia(e.inicio.slice(0, 10)))])
+  const ultimos = validos([dia(vuelveMax), ...eventos.map((e) => dia(e.fin.slice(0, 10)))])
+  const iso = (ms: number) => new Date(ms).toISOString().replace('.000Z', 'Z')
+  const desde = primeros.length === 0 ? DESDE : iso(Math.min(Date.parse(DESDE), Math.min(...primeros) - DIA))
+  const hasta = ultimos.length === 0 ? HASTA : iso(Math.max(Date.parse(HASTA), Math.max(...ultimos) + 2 * DIA))
   return { desde, hasta }
 }
 const AGENDA = 'https://puente-2027.vercel.app/agenda/'
