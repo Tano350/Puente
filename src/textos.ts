@@ -131,8 +131,10 @@ export const es = {
     el: (nombre: string, dia: string) => `${nombre} el ${dia}`,
     tu: 'Tú',
     tuMinuscula: 'tú',
-    integrantes: 'Integrantes',
     grafico: 'Cuántos están allá cada día',
+    // En el celular, las barras con nombre: el nombre de la lista y lo que lee el lector de pantalla en cada fila
+    estadias: 'La estadía de cada uno',
+    fila: (quien: string, estado: string, fechas: string | null) => (fechas ? `${quien}. ${estado}. ${fechas}.` : `${quien}. ${estado}.`),
     alla: 'Allá',
     ultimoDia: 'Último día',
     volvio: 'Volvió',

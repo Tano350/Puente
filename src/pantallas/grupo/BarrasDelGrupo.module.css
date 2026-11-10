@@ -1,0 +1,176 @@
+/* Grupo en el celular: una tarjeta con la estadía de cada uno como una barra con su nombre */
+.linea {
+  margin-top: 16px;
+  padding: 10px 10px 8px;
+  border-radius: 12px;
+  background: var(--panel);
+}
+
+.meses {
+  display: flex;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--sec);
+}
+
+.meses span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  padding-left: 4px;
+  border-left: 1px solid var(--regla);
+}
+
+/* "hoy", arriba de su raya */
+.hoyArriba {
+  position: relative;
+  height: 18px;
+}
+
+.hoyArriba span {
+  position: absolute;
+  top: 1px;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+  color: var(--acento);
+}
+
+.cuerpo {
+  position: relative;
+  margin-top: 2px;
+}
+
+/* La raya de hoy y el comienzo de cada mes pasan por detrás de las barras */
+.hoy,
+.corte {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.hoy {
+  width: 2px;
+  margin-left: -1px;
+  background: var(--acento);
+}
+
+.corte {
+  width: 1px;
+  background: var(--borde);
+}
+
+.filas,
+.sinFechas {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Toda la fila se toca: 36 px de alto, con la barra de 26 px adentro */
+.fila,
+.filaSinFechas {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 36px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+}
+
+button.fila,
+button.filaSinFechas {
+  cursor: pointer;
+}
+
+.barra {
+  position: absolute;
+  top: 5px;
+  height: 26px;
+  min-width: 6px;
+  overflow: hidden;
+  border-radius: 13px;
+  background: var(--sec);
+  color: var(--sobre);
+}
+
+.barra[data-tu='true'] {
+  background: var(--acento);
+}
+
+.nombre {
+  display: inline-block;
+  padding: 0 8px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 26px;
+  white-space: nowrap;
+}
+
+/* Estadía corta: el nombre va al lado, sobre el fondo de la tarjeta (así tapa la raya de hoy si pasa por ahí) */
+.barra[data-fuera] {
+  overflow: visible;
+}
+
+.barra[data-fuera] .nombre {
+  position: absolute;
+  top: 0;
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--tinta);
+}
+
+.barra[data-fuera='derecha'] .nombre {
+  left: 100%;
+}
+
+.barra[data-fuera='izquierda'] .nombre {
+  right: 100%;
+}
+
+.barra[data-tu='true'][data-fuera] .nombre {
+  color: var(--acento);
+}
+
+/* Quien no tiene fechas o todavía no entra: al final, sin barra */
+.sinFechas {
+  margin-top: 4px;
+  border-top: 1px solid var(--borde);
+}
+
+.suelta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+  padding: 0 2px;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.nombreSuelto {
+  font-weight: 500;
+}
+
+.nombreSuelto[data-tu='true'] {
+  color: var(--acento);
+}
+
+.motivo {
+  color: var(--sec);
+}
+
+.oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

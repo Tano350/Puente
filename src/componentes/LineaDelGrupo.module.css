@@ -1,18 +1,6 @@
-/* En el celular va en una tarjeta; en el computador ocupa la columna */
+/* Ocupa la columna izquierda de Grupo en el computador; la etiqueta es la columna de las caras y los nombres */
 .linea {
-  --etiqueta: 64px;
-  margin-top: 16px;
-  padding: 12px 12px 10px;
-  border-radius: 12px;
-  background: var(--panel);
-}
-
-.linea[data-computador='true'] {
   --etiqueta: 130px;
-  margin-top: 0;
-  padding: 0;
-  border-radius: 0;
-  background: transparent;
 }
 
 .meses {
@@ -88,62 +76,10 @@
 }
 
 .filas {
-  margin-top: 6px;
-}
-
-[data-computador='true'] .filas {
   margin-top: 8px;
 }
 
 .fila {
-  display: flex;
-  align-items: center;
-  height: 18px;
-}
-
-.nombre {
-  flex: none;
-  width: var(--etiqueta);
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font-size: 12px;
-}
-
-.nombre[data-tu='true'] {
-  font-weight: 500;
-  color: var(--acento);
-}
-
-.pista {
-  position: relative;
-  display: block;
-  flex: 1;
-  height: 8px;
-}
-
-.tramo {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  border-radius: 4px;
-  background: var(--sec);
-}
-
-.tramo[data-tu='true'] {
-  background: var(--acento);
-}
-
-.sinTramo {
-  flex: 1;
-  min-width: 0;
-  font-size: 12px;
-  line-height: 16px;
-  color: var(--sec);
-}
-
-/* ---------- Computador ---------- */
-.filaPc {
   display: grid;
   grid-template-columns: var(--etiqueta) minmax(0, 1fr);
   align-items: center;
@@ -156,29 +92,42 @@
   text-align: left;
 }
 
-button.filaPc {
+button.fila {
   cursor: pointer;
 }
 
-button.filaPc:hover {
+button.fila:hover {
   background: var(--panel);
 }
 
-.filaPc[aria-pressed='true'] {
+.fila[aria-pressed='true'] {
   background: var(--panel);
   box-shadow: inset 0 0 0 2px var(--acento);
 }
 
-.filaPc .pista {
+.pista {
+  position: relative;
+  display: block;
   height: 12px;
 }
 
-.filaPc .tramo {
+.tramo {
+  position: absolute;
+  top: 0;
+  bottom: 0;
   border-radius: 6px;
+  background: var(--sec);
 }
 
-.filaPc .sinTramo {
+.tramo[data-tu='true'] {
+  background: var(--acento);
+}
+
+.sinTramo {
+  min-width: 0;
   font-size: 13px;
+  line-height: 16px;
+  color: var(--sec);
 }
 
 .etiqueta {
@@ -203,7 +152,7 @@ button.filaPc:hover {
   font-weight: 500;
 }
 
-.nombrePc {
+.nombre {
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
@@ -213,11 +162,11 @@ button.filaPc:hover {
   line-height: 19px;
 }
 
-.nombrePc[data-tu='true'] {
+.nombre[data-tu='true'] {
   color: var(--ahora);
 }
 
-.nombrePc[data-fuera='true'] {
+.nombre[data-fuera='true'] {
   font-weight: 400;
   color: var(--sec);
 }

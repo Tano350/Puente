@@ -1,20 +1,19 @@
 import { useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router'
 import { Atras } from '../../componentes/Controles.tsx'
-import { Avatar } from '../../componentes/Avatar.tsx'
 import { EntradaPerfil } from '../../componentes/EntradaPerfil.tsx'
 import { Buscador } from '../../componentes/Buscador.tsx'
-import { Icono } from '../../componentes/Icono.tsx'
 import { LineaDelGrupo } from '../../componentes/LineaDelGrupo.tsx'
 import { DetallePersona, Tarjeta } from '../../componentes/Tarjeta.tsx'
 import { useEsComputador } from '../../componentes/useEsComputador.ts'
 import escritorio from '../../componentes/Escritorio.module.css'
 import { usePersonas, type Persona } from '../../datos/consultas.ts'
-import { diaCorto, diaDeLaSemana, diaLargo, hoyEnCalifornia, rangoCorto, sumarDias, ventanaDelViaje } from '../../datos/fechas.ts'
+import { diaCorto, diaDeLaSemana, diaLargo, hoyEnCalifornia, rangoLargo, sumarDias, ventanaDelViaje } from '../../datos/fechas.ts'
 import { coincide, estaAlla, integrantes, porLlegada, tieneFechas } from '../../datos/grupo.ts'
-import { carreraCorta, nombreCompleto, primerNombre } from '../../datos/nombres.ts'
+import { nombreCompleto, primerNombre } from '../../datos/nombres.ts'
 import { useSesion } from '../../datos/sesion.tsx'
 import { useTextos, type Textos } from '../../textos.ts'
+import { BarrasDelGrupo } from './BarrasDelGrupo.tsx'
 import estilos from './Grupo.module.css'
 
 // Arriba de Grupo: cuántos hay allá hoy y quién llega o vuelve esta semana
@@ -46,50 +45,15 @@ function resumen(gente: Persona[], yo: string, hoy: string, textos: Textos): [st
   return [linea1, null]
 }
 
-// "● Allá", "Llega el 15 ene", "Último día", "Volvió"…
-function estadoEnLista(p: Persona, yo: string, hoy: string, textos: Textos): { texto: string; alla: boolean } {
+// Cómo está cada uno hoy: "Allá", "Llega el 15 ene", "Último día", "Volvió"…
+function estadoDe(p: Persona, yo: string, hoy: string, textos: Textos): string {
   const t = textos.grupo
-  if (!p.entro_en) return { texto: t.sinEntrar, alla: false }
-  if (!tieneFechas(p)) return { texto: t.sinFechas, alla: false }
+  if (!p.entro_en) return t.sinEntrar
+  if (!tieneFechas(p)) return t.sinFechas
   const tuyo = p.id === yo
-  if (hoy < p.llega) return { texto: tuyo ? t.llegasCorto(diaCorto(p.llega)) : t.llega(diaCorto(p.llega)), alla: false }
-  if (hoy > p.vuelve) return { texto: tuyo ? t.volviste : t.volvio, alla: false }
-  return { texto: hoy === p.vuelve ? t.ultimoDia : t.alla, alla: true }
-}
-
-function FilaIntegrante({ persona, yo, hoy, onAbrir }: { persona: Persona; yo: string; hoy: string; onAbrir?: () => void }) {
-  const textos = useTextos()
-  const tuyo = persona.id === yo
-  const estado = estadoEnLista(persona, yo, hoy, textos)
-  const detalle = [carreraCorta(persona.carrera), tieneFechas(persona) ? rangoCorto(persona.llega, persona.vuelve) : ''].filter(Boolean).join(', ')
-  const contenido = (
-    <>
-      {tuyo ? (
-        <span className={estilos.tuAvatar} aria-hidden="true">{textos.grupo.tu}</span>
-      ) : persona.entro_en ? (
-        <Avatar persona={persona} medida={40} />
-      ) : (
-        <span className={estilos.sobre} aria-hidden="true">
-          <Icono nombre="correo" medida={18} />
-        </span>
-      )}
-      <span className={estilos.quien}>
-        <span className={estilos.nombre} data-tu={tuyo}>{tuyo ? textos.grupo.tu : nombreCompleto(persona)}</span>
-        {detalle && <span className={estilos.detalle}>{detalle}</span>}
-      </span>
-      <span className={estilos.estado} data-alla={estado.alla}>
-        {estado.alla && <span className={estilos.punto} aria-hidden="true" />}
-        {estado.texto}
-      </span>
-    </>
-  )
-  // Quien todavía no entra no tiene perfil que abrir
-  if (!onAbrir) return <div className={estilos.integrante}>{contenido}</div>
-  return (
-    <button type="button" className={estilos.integrante} onClick={onAbrir}>
-      {contenido}
-    </button>
-  )
+  if (hoy < p.llega) return tuyo ? t.llegasCorto(diaCorto(p.llega)) : t.llega(diaCorto(p.llega))
+  if (hoy > p.vuelve) return tuyo ? t.volviste : t.volvio
+  return hoy === p.vuelve ? t.ultimoDia : t.alla
 }
 
 export function Grupo() {
@@ -109,10 +73,10 @@ export function Grupo() {
   const hoy = hoyEnCalifornia()
   const ventana = ventanaDelViaje(gente)
   const [linea1, linea2] = resumen(gente, yo.id, hoy, textos)
-  const visibles = gente.filter((p) => coincide(p, busqueda))
-  const nadie = visibles.length === 0 ? textos.nadieCoincide(busqueda.trim()) : null
 
   if (esComputador) {
+    const visibles = gente.filter((p) => coincide(p, busqueda))
+    const nadie = visibles.length === 0 ? textos.nadieCoincide(busqueda.trim()) : null
     const elegibles = gente.filter((p) => p.id !== yo.id && p.entro_en)
     const elegida = elegibles.find((p) => p.id === id) ?? elegibles[0] ?? null
     return (
@@ -134,7 +98,6 @@ export function Grupo() {
                 visibles={visibles}
                 yo={yo.id}
                 hoy={hoy}
-                computador
                 elegida={elegida?.id}
                 onElegir={(otro) => navigate(`/grupo/${otro}`, { replace: true })}
               />
@@ -172,6 +135,12 @@ export function Grupo() {
     )
   }
 
+  // Celular: las barras con nombre, sin buscador (los 14 caben a la vista). Tocar a alguien abre su perfil; el tuyo es
+  // Tu perfil, y quien todavía no entra no tiene perfil que abrir
+  const abrir = (p: Persona) => (p.id === yo.id ? () => navigate('/perfil') : p.entro_en ? () => navigate(`/grupo/${p.id}`) : undefined)
+  const describir = (p: Persona) =>
+    t.fila(p.id === yo.id ? t.tu : nombreCompleto(p), estadoDe(p, yo.id, hoy, textos), tieneFechas(p) ? rangoLargo(p.llega, p.vuelve) : null)
+
   return (
     <div className={estilos.celular}>
       <div className={estilos.cabecera}>
@@ -182,24 +151,7 @@ export function Grupo() {
         <div className={estilos.linea1}>{linea1}</div>
         {linea2 && <div className={estilos.linea2}>{linea2}</div>}
       </div>
-      <LineaDelGrupo gente={gente} ventana={ventana} yo={yo.id} hoy={hoy} />
-      <div className={estilos.integrantes}>
-        <span>{t.integrantes}</span>
-        <span className={estilos.cuenta}>{gente.length}</span>
-      </div>
-      <Buscador valor={busqueda} onCambio={setBusqueda} clase={estilos.buscador} />
-      <div className={estilos.lista}>
-        {visibles.map((p) => (
-          <FilaIntegrante
-            key={p.id}
-            persona={p}
-            yo={yo.id}
-            hoy={hoy}
-            onAbrir={p.id === yo.id ? () => navigate('/perfil') : p.entro_en ? () => navigate(`/grupo/${p.id}`) : undefined}
-          />
-        ))}
-      </div>
-      {nadie && <div className={estilos.nadie}>{nadie}</div>}
+      <BarrasDelGrupo gente={gente} ventana={ventana} yo={yo.id} hoy={hoy} abrir={abrir} describir={describir} />
     </div>
   )
 }
