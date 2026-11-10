@@ -12,15 +12,15 @@ type Props = {
   ventana: Ventana
   yo: string
   hoy: string
-  // En el computador cada fila se elige y el perfil se ve al lado
-  computador?: boolean
+  // Cada fila se elige y el perfil se ve al lado
   visibles?: Persona[]
   elegida?: string | null
   onElegir?: (id: string) => void
 }
 
-// Enero y febrero del grupo: arriba cuántos están allá cada día, abajo la estadía de cada uno y una raya en hoy
-export function LineaDelGrupo({ gente, ventana: viaje, yo, hoy, computador = false, visibles = gente, elegida = null, onElegir }: Props) {
+// Grupo en el computador: enero y febrero del grupo, arriba cuántos están allá cada día, abajo la estadía de cada uno y
+// una raya en hoy. En el celular van las barras con nombre (pantallas/grupo/BarrasDelGrupo.tsx).
+export function LineaDelGrupo({ gente, ventana: viaje, yo, hoy, visibles = gente, elegida = null, onElegir }: Props) {
   const textos = useTextos()
   const t = textos.grupo
   const enElViaje = (i: number) => Math.min(Math.max(i, 0), viaje.dias - 1)
@@ -45,31 +45,23 @@ export function LineaDelGrupo({ gente, ventana: viaje, yo, hoy, computador = fal
   }
 
   const fila = (p: Persona) => {
-    if (!computador) {
-      return (
-        <div key={p.id} className={estilos.fila}>
-          <span className={estilos.nombre} data-tu={p.id === yo}>{nombre(p)}</span>
-          {pista(p)}
-        </div>
-      )
-    }
     const etiqueta = (
       <span className={estilos.etiqueta}>
         {p.id === yo ? <span className={estilos.tuAvatar} aria-hidden="true">{t.tu}</span> : <Avatar persona={p} medida={26} />}
-        <span className={estilos.nombrePc} data-tu={p.id === yo} data-fuera={!p.entro_en}>{nombre(p)}</span>
+        <span className={estilos.nombre} data-tu={p.id === yo} data-fuera={!p.entro_en}>{nombre(p)}</span>
       </span>
     )
     // Tú y quien todavía no entra no tienen perfil que mostrar al lado
     if (p.id === yo || !p.entro_en || !onElegir) {
       return (
-        <div key={p.id} className={estilos.filaPc}>
+        <div key={p.id} className={estilos.fila}>
           {etiqueta}
           {pista(p)}
         </div>
       )
     }
     return (
-      <button key={p.id} type="button" className={estilos.filaPc} aria-pressed={elegida === p.id} onClick={() => onElegir(p.id)}>
+      <button key={p.id} type="button" className={estilos.fila} aria-pressed={elegida === p.id} onClick={() => onElegir(p.id)}>
         {etiqueta}
         {pista(p)}
       </button>
@@ -77,7 +69,7 @@ export function LineaDelGrupo({ gente, ventana: viaje, yo, hoy, computador = fal
   }
 
   return (
-    <div className={estilos.linea} data-computador={computador}>
+    <div className={estilos.linea}>
       <div className={estilos.meses}>
         {mesesDe(viaje).map((mes) => (
           <span key={mes.nombre} style={{ flex: mes.dias }}>{mes.dias < 7 ? '' : mes.dias < 20 ? mes.nombre.slice(0, 3) : mes.nombre}</span>
@@ -91,7 +83,7 @@ export function LineaDelGrupo({ gente, ventana: viaje, yo, hoy, computador = fal
         )}
         <div role="img" aria-label={t.grafico} className={estilos.barras}>
           {cuantos.map((n, i) => (
-            <span key={i} className={estilos.barra} data-hoy={i === hoyEnLaLinea} style={{ height: Math.max(computador ? 2 : 1, Math.round((n / escala) * 40)) }} />
+            <span key={i} className={estilos.barra} data-hoy={i === hoyEnLaLinea} style={{ height: Math.max(2, Math.round((n / escala) * 40)) }} />
           ))}
         </div>
         <div className={estilos.filas}>{visibles.map(fila)}</div>
