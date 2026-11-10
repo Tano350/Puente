@@ -28,13 +28,6 @@
   color: var(--ahora);
 }
 
-/* Los días fuera del viaje no se abren */
-.cabeza:disabled,
-.cabeza:disabled .cabezaDia {
-  color: var(--apagado);
-  cursor: default;
-}
-
 .cabezaNumero {
   font-family: var(--letra-titulo);
   font-weight: 700;
@@ -146,7 +139,7 @@
 }
 
 @media (hover: hover) {
-  .semanaPc .cabeza:not(:disabled):hover {
+  .semanaPc .cabeza:hover {
     background: var(--fondo);
   }
 }

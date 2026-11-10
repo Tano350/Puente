@@ -1,7 +1,7 @@
 import type { Persona } from '../../datos/consultas.ts'
-import { conMayuscula, diaLargo, hora, type Ventana } from '../../datos/fechas.ts'
+import { conMayuscula, diaLargo, hora } from '../../datos/fechas.ts'
 import { useTextos } from '../../textos.ts'
-import { diasDelMes, enElViaje, type Pieza } from './AgendaDatos.ts'
+import { diasDelMes, type Pieza } from './AgendaDatos.ts'
 import estilos from './AgendaMes.module.css'
 
 type Props = {
@@ -11,19 +11,18 @@ type Props = {
   hoy: string
   yo: Pick<Persona, 'llega' | 'vuelve'>
   soloVoy: boolean
-  viaje: Ventana
   onDia: (dia: string) => void
 }
 
 // El mes: tu estadía como línea bajo los días y hoy en una tuerca. Tocar un día lo abre en la vista Día.
 // En el celular, un punto por evento (lleno si vas); en el computador, fichas con hora y nombre.
-export function AgendaMes({ dia, piezas, computador, hoy, yo, soloVoy, viaje, onDia }: Props) {
+export function AgendaMes({ dia, piezas, computador, hoy, yo, soloVoy, onDia }: Props) {
   const tv = useTextos().agenda.vista
   const mes = dia.slice(0, 7)
   const enEstadia = (d: string) => Boolean(yo.llega && yo.vuelve && yo.llega <= d && d <= yo.vuelve)
 
   const celdas = diasDelMes(dia).map((d) => {
-    const delMes = d.slice(0, 7) === mes && enElViaje(d, viaje)
+    const delMes = d.slice(0, 7) === mes
     const lista = delMes ? (piezas.get(d) ?? []) : []
     const eventos = lista.filter((p) => p.tipo === 'evento')
     const esHoy = d === hoy

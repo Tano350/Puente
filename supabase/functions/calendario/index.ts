@@ -81,11 +81,11 @@ async function anotarCalendarios(sql: Sql, g: Google): Promise<number> {
 // Copias de los eventos en el calendario de cada uno y sus ratos ocupados, para los calendarios asignados
 async function sincronizarEventos(sql: Sql, g: Google, conteo: Conteo, fallo: Fallo): Promise<void> {
   const { eventos, van, calendarios, ocupados } = await leerPuente(sql)
-  // La ventana cubre también las estadías de quienes siguen en Puente
+  // La ventana cubre también las estadías de quienes siguen en Puente y todos los eventos, sean de la fecha que sean
   const [estadias] = await sql<{ llega: string | null; vuelve: string | null }[]>`
     select to_char(min(llega), 'YYYY-MM-DD') as llega, to_char(max(vuelve), 'YYYY-MM-DD') as vuelve
       from public.personas where sacada_en is null`
-  const ventana = ventanaDeCruce(estadias?.llega, estadias?.vuelve)
+  const ventana = ventanaDeCruce(estadias?.llega, estadias?.vuelve, eventos)
   // Cada calendario se lee por separado: si uno no se puede leer, ese queda como estaba y los demás siguen.
   // Los de "solo libre u ocupado" no se leen.
   const listas = new Map<string, EventoGoogle[]>()

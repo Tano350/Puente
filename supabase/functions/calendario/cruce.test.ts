@@ -133,6 +133,19 @@ test('La ventana crece con las estadías y nunca baja de DESDE–HASTA', () => {
   assert.deepEqual(ventanaDeCruce('basura', undefined), { desde: DESDE, hasta: HASTA })
 })
 
+test('La ventana también cubre todos los eventos de Puente, sean de la fecha que sean', () => {
+  const enNoviembre = evento({ id: 'p-nov', inicio: '2026-11-20T18:00:00.000Z', fin: '2026-11-20T19:00:00.000Z' })
+  const enJunio = evento({ id: 'p-jun', inicio: '2027-06-30T23:00:00.000Z', fin: '2027-07-01T01:00:00.000Z' })
+  assert.deepEqual(ventanaDeCruce(null, null, [enNoviembre, enJunio]), { desde: '2026-11-19T00:00:00Z', hasta: '2027-07-03T00:00:00Z' })
+  // Con eventos dentro de DESDE–HASTA no cambia nada
+  assert.deepEqual(ventanaDeCruce('2027-01-05', '2027-02-20', [evento()]), { desde: DESDE, hasta: HASTA })
+  // Las estadías y los eventos se suman: manda el más temprano y el más tardío
+  assert.deepEqual(ventanaDeCruce('2026-11-01', '2027-02-20', [enJunio]), { desde: '2026-10-31T00:00:00Z', hasta: '2027-07-03T00:00:00Z' })
+  // Un evento de noviembre, que antes quedaba fuera, ahora tiene copia
+  const ventana = ventanaDeCruce(null, null, [enNoviembre])
+  assert.equal(cruzar(entrada({ eventos: [enNoviembre], van: [va('vicente', 'p-nov')], ventana })).length, 1)
+})
+
 test('Con la ventana ampliada, un evento de mayo sí tiene copia', () => {
   const enMayo = evento({ inicio: '2027-05-04T18:00:00.000Z', fin: '2027-05-04T19:00:00.000Z' })
   const ventana = ventanaDeCruce('2026-12-05', '2027-05-10')
