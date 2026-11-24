@@ -289,3 +289,9 @@
   font-size: 13px;
   color: var(--sec-tarjeta);
 }
+
+.filaFlecha {
+  display: flex;
+  flex: none;
+  color: var(--sec);
+}

@@ -32,6 +32,10 @@ function fila(cambios: Partial<Fila> = {}): Fila {
     estado: null,
     van: 1,
     suma: null,
+    tema: null,
+    abierto_en: null,
+    tema_nombre: null,
+    en_tema: false,
     contacto_id: null,
     contacto_nombre: null,
     organizacion: null,
@@ -106,6 +110,46 @@ test('Evento nuevo: no se manda si ya empezó, se canceló, se cerró o ya está
   descarta(fila({ modo: 'cerrado' }))
   descarta(fila({ estado: 'va' }))
   descarta(fila({ estado: 'espera' }))
+})
+
+// Un evento que va primero a los de Fintech
+const deFintech = (c: Partial<Fila> = {}) => fila({ tema: 't-fintech', tema_nombre: 'Fintech', en_tema: true, ...c })
+
+test('Evento nuevo solo para un tema: a los del tema les dice que es primero para ellos, en los dos idiomas', () => {
+  assert.deepEqual(mensaje(deFintech()), {
+    titulo: 'Evento nuevo: Visita a Google',
+    cuerpo: 'Primero para los de Fintech. Mañana, 10:00 · Googleplex.',
+    url: '/agenda/e1',
+    etiqueta: 'evento-e1',
+    ttl: 86400,
+    urgencia: 'normal',
+  })
+  assert.equal(
+    mensaje(deFintech({ modo: 'con_cupo', cupos: 4, van: 1 })).cuerpo,
+    'Primero para los de Fintech. Mañana, 10:00 · Googleplex. Quedan 3 cupos.',
+  )
+  const en = mensaje(deFintech({ idioma: 'en' }))
+  assert.deepEqual([en.titulo, en.cuerpo], ['New event: Visita a Google', 'First for the Fintech group. Tomorrow, 10:00 · Googleplex.'])
+})
+
+test('Evento nuevo solo para un tema: a quien no está en el tema no le llega todavía (sí a quien organiza)', () => {
+  assert.equal(descarta(deFintech({ en_tema: false })), 'Todavía es solo para los de Fintech.')
+  assert.equal(descarta(deFintech({ en_tema: false, idioma: 'en' })), 'Todavía es solo para los de Fintech.')
+  // "Deshacer" lo volvió a cerrar: el aviso que esperaba para quien no es del tema se descarta
+  assert.equal(descarta(deFintech({ en_tema: false, tema_nombre: '  Fintech ' })), 'Todavía es solo para los de Fintech.')
+  // La consulta marca en_tema también para quien organiza
+  assert.equal(mensaje(deFintech({ en_tema: true })).titulo, 'Evento nuevo: Visita a Google')
+  // Lo de antes sigue primero: cancelado, cerrado, ya estás
+  assert.equal(descarta(deFintech({ en_tema: false, cancelado_en: AHORA })), 'Se canceló el evento.')
+  assert.equal(descarta(deFintech({ estado: 'va' })), 'Ya está en el evento.')
+})
+
+test('Evento nuevo de un tema ya abierto a todos: el texto de siempre, para todos', () => {
+  const abierto = { abierto_en: AHORA }
+  assert.equal(mensaje(deFintech({ ...abierto, en_tema: false })).cuerpo, 'Mañana, 10:00 · Googleplex.')
+  assert.equal(mensaje(deFintech({ ...abierto })).cuerpo, 'Mañana, 10:00 · Googleplex.')
+  assert.equal(mensaje(deFintech({ ...abierto, idioma: 'en', en_tema: false })).cuerpo, 'Tomorrow, 10:00 · Googleplex.')
+  assert.equal(mensaje(deFintech({ ...abierto, en_tema: false })).titulo, 'Evento nuevo: Visita a Google')
 })
 
 const antes = { titulo: 'Visita a Google', lugar: 'Googleplex', direccion: '1600 Amphitheatre Pkwy, Mountain View', inicio: INICIO.toISOString(), fin: FIN.toISOString() }

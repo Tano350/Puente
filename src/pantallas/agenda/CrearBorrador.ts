@@ -1,5 +1,5 @@
 import type { Contacto } from '../../datos/contactos.ts'
-import type { Evento, ModoEvento, TipoEvento } from '../../datos/eventos.ts'
+import { soloParaTema, type Evento, type ModoEvento, type TipoEvento } from '../../datos/eventos.ts'
 import { diaEn, hora, momento } from '../../datos/fechas.ts'
 import type { Textos } from '../../textos.ts'
 
@@ -18,6 +18,8 @@ export type Borrador = {
   direccion: string
   modo: ModoEvento
   cupos: number
+  // El tema al que va primero (solo en para todos o con cupo); null si es para todos desde el inicio
+  tema: string | null
   elegidos: string[]
   notas: string
 }
@@ -42,6 +44,7 @@ export function borradorInicial(t: TextosCrear, desdeContacto?: Contacto, dia?: 
     direccion: '',
     modo: desdeContacto ? 'con_cupo' : 'para_todos',
     cupos: desdeContacto ? 4 : 8,
+    tema: null,
     elegidos: [],
     notas: '',
   }
@@ -61,6 +64,7 @@ export function borradorDe(evento: Evento): Borrador {
     direccion: evento.direccion ?? '',
     modo: evento.modo,
     cupos: evento.cupos ?? 8,
+    tema: soloParaTema(evento) ? evento.tema : null,
     elegidos: [],
     notas: evento.notas ?? '',
   }
@@ -103,8 +107,19 @@ export function datosDe(b: Borrador, horas: { inicio: string; fin: string }) {
     ...horas,
     modo: b.modo,
     cupos: b.modo === 'con_cupo' ? b.cupos : null,
+    tema: b.modo === 'cerrado' ? null : b.tema,
     notas: b.notas.trim() || null,
   }
 }
 
+// El tema no está: al editar se cambia aparte (cambiosDeTema)
 export const CAMBIABLES = ['titulo', 'tipo', 'lugar', 'direccion', 'inicio', 'fin', 'modo', 'cupos', 'notas'] as const satisfies readonly (keyof ReturnType<typeof datosDe>)[]
+
+// Al editar, el tema se cambia con reglas propias: cerrado no lleva tema, «Todos» abre el evento a todos (abierto_en) y
+// otro tema lo cambia. Devuelve lo que se manda y lo que lo deshace, o null si el tema queda igual.
+export function cambiosDeTema(original: Evento, datos: { modo: ModoEvento; tema: string | null }, abiertoEn: string): { cambio: Partial<Pick<Evento, 'tema' | 'abierto_en'>>; antes: Partial<Pick<Evento, 'tema' | 'abierto_en'>> } | null {
+  if (datos.modo === 'cerrado') return original.tema === null ? null : { cambio: { tema: null }, antes: { tema: original.tema } }
+  if (!soloParaTema(original) || datos.tema === original.tema) return null
+  if (datos.tema === null) return { cambio: { abierto_en: abiertoEn }, antes: { abierto_en: null } }
+  return { cambio: { tema: datos.tema }, antes: { tema: original.tema } }
+}

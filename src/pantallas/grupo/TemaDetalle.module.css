@@ -1,0 +1,274 @@
+/* ---------- La franja de arriba: el color de las tarjetas, con «‹ Grupo» y «Editar» ---------- */
+.franja {
+  flex: none;
+  padding: 14px 20px 18px;
+  border-bottom: 1px solid var(--regla);
+  background: var(--panel);
+}
+
+/* En el celular sube hasta el borde: el contenedor desplazable le deja 24 px de aire */
+.franjaCel {
+  margin: -24px -20px 0;
+  padding: 20px 20px 16px;
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 32px;
+}
+
+.cabeceraCel {
+  height: 44px;
+}
+
+.derecha {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.editar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  margin-left: auto;
+  margin-right: -8px;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.editar[aria-disabled='true'],
+.borrar[aria-disabled='true'],
+.salir[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.titular {
+  margin-top: 6px;
+}
+
+.titulo {
+  margin: 0;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 34px;
+  line-height: 38px;
+  overflow-wrap: anywhere;
+}
+
+.trata {
+  margin: 2px 0 0;
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--sec-tarjeta);
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Contenido ---------- */
+.cuerpo {
+  padding-top: 2px;
+}
+
+.rotulo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 18px 0 2px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.rotulo h3 {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.separado {
+  margin-top: 24px;
+}
+
+.filas {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fila {
+  border-bottom: 1px solid var(--borde);
+}
+
+.abrir {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 6px 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+button.abrir {
+  cursor: pointer;
+}
+
+button.abrir:focus-visible,
+.salir:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+.quien {
+  flex: 1;
+  min-width: 0;
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.estadia {
+  flex: none;
+  font-size: 14px;
+  color: var(--sec);
+}
+
+/* Fecha chica de un evento: se lee, no se toca por separado */
+.fecha {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  width: 36px;
+  line-height: 1;
+}
+
+.fecha small {
+  font-size: 13px;
+  color: var(--sec);
+}
+
+.fecha b {
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+.evento {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.eventoTitulo {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 22px;
+}
+
+.eventoMeta {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.sinEventos {
+  margin: 6px 0 0;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.creo {
+  margin: 20px 0 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sec);
+}
+
+.borrar {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  margin-top: 4px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--sec);
+  font-size: 15px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* ---------- Abajo ---------- */
+.pieDentro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* No se toca: es un texto */
+.teInteresa {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.salir {
+  flex: none;
+  height: 48px;
+  padding: 0 16px;
+  border: 2px solid var(--tinta);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--tinta);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* ---------- Computador: una tarjeta que llena la columna ---------- */
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  border: 1px solid var(--regla);
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: var(--fondo);
+  background-image: var(--papel);
+}
+
+.contenido {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 0 20px 16px;
+}
+
+.pieTarjeta {
+  flex: none;
+  padding: 12px 20px 14px;
+  border-top: 1px solid var(--borde);
+  background-color: var(--fondo);
+  background-image: var(--papel);
+}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Icono } from '../../componentes/Icono.tsx'
 import { useConectado } from '../../datos/conexion.ts'
 import type { Evento, Ocupado } from '../../datos/eventos.ts'
@@ -17,6 +17,8 @@ type Props = {
   ahora: string
   soloVoy: boolean
   nombres: Map<string, string>
+  // Los nombres de los temas, para «Primero para los de IA»
+  temas: Map<string, string>
   elegido?: string
   pendiente?: string | null
   onAbrir: (evento: Evento) => void
@@ -38,9 +40,10 @@ function Asientos({ tomados, total }: { tomados: number; total: number }) {
 
 // El día como línea de estaciones, igual que Hoy: lo que pasó en gris, "ahora" y lo que sigue.
 // Un evento se abre en su boleto; un rato ocupado, en su hoja.
-export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy, nombres, elegido, pendiente, onAbrir, onIr, onNuevo }: Props) {
+export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy, nombres, temas, elegido, pendiente, onAbrir, onIr, onNuevo }: Props) {
   const textos = useTextos()
   const tv = textos.agenda.vista
+  const tc = textos.intereses.comun
   // Sin señal, "Tomar cupo" y "Voy" quedan apagados (la ficha de arriba dice por qué)
   const sinRed = !useConectado()
   const [rato, setRato] = useState<Ocupado | null>(null)
@@ -81,10 +84,24 @@ export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy,
     return donde ? `${donde}, ${hasta}` : conMayuscula(hasta)
   }
 
+  // Un evento que todavía es solo para los de un tema: si no es tuyo, no hay con qué sumarse y la línea dice por qué
+  const sinTema = (p: PiezaEvento) => p.tema !== null && !p.teToca && (p.estado === 'tomar' || p.estado === 'voy' || p.estado === 'lleno')
+  const delTema = (p: PiezaEvento) => (p.tema !== null && !p.pasada ? temas.get(p.tema) : undefined)
+  const lineaTema = (p: PiezaEvento): ReactNode => {
+    const tema = delTema(p)
+    if (!tema || p.estado === 'vas' || p.estado === 'afuera') return null
+    return (
+      <>
+        <Icono nombre="grupo" medida={15} trazo={2} />
+        {sinTema(p) ? tc.soloParaLosDe(tema) : tc.primeroPara(tema)}
+      </>
+    )
+  }
+
   // Celular: el estado a la derecha; "Tomar cupo" y "Voy" se hacen ahí mismo
   const derecha = (p: Pieza) => {
     if (p.tipo === 'ocupado') return <span className={estilos.estado}>{tv.ocupado}</span>
-    if (p.pasada || p.estado === 'cerrada') return null
+    if (p.pasada || p.estado === 'cerrada' || sinTema(p)) return null
     if (p.estado === 'vas')
       return (
         <span className={estilos.vas}>
@@ -111,7 +128,7 @@ export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy,
     return <span className={estilos.estado}>{tv.estados[p.estado]}</span>
   }
   const extra = (p: Pieza) => {
-    if (p.tipo === 'ocupado' || p.pasada) return null
+    if (p.tipo === 'ocupado' || p.pasada || sinTema(p)) return null
     if (p.estado === 'cerrada')
       return (
         <>
@@ -139,6 +156,7 @@ export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy,
   // Computador: toda la fila elige el evento (o abre el rato) y el estado va como texto
   const chip = (p: Pieza) => {
     const texto = p.tipo === 'ocupado' ? tv.ocupado : tv.estados[p.estado]
+    if (p.tipo === 'evento' && sinTema(p)) return null
     const tipo = p.tipo === 'evento' && p.estado === 'vas' ? 'vas' : p.tipo === 'evento' && (p.estado === 'tomar' || p.estado === 'voy') && !sinRed ? 'accion' : 'apagado'
     return (
       <span className={estilos.chip} data-tipo={tipo}>
@@ -178,6 +196,7 @@ export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy,
           <span className={estilos.texto}>
             <span className={estilos.nombre}>{p.titulo}</span>
             <span className={estilos.lugar}>{lugar(p)}</span>
+            {p.tipo === 'evento' && lineaTema(p) && <span className={`${estilos.lugar} ${estilos.temaPc}`}>{lineaTema(p)}</span>}
           </span>
           {chip(p)}
         </>
@@ -192,6 +211,7 @@ export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy,
     }
 
     const debajo = extra(p)
+    const tema = p.tipo === 'evento' ? lineaTema(p) : null
     return (
       <li key={p.id} className={estilos.fila} {...comun}>
         {horas}
@@ -204,6 +224,7 @@ export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy,
             {derecha(p)}
           </div>
           {!p.pasada && <div className={estilos.lugar}>{lugar(p)}</div>}
+          {tema && <div className={estilos.extra}>{tema}</div>}
           {debajo && <div className={estilos.extra}>{debajo}</div>}
         </div>
       </li>

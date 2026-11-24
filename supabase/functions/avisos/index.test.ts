@@ -113,6 +113,10 @@ function pago(cambios: Partial<Fila> = {}): Fila {
     estado: null,
     van: null,
     suma: null,
+    tema: null,
+    abierto_en: null,
+    tema_nombre: null,
+    en_tema: false,
     contacto_id: null,
     contacto_nombre: null,
     organizacion: null,
@@ -264,6 +268,44 @@ test('Tareas: la consulta trae la tarea, quién la asignó y si sigue siendo tuy
   assert.deepEqual(aviso, { titulo: 'Diego te asignó una tarea', cuerpo: 'Reservar el auto', url: '/tareas/t1', etiqueta: 'tarea-t1' })
   // El "vence mañana" de una fecha que ya pasó no sale
   assert.deepEqual(base.escrituras.find((e) => e.valores[1] === 'aviso-2')?.valores, ['La tarea ya no vence mañana.', 'aviso-2'])
+})
+
+test('Eventos de un tema: la consulta trae el tema y si quien recibe está en él; a quien no, no le llega todavía', async () => {
+  const inicio = new Date(ahora + 2 * 86400_000)
+  const evento = (cambios: Partial<Fila>) =>
+    pago({
+      tipo: 'eventos',
+      pago_id: null,
+      monto: null,
+      paga: null,
+      evento_id: 'e3',
+      titulo: 'Visita a Stripe',
+      lugar: null,
+      inicio,
+      fin: new Date(inicio.getTime() + 3600_000),
+      modo: 'para_todos',
+      tema: 'tema-fintech',
+      tema_nombre: 'Fintech',
+      ...cambios,
+    })
+  await preparar([evento({ en_tema: true }), evento({ id: 'aviso-2', en_tema: false })])
+  base.dispositivos = base.dispositivos.slice(0, 1)
+  assert.deepEqual(await correr(), { estado: 200, cuerpo: { enviados: 1, descartados: 1, fallidos: 0, dispositivosBorrados: 0 } })
+  assert.match(base.reclamo, /e\.tema, e\.abierto_en, tm\.nombre as tema_nombre/)
+  assert.match(base.reclamo, /left join public\.temas tm on tm\.id = e\.tema/)
+  assert.match(base.reclamo, /\(e\.organizador = r\.persona .*exists \(select 1 from public\.interesados i where i\.tema = e\.tema and i\.persona = r\.persona\)\) is true as en_tema/)
+  const aviso = JSON.parse(await descifrar(servicio.llegadas[0].body, celular))
+  assert.deepEqual({ ...aviso, cuerpo: undefined }, { titulo: 'Evento nuevo: Visita a Stripe', cuerpo: undefined, url: '/agenda/e3', etiqueta: 'evento-e3' })
+  assert.match(aviso.cuerpo, /^Primero para los de Fintech\. .+, \d\d:\d\d\.$/)
+  assert.deepEqual(base.escrituras.find((e) => e.valores[1] === 'aviso-2')?.valores, ['Todavía es solo para los de Fintech.', 'aviso-2'])
+
+  // Ya abierto a todos: le llega a quien no está en el tema, con el texto de siempre
+  await preparar([evento({ id: 'aviso-3', en_tema: false, abierto_en: new Date(ahora - 60_000) })])
+  base.dispositivos = base.dispositivos.slice(0, 1)
+  assert.deepEqual(await correr(), { estado: 200, cuerpo: { enviados: 1, descartados: 0, fallidos: 0, dispositivosBorrados: 0 } })
+  const abierto = JSON.parse(await descifrar(servicio.llegadas[0].body, celular))
+  assert.equal(abierto.titulo, 'Evento nuevo: Visita a Stripe')
+  assert.doesNotMatch(abierto.cuerpo, /Fintech/)
 })
 
 test('Lo que ya no tiene sentido se descarta sin mandar nada', async () => {

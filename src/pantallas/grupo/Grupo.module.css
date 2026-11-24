@@ -58,3 +58,94 @@
   line-height: 22px;
   color: var(--sec);
 }
+
+/* ---------- Selector de vista y «Nuevo» ---------- */
+.controles {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.fichaCel {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.cabecera:has(.fichaCel) {
+  padding-top: 12px;
+}
+
+.segmento {
+  display: inline-flex;
+  flex: none;
+  padding: 3px;
+  border: 1px solid var(--sec);
+  border-radius: 8px;
+}
+
+.segmento button {
+  position: relative;
+  height: 36px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sec);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Se ve de 36 px, pero se toca en 44 */
+.segmento button::after {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
+}
+
+.segmento button[aria-pressed='true'] {
+  background: var(--tinta);
+  color: var(--fondo);
+}
+
+.nuevo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  height: 44px;
+  padding: 0 16px 0 12px;
+  border: 2px solid var(--tinta);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--tinta);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.nuevo[aria-pressed='true'] {
+  background: var(--tinta);
+  color: var(--fondo);
+}
+
+.nuevo[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Computador: el título y el selector en una fila */
+.tituloFilaPc {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.derechaPc {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}

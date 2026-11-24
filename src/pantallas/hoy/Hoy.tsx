@@ -16,6 +16,7 @@ import { ErrorDeEvento, ir, noIr, useAsistentes, useEventos, useNotasReunion, ty
 import { conMayuscula, diaEn, diaLargo, diasEntre, hora, hoyAqui, hoyEnCalifornia } from '../../datos/fechas.ts'
 import { comoSaldar, conmigo, plata, saldos, useGastos, usePagos, usePartes } from '../../datos/gastos.ts'
 import { estaAlla } from '../../datos/grupo.ts'
+import { useInteresados, useTemas } from '../../datos/intereses.ts'
 import { primerNombre } from '../../datos/nombres.ts'
 import { useSesion, type Persona } from '../../datos/sesion.tsx'
 import { useAsignados, useTareas } from '../../datos/tareas.ts'
@@ -57,6 +58,8 @@ export function Hoy() {
   const { data: eventos } = useEventos()
   const { data: asistentes } = useAsistentes()
   const { data: notas } = useNotasReunion()
+  const { data: interesados } = useInteresados()
+  const { data: temas } = useTemas()
   const { data: personas } = usePersonas()
   const { data: gastos } = useGastos()
   const { data: partes } = usePartes()
@@ -78,6 +81,7 @@ export function Hoy() {
   const cargado = Boolean(eventos && asistentes)
   const lista = eventos ?? []
   const van = asistentes ?? []
+  const losInteresados = interesados ?? []
 
   // Tu día (durante) o lo próximo (antes), como estaciones
   let paradas: Parada[] = []
@@ -90,8 +94,8 @@ export function Hoy() {
     paradas = loProximo(lista, van, persona, ahora)
   }
   const estaciones = armarEstaciones(paradas, { textos, durante, chile, ahora, hoyCalifornia: hoyEnCalifornia(), yo: persona.id, asistentes: van, personas: personas ?? [], contactos: contactos ?? [], notas: notas ?? [] })
-  const tambien = durante ? tambienHoy(lista, van, persona.id, hoy, ahora) : []
-  const sinConfirmar = durante || momento === 'antes' ? porConfirmar(lista, van, persona, ahora, durante ? hoy : null) : []
+  const tambien = durante ? tambienHoy(lista, van, persona.id, hoy, ahora, losInteresados) : []
+  const sinConfirmar = durante || momento === 'antes' ? porConfirmar(lista, van, persona, ahora, durante ? hoy : null, losInteresados) : []
   // Tus tareas por hacer cuentan antes, durante y después del viaje
   const misTareas = misPorHacer(tareas ?? [], asignados ?? [], persona.id, activosDe(personas))
   const pendientes = pendientesDe(persona, contactos ?? [], sinConfirmar, misTareas, textos, navigate)
@@ -177,7 +181,7 @@ export function Hoy() {
       <h2 id="hoy-tambien" className={estilos.cinta}>
         {v.tambienHoy}
       </h2>
-      <TambienHoy eventos={tambien} asistentes={van} yo={persona.id} chile={chile} computador={computador} elegido={idElegido} yendo={yendo} onAbrir={abrir} onVoy={(e) => void sumarme(e)} />
+      <TambienHoy eventos={tambien} asistentes={van} temas={temas ?? []} yo={persona.id} chile={chile} computador={computador} elegido={idElegido} yendo={yendo} onAbrir={abrir} onVoy={(e) => void sumarme(e)} />
     </section>
   )
   const seccionPendientes = (

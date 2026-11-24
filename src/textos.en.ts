@@ -103,6 +103,7 @@ export const en: Textos = {
         no_estas: 'You’re not in California that day.',
         cerrado: 'Only people the organizer adds can go.',
         paso: 'That event is over.',
+        solo_tema: 'For now, it’s only for people in that topic.',
         otro: 'That didn’t work. Check your connection and try again.',
       },
       pendientesDe: (lista: string) => `To do: ${lista}`,
@@ -163,6 +164,62 @@ export const en: Textos = {
     noCoinciden: 'You don’t overlap.',
     incompleto: (nombre: string) => `${nombre} hasn’t completed their profile yet.`,
     aSuCargo: 'Contacts in charge',
+    intereses: 'Interests',
+  },
+  intereses: {
+    comun: {
+      titulo: 'Interests',
+      estadias: 'Stays',
+      meInteresa: 'I’m interested',
+      teInteresa: 'You’re interested',
+      yaNoMeInteresa: 'Not interested anymore',
+      primeroPara: (tema: string) => `First for ${tema} people`,
+      soloParaLosDe: (tema: string) => `For now, only for ${tema} people`,
+      necesitasConexion: 'You need a connection to join a topic.',
+    },
+    grupo: {
+      queVer: 'Group view',
+      nuevo: 'New',
+      nuevoTema: 'New topic',
+      vacio: 'No topics yet.',
+      vacioAyuda: 'A topic gathers people who share an interest, like Fintech or AI.',
+      nadie: 'Nobody is interested yet.',
+      teSumaste: (tema: string) => `You joined ${tema}.`,
+      creaste: (tema: string) => `You created ${tema}.`,
+      sinRedCrear: 'You need a connection to create a topic.',
+      sinRedCambiar: 'You need a connection to change a topic.',
+    },
+    tema: {
+      atras: 'Group',
+      editar: 'Edit',
+      aQuienes: 'Who is interested',
+      proximos: 'Upcoming events',
+      linea: (hora: string, texto: string) => `${hora} · ${texto}`,
+      soloElTema: 'Not open to everyone yet',
+      paraTodos: 'Open to everyone',
+      sinEventos: (tema: string) => `No events for ${tema} yet.`,
+      loCreo: (nombre: string, dia: string) => `Created by ${nombre} on ${dia}.`,
+      loCreaste: (dia: string) => `You created it on ${dia}.`,
+      borrar: 'Delete topic',
+      borraste: (tema: string) => `You deleted ${tema}.`,
+      saliste: (tema: string) => `You left ${tema}.`,
+      borrarPregunta: (tema: string) => `Delete ${tema}?`,
+      borrarAviso: (eventos: string, varios: boolean, tema: string) =>
+        varios
+          ? `${eventos} are still only for ${tema} people. Deleting the topic opens them to everyone, and everyone gets a notice.`
+          : `${eventos} is still only for ${tema} people. Deleting the topic opens it to everyone, and everyone gets a notice.`,
+    },
+    editar: {
+      nuevo: 'New topic',
+      editar: 'Edit topic',
+      nombre: 'Name',
+      deQueTrata: 'What it’s about',
+      crear: 'Create topic',
+      guardar: 'Save',
+      faltaNombre: 'Give the topic a name.',
+      repetido: (nombre: string) => `There is already a topic called ${nombre}.`,
+    },
+
   },
   agenda: {
     titulo: 'Schedule',
@@ -206,7 +263,7 @@ export const en: Textos = {
       creaste: (titulo: string) => `You created ${titulo}.`,
       tomaste: 'You took a spot.',
       vasA: (titulo: string) => `You’re going to ${titulo}.`,
-      motivos: { lleno: 'No spots left.', no_estas: 'You’re not in California that day.', cerrado: 'Only people the organizer adds can go.', paso: 'That event is over.' },
+      motivos: { lleno: 'No spots left.', no_estas: 'You’re not in California that day.', cerrado: 'Only people the organizer adds can go.', paso: 'That event is over.', solo_tema: 'For now, it’s only for people in that topic.' },
       noSeCargo: 'Couldn’t load the schedule. Check your connection.',
       reintentar: 'Try again',
     },
@@ -260,6 +317,11 @@ export const en: Textos = {
       sinRedSalir: 'You need a connection to leave the list.',
       sinRedYaNoVoy: 'You need a connection to change your answer.',
       sinRedQuienes: 'You need a connection to change who’s going.',
+      abrirATodos: 'Open to all',
+      todaviaNoSeAbre: 'Not open to everyone yet.',
+      abriste: (titulo: string) => `${titulo} is now open to all.`,
+      sinRedAbrir: 'You need a connection to open it to all.',
+      soloTema: (tema: string) => `For now, it’s only for ${tema} people.`,
       tomarCupo: 'Take spot',
       tienesCupo: 'You have a spot',
       soltarCupo: 'Give up spot',
@@ -332,6 +394,11 @@ export const en: Textos = {
       modos: { para_todos: 'Open to all', con_cupo: 'Limited spots', cerrado: 'Closed' },
       explicaModo: { para_todos: 'Everyone confirms if they’re going.', con_cupo: 'First come, first served, with a waitlist.', cerrado: 'Only people you add can go.' },
       verLos: (n: number) => `See all ${n}`,
+      primeroPara: 'First for',
+      todos: 'Everyone',
+      explicaTema: (tema: string) => `Only ${tema} people can join, and they get a notice, until you open it to all.`,
+      agregarALosDe: 'Add people from',
+      personasEtiqueta: 'People',
       agregarPersona: 'Add person',
       notas: 'Notes',
       notasEjemplo: 'Something the group should know',
@@ -345,6 +412,16 @@ export const en: Textos = {
               : libres === 0
                 ? `None of the ${alla} people in California are free at that time.`
                 : `${libres} of the ${alla} people in California ${libres === 1 ? 'is' : 'are'} free at that time.`,
+      libresTema: (libres: number, alla: number, tema: string) =>
+        alla === 0
+          ? `No one from ${tema} is in California that day.`
+          : alla === 1
+            ? `1 person from ${tema} is in California that day and ${libres ? 'is' : 'isn’t'} free at that time.`
+            : libres === alla
+              ? `All ${alla} people from ${tema} in California are free at that time.`
+              : libres === 0
+                ? `None of the ${alla} people from ${tema} in California are free at that time.`
+                : `${libres} of the ${alla} people from ${tema} in California ${libres === 1 ? 'is' : 'are'} free at that time.`,
       grupoVera: 'The group will only see that you’re busy at that time.',
       reunionCon: (nombre: string) => `Meeting with ${nombre}`,
       pasara: (nombre: string, etapa: string) => `${nombre} will move to ${etapa}.`,

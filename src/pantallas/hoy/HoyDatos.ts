@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Persona } from '../../datos/consultas.ts'
 import { asistentesDe, estaAllaEse, miLugar, type Asistente, type Evento, type NotaReunion } from '../../datos/eventos.ts'
 import { ahora as ahoraIso, diaEn } from '../../datos/fechas.ts'
+import { teTocaElTema, type Interesado } from '../../datos/intereses.ts'
 
 // Qué muestra Hoy según tus fechas: antes de llegar, durante tu estadía o después de volver
 export type Momento = 'sinFechas' | 'antes' | 'durante' | 'despues'
@@ -60,11 +61,11 @@ export function cuposLibres(evento: Evento, asistentes: Asistente[]): number | n
   return Math.max(0, evento.cupos - asistentesDe(evento.id, asistentes).van.length)
 }
 
-// También hoy en el grupo: lo de hoy que todavía no empieza y al que te puedes sumar
-export function tambienHoy(eventos: Evento[], asistentes: Asistente[], yo: string, hoy: string, ahora: number): Evento[] {
+// También hoy en el grupo: lo de hoy que todavía no empieza y al que te puedes sumar (sin lo que todavía es solo para los de un tema que no es tuyo)
+export function tambienHoy(eventos: Evento[], asistentes: Asistente[], yo: string, hoy: string, ahora: number, interesados: Interesado[]): Evento[] {
   return eventos
     .filter((e) => {
-      if (diaEn(e.inicio) !== hoy || ms(e.inicio) <= ahora || e.modo === 'cerrado') return false
+      if (diaEn(e.inicio) !== hoy || ms(e.inicio) <= ahora || e.modo === 'cerrado' || !teTocaElTema(e, interesados, yo)) return false
       // Si estás en la lista de espera también va aquí, con tu puesto
       const lugar = miLugar(e.id, asistentes, yo)
       return lugar ? lugar.estado === 'espera' : cuposLibres(e, asistentes) !== 0
@@ -72,10 +73,11 @@ export function tambienHoy(eventos: Evento[], asistentes: Asistente[], yo: strin
     .sort(porInicio)
 }
 
-// Eventos para todos que todavía no confirmas, dentro de tu estadía. Durante el viaje, los de hoy ya están en "También hoy".
-export function porConfirmar(eventos: Evento[], asistentes: Asistente[], persona: Persona, ahora: number, salvoElDia: string | null): Evento[] {
+// Eventos para todos que todavía no confirmas, dentro de tu estadía (sin los que todavía son solo para los de un tema que no es tuyo).
+// Durante el viaje, los de hoy ya están en "También hoy".
+export function porConfirmar(eventos: Evento[], asistentes: Asistente[], persona: Persona, ahora: number, salvoElDia: string | null, interesados: Interesado[]): Evento[] {
   return eventos
-    .filter((e) => e.modo === 'para_todos' && ms(e.inicio) > ahora && estaAllaEse(persona, e.inicio) && diaEn(e.inicio) !== salvoElDia && !vas(e, asistentes, persona.id))
+    .filter((e) => e.modo === 'para_todos' && ms(e.inicio) > ahora && estaAllaEse(persona, e.inicio) && diaEn(e.inicio) !== salvoElDia && !vas(e, asistentes, persona.id) && teTocaElTema(e, interesados, persona.id))
     .sort(porInicio)
 }
 

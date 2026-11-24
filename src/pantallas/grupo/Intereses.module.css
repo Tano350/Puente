@@ -1,0 +1,134 @@
+/* ---------- Celular ---------- */
+.celular {
+  padding: 28px 20px 28px;
+}
+
+.cuerpo {
+  padding-top: 16px;
+}
+
+/* ---------- Sin temas ---------- */
+.vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 72px 12px 0;
+  text-align: center;
+}
+
+.tuercaVacia {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  background: var(--regla);
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+}
+
+.tuercaVacia::after {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 7px;
+  width: 42px;
+  height: 42px;
+  background-color: var(--fondo);
+  background-image: var(--papel);
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+}
+
+.vacioTexto {
+  margin-top: 18px;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.vacioAyuda {
+  margin-top: 6px;
+  max-width: 300px;
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--sec-tarjeta);
+}
+
+.agregar {
+  height: 50px;
+  margin-top: 20px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 6px;
+  background: var(--acento);
+  color: var(--sobre);
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 19px;
+  cursor: pointer;
+}
+
+.agregar[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ---------- Hoja de «¿Borrar …?» ---------- */
+.hojaTexto {
+  margin: 8px 0 20px;
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--sec-tarjeta);
+}
+
+.hojaBotones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ---------- Computador ---------- */
+.cabeceraPc {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px 32px 0;
+}
+
+.tituloFilaPc {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.derechaPc {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.columnas {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 410px;
+  grid-template-rows: minmax(0, 1fr);
+  column-gap: 36px;
+  padding: 0 32px;
+}
+
+.columna,
+.lado {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding-bottom: 24px;
+}
+
+/* El borde de la tarjeta elegida se dibuja afuera: deja aire para que no se corte */
+.columna {
+  padding: 3px 3px 24px;
+}
+
+.lado {
+  display: flex;
+  flex-direction: column;
+}

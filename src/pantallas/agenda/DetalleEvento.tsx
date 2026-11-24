@@ -10,7 +10,9 @@ import { SinConexion } from '../../componentes/SinConexion.tsx'
 import { useConectado } from '../../datos/conexion.ts'
 import { useContactos } from '../../datos/contactos.ts'
 import {
+  abrirATodos,
   asistentesDe,
+  deshacerAbrirATodos,
   enlaceMapa,
   ErrorDeEvento,
   esperar,
@@ -20,12 +22,14 @@ import {
   miLugar,
   noIr,
   sacarDeEvento,
+  soloParaTema,
   sumarAEvento,
   useAsistentes,
   useNotasReunion,
   type Evento,
 } from '../../datos/eventos.ts'
 import { ahora, CHILE, conMayuscula, diaDeLaSemana, diaEn, diaLargo, hora } from '../../datos/fechas.ts'
+import { teTocaElTema, useInteresados, useTemas } from '../../datos/intereses.ts'
 import { primerNombre } from '../../datos/nombres.ts'
 import { useSesion } from '../../datos/sesion.tsx'
 import { useTextos, type Textos } from '../../textos.ts'
@@ -105,6 +109,8 @@ function Boleto({ evento, computador, atras, conNota, onCerrar, onEditar }: Prop
   const { data: personas } = usePersonas()
   const { data: contactos } = useContactos()
   const { data: notas } = useNotasReunion()
+  const { data: temas } = useTemas()
+  const { data: interesados } = useInteresados()
   const [horaDeChile] = useHoraDeChile()
   const aviso = useAviso()
   const sinRed = !useConectado()
@@ -162,6 +168,11 @@ function Boleto({ evento, computador, atras, conNota, onCerrar, onEditar }: Prop
   const soloAgrega = evento.organizador === yo.id ? t.soloAgregas : organizador ? t.soloAgrega(primerNombre(organizador)) : t.soloQuienOrganiza
   const contacto = evento.contacto ? contactos?.find((c) => c.id === evento.contacto) : undefined
   const miNota = notas?.find((n) => n.evento === evento.id && n.autor === yo.id)
+  // Primero para los de un tema: quien organiza o administra lo abre a todos; los que no son del tema no pueden sumarse
+  const nombreDelTema = temas?.find((x) => x.id === evento.tema)?.nombre ?? ''
+  const soloDelTema = !pasado && nombreDelTema !== '' && soloParaTema(evento)
+  const puedeAbrir = evento.organizador === yo.id || yo.administra
+  const noTeToca = soloDelTema && interesados !== undefined && !teTocaElTema(evento, interesados, yo.id)
 
   // ---------- Acciones ----------
   const mensajeDe = (error: unknown, siLleno: string): string => {
@@ -170,6 +181,7 @@ function Boleto({ evento, computador, atras, conNota, onCerrar, onEditar }: Prop
     if (error.motivo === 'no_estas') return t.noEstasAlla
     if (error.motivo === 'cerrado') return soloAgrega
     if (error.motivo === 'paso') return t.paso
+    if (error.motivo === 'solo_tema') return t.soloTema(nombreDelTema)
     return textos.noSeGuardo
   }
   // Una cosa a la vez; si falla, el aviso dice por qué y se ve cómo quedó el evento
@@ -254,6 +266,14 @@ function Boleto({ evento, computador, atras, conNota, onCerrar, onEditar }: Prop
       aviso.mostrar(t.sacaste(nombreDe(id)), conDeshacer(() => sumarAEvento(evento.id, id, { avisar: false })))
     })
 
+  const abrir = () => {
+    if (sinRed) return aviso.mostrar(t.sinRedAbrir)
+    void hacer(async () => {
+      await abrirATodos(evento.id)
+      aviso.mostrar(t.abriste(evento.titulo), conDeshacer(() => deshacerAbrirATodos(evento.id)))
+    })
+  }
+
   const abrirNota = () => setBorrador({ aprendi: miNota?.aprendi ?? '', sigue: miNota?.sigue ?? '' })
   const notaVacia = !borrador || (!borrador.aprendi.trim() && !borrador.sigue.trim())
   const guardarNota = () => {
@@ -307,6 +327,8 @@ function Boleto({ evento, computador, atras, conNota, onCerrar, onEditar }: Prop
     accion = info(estado.cuando === 'antes' ? t.todaviaNoLlegas : estado.cuando === 'despues' ? t.yaVolviste : t.sinFechas)
   } else if (estado?.tipo === 'cerrada') {
     accion = info(soloAgrega)
+  } else if (noTeToca && (estado?.tipo === 'voy' || estado?.tipo === 'hay' || estado?.tipo === 'lleno')) {
+    accion = info(t.todaviaNoSeAbre)
   } else if (estado) {
     const principal = {
       voy: [t.voy, voy, t.sinRedVoy],
@@ -371,6 +393,21 @@ function Boleto({ evento, computador, atras, conNota, onCerrar, onEditar }: Prop
               {!computador && <Icono nombre="ruta" medida={16} trazo={2} />}
               {t.comoLlegar}
             </a>
+          )}
+        </div>
+      )}
+      {soloDelTema && (
+        <div className={estilos.tema}>
+          <span className={estilos.lugarIcono}>
+            <Icono nombre="grupo" medida={20} />
+          </span>
+          <span className={estilos.lugarTexto}>
+            <span className={estilos.lugarNombre}>{textos.intereses.comun.primeroPara(nombreDelTema)}</span>
+          </span>
+          {puedeAbrir && (
+            <button type="button" className={estilos.abrir} aria-disabled={ocupado || sinRed} onClick={() => !ocupado && abrir()}>
+              {t.abrirATodos}
+            </button>
           )}
         </div>
       )}
