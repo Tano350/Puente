@@ -93,6 +93,39 @@
   inset: -4px -2px;
 }
 
+/* ---------- Primero para los de un tema, con «Abrir a todos» ---------- */
+.tema {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.abrir {
+  position: relative;
+  flex: none;
+  height: 40px;
+  padding: 0 12px;
+  border: 2px solid var(--tinta);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--tinta);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.abrir::before {
+  content: '';
+  position: absolute;
+  inset: -4px -2px;
+}
+
+.abrir[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}
+
 /* ---------- Quién organiza y sus notas ---------- */
 .organiza {
   margin-top: 16px;

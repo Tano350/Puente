@@ -443,3 +443,14 @@ button.filaPc {
 .listaPc .ahora {
   height: 30px;
 }
+
+/* Computador: «Primero para los de IA», con su ícono */
+.temaPc {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.temaPc svg {
+  flex: none;
+}

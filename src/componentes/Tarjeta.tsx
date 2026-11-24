@@ -3,6 +3,7 @@ import type { Persona } from '../datos/consultas.ts'
 import { useContactos } from '../datos/contactos.ts'
 import { diaLargo, diasEntre, estadia, hoyEnCalifornia, indiceEnElViaje, mesesDe, rango, rangoLargo, ventanaDelViaje } from '../datos/fechas.ts'
 import { tieneFechas, useViaje, type ConFechas } from '../datos/grupo.ts'
+import { temasDe, useInteresados, useTemas } from '../datos/intereses.ts'
 import { carreraCorta, nombreCompleto, primerNombre } from '../datos/nombres.ts'
 import { useTextos } from '../textos.ts'
 import { Avatar } from './Avatar.tsx'
@@ -94,10 +95,13 @@ export function DetallePersona({ persona, yo }: { persona: Persona; yo?: Persona
   const textos = useTextos()
   const navigate = useNavigate()
   const { data: contactos } = useContactos()
+  const { data: temas } = useTemas()
+  const { data: interesados } = useInteresados()
   const t = textos.persona
   const otra = yo && yo.id !== persona.id ? yo : null
   const hoy = hoyEnCalifornia()
   // Así se coordina sin preguntar: qué contactos lleva cada uno y en qué van
+  const susTemas = temasDe(persona.id, temas ?? [], interesados ?? [])
   const aCargo = (contactos ?? []).filter((c) => c.responsable === persona.id)
 
   const comparacion = (p: ConFechas, mia: ConFechas) => {
@@ -123,6 +127,21 @@ export function DetallePersona({ persona, yo }: { persona: Persona; yo?: Persona
         <div className={estilos.bloque}>
           <div className={estilos.rotulo}>{t.objetivos}</div>
           <div className={estilos.objetivos}>{persona.objetivos}</div>
+        </div>
+      )}
+      {susTemas.length > 0 && (
+        <div className={estilos.bloque}>
+          <div className={estilos.rotulo}>{t.intereses}</div>
+          <div className={estilos.cargo}>
+            {susTemas.map((tema) => (
+              <button key={tema.id} type="button" className={estilos.cargoFila} onClick={() => navigate(`/grupo/intereses/${tema.id}`)}>
+                <span className={estilos.cargoNombre}>{tema.nombre}</span>
+                <span className={estilos.filaFlecha}>
+                  <Icono nombre="derecha" medida={18} trazo={2} />
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
       {otra && !persona.emprendimiento && !persona.objetivos && <div className={estilos.incompleto}>{t.incompleto(primerNombre(persona))}</div>}

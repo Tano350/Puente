@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Persona } from '../../datos/consultas.ts'
-import { asistentesDe, estaAllaEse, type Asistente, type Evento, type Ocupado } from '../../datos/eventos.ts'
+import { asistentesDe, estaAllaEse, soloParaTema, type Asistente, type Evento, type Ocupado } from '../../datos/eventos.ts'
+import { teTocaElTema, type Interesado } from '../../datos/intereses.ts'
 import { idiomaActual } from '../../datos/idioma.ts'
 import { ahora, conMayuscula, diaEn, diasEntre, hora, sumarDias, type Ventana } from '../../datos/fechas.ts'
 
@@ -20,7 +21,7 @@ type Comun = {
   hasta: number
   pasada: boolean
 }
-export type PiezaEvento = Comun & { tipo: 'evento'; evento: Evento; estado: Estado; mio: boolean; proxima: boolean; van: string[] }
+export type PiezaEvento = Comun & { tipo: 'evento'; evento: Evento; estado: Estado; mio: boolean; proxima: boolean; van: string[]; tema: string | null; teToca: boolean }
 export type PiezaOcupado = Comun & { tipo: 'ocupado'; ocupado: Ocupado }
 export type Pieza = PiezaEvento | PiezaOcupado
 
@@ -46,8 +47,10 @@ function estadoDe(evento: Evento, yo: Persona, pasada: boolean, voy: boolean, es
   return evento.cupos !== null && van >= evento.cupos ? 'lleno' : 'tomar'
 }
 
-// "Próxima" es lo siguiente a lo que vas (o lo que está pasando): va en acento
-export function armarPiezas(eventos: Evento[], asistentes: Asistente[], ocupados: Ocupado[], yo: Persona, ahoraIso: string): Pieza[] {
+// "Próxima" es lo siguiente a lo que vas (o lo que está pasando): va en acento.
+// "tema" es el tema al que el evento va primero (si todavía es solo para los suyos) y "teToca" dice si puedes sumarte en cuanto a ese tema
+// (mientras no llegan los intereses, se asume que sí, para que no parpadee).
+export function armarPiezas(eventos: Evento[], asistentes: Asistente[], ocupados: Ocupado[], yo: Persona, ahoraIso: string, interesados?: Interesado[]): Pieza[] {
   const ahoraMs = Date.parse(ahoraIso)
   const piezas: Pieza[] = []
   let hayProxima = false
@@ -58,7 +61,9 @@ export function armarPiezas(eventos: Evento[], asistentes: Asistente[], ocupados
     const proxima = mio && !base.pasada && !hayProxima
     if (proxima) hayProxima = true
     const estado = estadoDe(evento, yo, base.pasada, mio, espera.some((a) => a.persona === yo.id), van.length)
-    piezas.push({ ...base, tipo: 'evento', evento, estado, mio, proxima, van: van.map((a) => a.persona) })
+    const tema = soloParaTema(evento) ? evento.tema : null
+    const teToca = !interesados || teTocaElTema(evento, interesados, yo.id)
+    piezas.push({ ...base, tipo: 'evento', evento, estado, mio, proxima, van: van.map((a) => a.persona), tema, teToca })
   }
   for (const ocupado of ocupados) piezas.push({ ...comun(ocupado.id, ocupado.titulo, ocupado.inicio, ocupado.fin, ahoraMs), tipo: 'ocupado', ocupado })
   return piezas.sort((a, b) => a.dia.localeCompare(b.dia) || a.desde - b.desde || a.hasta - b.hasta)

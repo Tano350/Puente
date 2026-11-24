@@ -280,6 +280,7 @@ export type Database = {
       }
       eventos: {
         Row: {
+          abierto_en: string | null
           cambiado_en: string
           cancelado_en: string | null
           contacto: string | null
@@ -296,10 +297,12 @@ export type Database = {
           modo: Database["public"]["Enums"]["modo_evento"]
           notas: string | null
           organizador: string | null
+          tema: string | null
           tipo: Database["public"]["Enums"]["tipo_evento"]
           titulo: string
         }
         Insert: {
+          abierto_en?: string | null
           cambiado_en?: string
           cancelado_en?: string | null
           contacto?: string | null
@@ -316,10 +319,12 @@ export type Database = {
           modo?: Database["public"]["Enums"]["modo_evento"]
           notas?: string | null
           organizador?: string | null
+          tema?: string | null
           tipo?: Database["public"]["Enums"]["tipo_evento"]
           titulo: string
         }
         Update: {
+          abierto_en?: string | null
           cambiado_en?: string
           cancelado_en?: string | null
           contacto?: string | null
@@ -336,6 +341,7 @@ export type Database = {
           modo?: Database["public"]["Enums"]["modo_evento"]
           notas?: string | null
           organizador?: string | null
+          tema?: string | null
           tipo?: Database["public"]["Enums"]["tipo_evento"]
           titulo?: string
         }
@@ -359,6 +365,13 @@ export type Database = {
             columns: ["organizador"]
             isOneToOne: false
             referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventos_tema_fkey"
+            columns: ["tema"]
+            isOneToOne: false
+            referencedRelation: "temas"
             referencedColumns: ["id"]
           },
         ]
@@ -429,6 +442,39 @@ export type Database = {
             columns: ["pagado_por"]
             isOneToOne: false
             referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      interesados: {
+        Row: {
+          desde: string
+          persona: string
+          tema: string
+        }
+        Insert: {
+          desde?: string
+          persona: string
+          tema: string
+        }
+        Update: {
+          desde?: string
+          persona?: string
+          tema?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interesados_persona_fkey"
+            columns: ["persona"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interesados_tema_fkey"
+            columns: ["tema"]
+            isOneToOne: false
+            referencedRelation: "temas"
             referencedColumns: ["id"]
           },
         ]
@@ -857,6 +903,41 @@ export type Database = {
           },
         ]
       }
+      temas: {
+        Row: {
+          borrado_en: string | null
+          creado_en: string
+          creado_por: string
+          de_que_trata: string | null
+          id: string
+          nombre: string
+        }
+        Insert: {
+          borrado_en?: string | null
+          creado_en?: string
+          creado_por?: string
+          de_que_trata?: string | null
+          id?: string
+          nombre: string
+        }
+        Update: {
+          borrado_en?: string | null
+          creado_en?: string
+          creado_por?: string
+          de_que_trata?: string | null
+          id?: string
+          nombre?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "temas_creado_por_fkey"
+            columns: ["creado_por"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -904,6 +985,7 @@ export type Database = {
       avisos_en_pausa: { Args: never; Returns: boolean }
       borrar_gasto: { Args: { gasto: string }; Returns: undefined }
       borrar_tarea: { Args: { tarea: string }; Returns: undefined }
+      borrar_tema: { Args: { tema: string }; Returns: number }
       buscar_calendarios: { Args: never; Returns: undefined }
       calendario_conectado: { Args: never; Returns: boolean }
       calendarios_del_viaje: {
@@ -983,9 +1065,27 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      cambiar_tema: {
+        Args: { de_que_trata?: string; nombre: string; tema: string }
+        Returns: {
+          borrado_en: string | null
+          creado_en: string
+          creado_por: string
+          de_que_trata: string | null
+          id: string
+          nombre: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "temas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       cambio_boleta: { Args: { gasto: string }; Returns: boolean }
       cambio_gasto: { Args: { gasto: string }; Returns: boolean }
       cambio_tarea: { Args: { tarea: string }; Returns: boolean }
+      cambio_tema: { Args: { tema: string }; Returns: boolean }
       crear_tarea: {
         Args: {
           cada_uno: boolean
@@ -1014,11 +1114,29 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      crear_tema: {
+        Args: { de_que_trata?: string; id?: string; nombre: string }
+        Returns: {
+          borrado_en: string | null
+          creado_en: string
+          creado_por: string
+          de_que_trata: string | null
+          id: string
+          nombre: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "temas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       deshacer_pago: { Args: { pago: string }; Returns: undefined }
       despertar_avisos: { Args: never; Returns: undefined }
       devolver: { Args: { persona: string }; Returns: undefined }
       devolver_gasto: { Args: { gasto: string }; Returns: undefined }
       devolver_tarea: { Args: { tarea: string }; Returns: undefined }
+      devolver_tema: { Args: { tema: string }; Returns: undefined }
       encolar_aviso: {
         Args: {
           contacto?: string
@@ -1101,8 +1219,9 @@ export type Database = {
         }
       }
       ir: { Args: { evento: string }; Returns: string }
+      le_interesa: { Args: { persona: string; tema: string }; Returns: boolean }
       libres: {
-        Args: { desde: string; hasta: string }
+        Args: { desde: string; hasta: string; tema?: string }
         Returns: {
           alla: number
           libres: number
@@ -1130,6 +1249,7 @@ export type Database = {
         Args: { hecha: boolean; tarea: string }
         Returns: undefined
       }
+      me_interesa: { Args: { tema: string }; Returns: undefined }
       mi_persona: { Args: never; Returns: string }
       no_ir: { Args: { evento: string }; Returns: undefined }
       poner_boleta: {
@@ -1148,6 +1268,14 @@ export type Database = {
         Returns: undefined
       }
       sincronizar_calendarios: { Args: { activa: boolean }; Returns: undefined }
+      solo_para_tema: {
+        Args: {
+          abierto_en: string
+          modo: Database["public"]["Enums"]["modo_evento"]
+          tema: string
+        }
+        Returns: boolean
+      }
       soltar_tarea: { Args: { tarea: string }; Returns: undefined }
       sumar_a_evento: {
         Args: { avisar?: boolean; evento: string; persona: string }
@@ -1155,6 +1283,7 @@ export type Database = {
       }
       tomar_tarea: { Args: { tarea: string }; Returns: undefined }
       veo_gasto: { Args: { gasto: string }; Returns: boolean }
+      ya_no_me_interesa: { Args: { tema: string }; Returns: undefined }
     }
     Enums: {
       canal: "correo" | "linkedin" | "telefono"
