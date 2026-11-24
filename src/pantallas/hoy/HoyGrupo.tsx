@@ -3,6 +3,7 @@ import { Icono } from '../../componentes/Icono.tsx'
 import { useConectado } from '../../datos/conexion.ts'
 import { miLugar, type Asistente, type Evento } from '../../datos/eventos.ts'
 import { CHILE, hora } from '../../datos/fechas.ts'
+import { temaPendiente, type Tema } from '../../datos/intereses.ts'
 import { empujon, Numero } from '../../movimiento/index.ts'
 import { useTextos } from '../../textos.ts'
 import { cuposLibres } from './HoyDatos.ts'
@@ -49,6 +50,7 @@ function BotonVoy({ ocupado, sinRed, etiqueta, texto, onClick }: { ocupado: bool
 export function TambienHoy({
   eventos,
   asistentes,
+  temas,
   yo,
   chile,
   computador,
@@ -59,6 +61,7 @@ export function TambienHoy({
 }: {
   eventos: Evento[]
   asistentes: Asistente[]
+  temas: Tema[]
   yo: string
   chile: boolean
   computador: boolean
@@ -67,7 +70,8 @@ export function TambienHoy({
   onAbrir: (id: string) => void
   onVoy: (evento: Evento) => void
 }) {
-  const t = useTextos().hoy.viaje
+  const textos = useTextos()
+  const t = textos.hoy.viaje
   // Sin conexión, "Voy" queda apagado; al tocarlo, un aviso dice por qué
   const sinRed = !useConectado()
   return (
@@ -78,6 +82,8 @@ export function TambienHoy({
         const puesto = lugar?.estado === 'espera' ? lugar.puesto : null
         const detalle = puesto !== null ? t.enEspera(puesto, e.lugar) : libres === null ? t.paraTodos(e.lugar) : conNumero(t.quedan(libres, e.lugar), libres)
         const ocupado = yendo === e.id
+        // Lo que todavía es solo para los de un tema (y es tuyo: lo demás no llega aquí)
+        const tema = temaPendiente(e, temas)
         // Las mismas palabras que la Agenda: "Voy" en lo que es para todos y "Tomar cupo" en lo que tiene cupos
         const conCupo = e.modo !== 'para_todos'
         return (
@@ -89,6 +95,12 @@ export function TambienHoy({
             <button type="button" className={estilos.datos} aria-pressed={computador ? elegido === e.id : undefined} onClick={() => onAbrir(e.id)}>
               <span className={estilos.titulo}>{e.titulo}</span>
               <span className={estilos.detalle}>{detalle}</span>
+              {tema && (
+                <span className={`${estilos.detalle} ${estilos.tema}`}>
+                  <Icono nombre="grupo" medida={15} trazo={2} />
+                  {textos.intereses.comun.primeroPara(tema.nombre)}
+                </span>
+              )}
             </button>
             {puesto === null && (
               <BotonVoy ocupado={ocupado} sinRed={sinRed} etiqueta={conCupo ? t.tomarCupoEn(e.titulo) : t.voyA(e.titulo)} texto={conCupo ? t.tomarCupo : t.voy} onClick={() => !ocupado && onVoy(e)} />

@@ -38,6 +38,12 @@ export type Fila = {
   van: number | null
   // Quién te sumó (sumado)
   suma: string | null
+  // El tema del evento, si va primero a los de un tema: cuándo se abrió a todos (vacío: todavía es solo para ellos),
+  // cómo se llama el tema y si quien recibe está en él o lo organiza
+  tema: string | null
+  abierto_en: Date | null
+  tema_nombre: string | null
+  en_tema: boolean
   // El contacto
   contacto_id: string | null
   contacto_nombre: string | null
@@ -195,6 +201,7 @@ const TEXTOS = {
     teAsignoTarea: (quien: string | null) => (quien ? `${quien} te asignó una tarea` : 'Te asignaron una tarea'),
     paraEl: (dia: string) => `para el ${dia}`,
     venceManana: 'Mañana vence una tarea tuya',
+    primeroPara: (tema: string) => `Primero para los de ${tema}.`,
   },
   en: {
     nuevo: (t: string) => `New event: ${t}`,
@@ -219,6 +226,7 @@ const TEXTOS = {
     teAsignoTarea: (quien: string | null) => (quien ? `${quien} assigned you a task` : 'You were assigned a task'),
     paraEl: (dia: string) => `due ${dia}`,
     venceManana: 'One of your tasks is due tomorrow',
+    primeroPara: (tema: string) => `First for the ${tema} group.`,
   },
 }
 
@@ -283,7 +291,12 @@ export function armar(f: Fila, ahora: Date): Resultado {
       if (empezo) return { descartar: 'El evento ya empezó.' }
       if (f.modo === 'cerrado') return { descartar: 'El evento es cerrado.' }
       if (f.estado) return { descartar: 'Ya está en el evento.' }
+      // Todavía es solo para los de su tema (como solo_para_tema en la base): a los demás no les sirve todavía
+      const soloTema = f.tema !== null && f.abierto_en === null
+      const tema = limpio(f.tema_nombre)
+      if (soloTema && !f.en_tema) return { descartar: tema ? `Todavía es solo para los de ${tema}.` : 'Todavía es solo para los de su tema.' }
       const partes = [[cuando(f.inicio, ahora, idioma), dondeEs(f.lugar, null)].filter(Boolean).join(' · ') + '.']
+      if (soloTema && tema) partes.unshift(t.primeroPara(tema))
       if (f.modo === 'con_cupo' && f.cupos !== null) {
         const quedan = f.cupos - (f.van ?? 0)
         partes.push(quedan > 0 ? t.quedan(quedan) : t.lleno)

@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { ElegirPersona } from '../../componentes/ElegirPersona.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
 import { usePersonas, type Persona } from '../../datos/consultas.ts'
-import { estaAllaEse, type ModoEvento } from '../../datos/eventos.ts'
+import { estaAllaEse, soloParaTema, type Evento, type ModoEvento } from '../../datos/eventos.ts'
 import { momento } from '../../datos/fechas.ts'
 import { integrantes } from '../../datos/grupo.ts'
+import { interesadosDe, useInteresados, useTemas } from '../../datos/intereses.ts'
 import { primerNombre } from '../../datos/nombres.ts'
 import { useSesion } from '../../datos/sesion.tsx'
 import { useTextos } from '../../textos.ts'
@@ -14,14 +15,28 @@ const MODOS = ['para_todos', 'con_cupo', 'cerrado'] as const satisfies readonly 
 // Fichas a mano en uno cerrado (de los que están allá ese día, si ya se eligió); el resto, en "Ver los 13"
 const FICHAS = 6
 
-type Props = { computador: boolean; dia: string | null; modo: ModoEvento; elegidos: string[]; editando?: boolean; onModo: (modo: ModoEvento) => void; onElegidos: (elegidos: string[]) => void }
+type Props = {
+  computador: boolean
+  dia: string | null
+  modo: ModoEvento
+  tema: string | null
+  elegidos: string[]
+  // El evento que se edita: «Primero para» solo va mientras sigue siendo solo para su tema
+  editando?: Evento
+  onModo: (modo: ModoEvento) => void
+  onTema: (tema: string | null) => void
+  onElegidos: (elegidos: string[]) => void
+}
 
 // Quiénes pueden ir: para todos, con cupo o cerrado (con las personas que van).
+// Para todos o con cupo pueden ir primero a los de un tema; en uno cerrado se suma a los de un tema de una vez.
 // Al editar no hay fichas: en uno cerrado, la gente se suma y se saca en el evento.
-export function CrearQuienes({ computador, dia, modo, elegidos, editando = false, onModo, onElegidos }: Props) {
+export function CrearQuienes({ computador, dia, modo, tema, elegidos, editando, onModo, onTema, onElegidos }: Props) {
   const textos = useTextos()
   const sesion = useSesion()
   const { data: personas } = usePersonas()
+  const { data: temas } = useTemas()
+  const { data: interesados } = useInteresados()
   const [eligiendo, setEligiendo] = useState(false)
   // Los que se agregaron desde la lista siguen a la vista aunque se desmarquen
   const [agregados, setAgregados] = useState<string[]>([])
@@ -42,6 +57,17 @@ export function CrearQuienes({ computador, dia, modo, elegidos, editando = false
   }
   const cambiar = (id: string) => onElegidos(elegidos.includes(id) ? elegidos.filter((x) => x !== id) : [...elegidos, id])
 
+  // Los de un tema que se pueden agregar: integrantes de ahora, sin ti. Un tema sin nadie así no se muestra.
+  const deTema = (id: string) => otros.filter((p) => interesadosDe(id, interesados ?? []).includes(p.id)).map((p) => p.id)
+  const temasConGente = (temas ?? []).filter((x) => deTema(x.id).length > 0)
+  const todosLosDe = (id: string) => deTema(id).every((p) => elegidos.includes(p))
+  const cambiarTema = (id: string) => {
+    const suyos = deTema(id)
+    onElegidos(todosLosDe(id) ? elegidos.filter((x) => !suyos.includes(x)) : [...elegidos, ...suyos.filter((x) => !elegidos.includes(x))])
+  }
+  const primero = temas?.find((x) => x.id === tema)
+  const verPrimero = modo !== 'cerrado' && (temas?.length ?? 0) > 0 && (!editando || soloParaTema(editando))
+
   return (
     <div data-computador={computador}>
       <div id="crear-quienes" className={estilos.etiqueta}>
@@ -59,8 +85,53 @@ export function CrearQuienes({ computador, dia, modo, elegidos, editando = false
         {editando && modo === 'cerrado' ? textos.agenda.editar.cerrado : t.explicaModo[modo]}
       </div>
 
+      {verPrimero && (
+        <>
+          <div id="crear-primero" className={estilos.etiqueta}>
+            {t.primeroPara}
+          </div>
+          <div role="radiogroup" aria-labelledby="crear-primero" aria-describedby={primero ? 'crear-primero-explica' : undefined} className={estilos.fichas}>
+            <button type="button" role="radio" aria-checked={tema === null} className={estilos.ficha} onClick={() => onTema(null)}>
+              {t.todos}
+            </button>
+            {(temas ?? []).map((x) => (
+              <button key={x.id} type="button" role="radio" aria-checked={tema === x.id} className={estilos.ficha} onClick={() => onTema(x.id)}>
+                {x.nombre}
+              </button>
+            ))}
+          </div>
+          {primero && (
+            <div id="crear-primero-explica" className={estilos.explica}>
+              {t.explicaTema(primero.nombre)}
+            </div>
+          )}
+        </>
+      )}
+
+      {modo === 'cerrado' && !editando && temasConGente.length > 0 && (
+        <>
+          <div id="crear-temas" className={estilos.etiqueta}>
+            {t.agregarALosDe}
+          </div>
+          <div role="group" aria-labelledby="crear-temas" className={estilos.fichas}>
+            {temasConGente.map((x) => {
+              const van = todosLosDe(x.id)
+              return (
+                <button key={x.id} type="button" className={estilos.ficha} aria-pressed={van} onClick={() => cambiarTema(x.id)}>
+                  {van && <Icono nombre="check" medida={14} trazo={2.5} />}
+                  {x.nombre}
+                </button>
+              )
+            })}
+          </div>
+          <div id="crear-personas" className={estilos.etiqueta}>
+            {t.personasEtiqueta}
+          </div>
+        </>
+      )}
+
       {modo === 'cerrado' && !editando && (
-        <div role="group" aria-labelledby="crear-quienes-explica" className={estilos.fichas}>
+        <div role="group" aria-labelledby={temasConGente.length > 0 ? 'crear-personas' : 'crear-quienes-explica'} className={estilos.fichas}>
           {fichas.map((p) => {
             const va = elegidos.includes(p.id)
             return (

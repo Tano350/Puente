@@ -3,7 +3,7 @@ import type { Enums, Tables, TablesInsert, TablesUpdate } from './base.ts'
 import { consultas, type Persona } from './consultas.ts'
 import { ahora, diaEn } from './fechas.ts'
 import { conNotaReunion } from './enEspera.ts'
-import { cambiarContactosDeMaqueta, datosDeMaqueta, modoMaqueta, personaDeMaqueta } from './maqueta.ts'
+import { cambiarContactosDeMaqueta, datosDeMaqueta, interesadosDeMaqueta, modoMaqueta, personaDeMaqueta } from './maqueta.ts'
 import { asegurarSesion, conPendientes, escribir, registrarEscritura } from './sinSenal.ts'
 import { supabase } from './supabase.ts'
 
@@ -17,7 +17,7 @@ export type TipoEvento = Enums<'tipo_evento'>
 export type ModoEvento = Enums<'modo_evento'>
 
 // Por qué no se pudo ir a un evento
-export type Motivo = 'lleno' | 'no_estas' | 'cerrado' | 'paso' | 'otro'
+export type Motivo = 'lleno' | 'no_estas' | 'cerrado' | 'paso' | 'solo_tema' | 'otro'
 export class ErrorDeEvento extends Error {
   readonly motivo: Motivo
   constructor(motivo: Motivo) {
@@ -91,10 +91,21 @@ export function estaAllaEse(persona: Pick<Persona, 'llega' | 'vuelve'>, inicio: 
 
 const recargar = (...claves: string[]) => Promise.all(claves.map((clave) => consultas.invalidateQueries({ queryKey: [clave] })))
 
+// ¿Es todavía solo para los de su tema? (como solo_para_tema en la base: tiene tema, no se abrió y no es cerrado)
+export function soloParaTema(evento: Pick<Evento, 'tema' | 'abierto_en' | 'modo'>): boolean {
+  return evento.tema !== null && evento.abierto_en === null && evento.modo !== 'cerrado'
+}
+
+// En la maqueta, como en la base: si todavía es solo para los de un tema, se suma por su cuenta solo quien está en él
+// o lo organiza
+function revisarTemaDeMaqueta(e: Evento, yo: string) {
+  if (soloParaTema(e) && e.organizador !== yo && !interesadosDeMaqueta().some((i) => i.tema === e.tema && i.persona === yo)) throw new ErrorDeEvento('solo_tema')
+}
+
 // ---------- Ir, esperar y dejar de ir: un solo paso en la base ----------
 function motivoDe(error: { hint?: string | null } | null): Motivo {
   const hint = error?.hint
-  return hint === 'lleno' || hint === 'no_estas' || hint === 'cerrado' || hint === 'paso' ? hint : 'otro'
+  return hint === 'lleno' || hint === 'no_estas' || hint === 'cerrado' || hint === 'paso' || hint === 'solo_tema' ? hint : 'otro'
 }
 
 export async function ir(evento: string): Promise<void> {
@@ -105,6 +116,7 @@ export async function ir(evento: string): Promise<void> {
     if (!e) throw new ErrorDeEvento('otro')
     if (!estaAllaEse(yo, e.inicio)) throw new ErrorDeEvento('no_estas')
     if (e.modo === 'cerrado') throw new ErrorDeEvento('cerrado')
+    revisarTemaDeMaqueta(e, yo.id)
     const { van } = asistentesDe(evento, datos.asistentes)
     if (e.modo === 'con_cupo' && e.cupos !== null && van.length >= e.cupos && !van.some((a) => a.persona === yo.id)) throw new ErrorDeEvento('lleno')
     datos.asistentes = [...datos.asistentes.filter((a) => !(a.evento === evento && a.persona === yo.id)), { evento, persona: yo.id, estado: 'va', desde: ahora() }]
@@ -120,6 +132,9 @@ export async function esperar(evento: string): Promise<number> {
   if (import.meta.env.DEV && modoMaqueta) {
     const datos = datosDeMaqueta()
     const yo = personaDeMaqueta().id
+    const e = datos.eventos.find((x) => x.id === evento)
+    if (!e) throw new ErrorDeEvento('otro')
+    revisarTemaDeMaqueta(e, yo)
     if (!datos.asistentes.some((a) => a.evento === evento && a.persona === yo)) datos.asistentes = [...datos.asistentes, { evento, persona: yo, estado: 'espera', desde: ahora() }]
     await recargar('asistentes')
     return asistentesDe(evento, datos.asistentes).espera.findIndex((a) => a.persona === yo) + 1
@@ -191,7 +206,7 @@ export async function crearEvento(yo: string, nuevo: Omit<TablesInsert<'eventos'
   let creado: Evento
   if (import.meta.env.DEV && modoMaqueta) {
     const datos = datosDeMaqueta()
-    creado = { id: `evento-${Date.now()}`, tipo: 'otro', lugar: null, direccion: null, modo: 'para_todos', cupos: null, notas: null, contacto: null, google_id: null, desde_google: false, cancelado_en: null, ...nuevo, organizador: yo, creado_por: yo, creado_en: ahora(), cambiado_en: ahora() }
+    creado = { id: `evento-${Date.now()}`, tipo: 'otro', lugar: null, direccion: null, modo: 'para_todos', cupos: null, notas: null, contacto: null, google_id: null, desde_google: false, cancelado_en: null, tema: null, abierto_en: null, ...nuevo, organizador: yo, creado_por: yo, creado_en: ahora(), cambiado_en: ahora() }
     datos.eventos = [...datos.eventos, creado].sort((a, b) => a.inicio.localeCompare(b.inicio))
     datos.asistentes = [...datos.asistentes, { evento: creado.id, persona: yo, estado: 'va', desde: ahora() }]
   } else {
@@ -236,6 +251,16 @@ export async function cambiarEvento(id: string, cambios: TablesUpdate<'eventos'>
   return cambiado
 }
 
+// «Abrir a todos»: el evento que era solo para los de un tema pasa a ser para todos (a los demás les llega el aviso).
+// "Deshacer" lo vuelve a cerrar; la base lo permite solo dentro del primer minuto.
+export function abrirATodos(id: string): Promise<Evento> {
+  return cambiarEvento(id, { abierto_en: ahora() })
+}
+
+export function deshacerAbrirATodos(id: string): Promise<Evento> {
+  return cambiarEvento(id, { abierto_en: null })
+}
+
 // Solo para deshacer un evento recién creado; lo demás se cancela
 export async function borrarEvento(id: string): Promise<void> {
   if (import.meta.env.DEV && modoMaqueta) {
@@ -253,17 +278,19 @@ export function cancelarEvento(id: string): Promise<Evento> {
   return cambiarEvento(id, { cancelado_en: ahora() })
 }
 
-// Cuántos están allá ese día y cuántos tienen libre esa hora (Puente informa, no sugiere)
-export async function libres(desde: string, hasta: string): Promise<{ alla: number; libres: number }> {
+// Cuántos están allá ese día y cuántos tienen libre esa hora (Puente informa, no sugiere). Con un tema, cuenta solo a
+// los de ese tema: «3 de los 4 de Fintech que están allá tienen libre esa hora».
+export async function libres(desde: string, hasta: string, tema: string | null = null): Promise<{ alla: number; libres: number }> {
   if (import.meta.env.DEV && modoMaqueta) {
     const datos = datosDeMaqueta()
-    const alla = datos.personas.filter((p) => !p.sacada_en && estaAllaEse(p, desde))
+    const delTema = (persona: string) => tema === null || interesadosDeMaqueta().some((i) => i.tema === tema && i.persona === persona)
+    const alla = datos.personas.filter((p) => !p.sacada_en && estaAllaEse(p, desde) && delTema(p.id))
     const ocupada = (persona: string) =>
       datos.asistentes.some((a) => a.persona === persona && a.estado === 'va' && datos.eventos.some((e) => e.id === a.evento && !e.cancelado_en && e.inicio < hasta && e.fin > desde)) ||
       datos.ocupados.some((o) => o.persona === persona && o.inicio < hasta && o.fin > desde)
     return { alla: alla.length, libres: alla.filter((p) => !ocupada(p.id)).length }
   }
-  const { data, error } = await supabase.rpc('libres', { desde, hasta })
+  const { data, error } = await supabase.rpc('libres', tema ? { desde, hasta, tema } : { desde, hasta })
   if (error) throw error
   return data[0] ?? { alla: 0, libres: 0 }
 }

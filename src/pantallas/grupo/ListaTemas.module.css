@@ -1,0 +1,117 @@
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tarjeta {
+  position: relative;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+.tarjeta[data-elegida='true'] {
+  border-color: transparent;
+  box-shadow: 0 0 0 2px var(--acento);
+}
+
+@media (hover: hover) {
+  .tarjeta:hover:not([data-elegida='true']) {
+    border-color: var(--sec);
+  }
+}
+
+/* Toda la tarjeta se toca; «Me interesa» y la marca van encima, a la derecha */
+.abrir {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 14px 16px 14px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.abrir:focus-visible,
+.meInteresa:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+.nombre {
+  padding-right: 120px;
+  font-family: var(--letra-titulo);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 26px;
+  overflow-wrap: anywhere;
+}
+
+.trata {
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--sec-tarjeta);
+  overflow-wrap: anywhere;
+}
+
+.raya {
+  display: block;
+  margin: 10px 0;
+  border-top: 1px dashed var(--regla);
+}
+
+.gente {
+  min-height: 44px;
+  padding-right: 132px;
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.gente[data-nadie='true'] {
+  color: var(--sec);
+}
+
+/* Abajo a la derecha, alineado con los nombres */
+.meInteresa {
+  position: absolute;
+  right: 12px;
+  bottom: 14px;
+  height: 44px;
+  padding: 0 14px;
+  border: 2px solid var(--tinta);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--tinta);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.meInteresa[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* No se toca: es un texto, sin borde ni fondo */
+.teInteresa {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--sec-tarjeta);
+  pointer-events: none;
+}

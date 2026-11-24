@@ -77,7 +77,7 @@
   gap: 4px;
   height: 36px;
   padding: 0 12px;
-  border: 1.5px solid var(--regla);
+  border: 1.5px solid var(--sec);
   border-radius: 18px;
   background: transparent;
   color: var(--tinta);
@@ -87,9 +87,18 @@
 
 .ficha[aria-pressed='true'] {
   padding: 0 10.5px 0 8.5px;
+}
+
+.ficha[aria-pressed='true'],
+.ficha[aria-checked='true'] {
   border-color: var(--tinta);
   background: var(--tinta);
   color: var(--fondo);
+}
+
+.ficha:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
 }
 
 .verTodos {

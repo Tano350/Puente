@@ -1,10 +1,14 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react'
 import { Valor } from './resortes.ts'
 
+// Dónde quedó cada marca con clave: un selector que cambia de pantalla (Estadías / Intereses) se arma de nuevo en la
+// otra, y así su marca parte desde donde estaba y se desliza
+const recuerdos = new Map<string, { pos: number; largo: number }>()
+
 // La marca de lo elegido (la pastilla de "Todas / Mías", la raya de la barra de secciones) se desliza hasta la opción
 // elegida. El contenedor tiene position: relative y un hijo con data-pastilla; la opción elegida es la que tiene
 // aria-pressed, aria-selected o aria-current="page". Si no hay ninguna elegida, la marca no se ve.
-export function usePastilla(contenedor: RefObject<HTMLElement | null>, eje: 'x' | 'y' = 'x') {
+export function usePastilla(contenedor: RefObject<HTMLElement | null>, eje: 'x' | 'y' = 'x', clave?: string) {
   const estado = useRef<{ marca: HTMLElement | null; pos: Valor; largo: Valor; visto: boolean } | null>(null)
   const medir = useRef<(animar: boolean) => void>(() => {})
 
@@ -42,6 +46,14 @@ export function usePastilla(contenedor: RefObject<HTMLElement | null>, eje: 'x' 
       const pos = eje === 'x' ? o.left - r.left - raiz.clientLeft : o.top - r.top - raiz.clientTop
       const largo = eje === 'x' ? o.width : o.height
       marca.style.opacity = ''
+      const antes = clave ? recuerdos.get(clave) : undefined
+      if (clave) recuerdos.set(clave, { pos, largo })
+      // Recién armado en otra pantalla: parte desde donde quedó allá
+      if (animar && !e.visto && antes) {
+        e.pos.fijar(antes.pos)
+        e.largo.fijar(antes.largo)
+        e.visto = true
+      }
       if (animar && e.visto) {
         e.pos.ir(pos)
         e.largo.ir(largo)

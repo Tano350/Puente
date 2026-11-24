@@ -4,6 +4,7 @@ import type { Calendario, Sincronizacion } from './calendario.ts'
 import type { Asistente, Evento, NotaReunion, Ocupado } from './eventos.ts'
 import type { Gasto, Pago, Parte, Rendicion } from './gastos.ts'
 import type { Asignado, Tarea } from './estadoTareas.ts'
+import type { Interesado, Tema } from './intereses.ts'
 import { hoyEnCalifornia, momento, sumarDias, VIAJE } from './fechas.ts'
 
 // Solo en desarrollo: personas de ejemplo del lienzo, para revisar pantallas sin entrar con Google.
@@ -154,7 +155,7 @@ let agenda: Datos | null = null
 const YO = 'josefa.contreras'
 const [ANDRES, BENJAMIN, CATALINA, DIEGO, FLORENCIA, IGNACIO, JOAQUIN, MARTINA, PAULA, SOFIA, VICENTE] = ['andres.cifuentes', 'benjamin.silva', 'catalina.perez', 'diego.larrain', 'florencia.diaz', 'ignacio.rivas', 'joaquin.soto', 'martina.vidal', 'paula.torres', 'sofia.mendez', 'vicente.morales']
 
-type Ejemplo = [id: string, dia: number, desde: string, hasta: string, titulo: string, tipo: Evento['tipo'], lugar: string, direccion: string, modo: Evento['modo'], cupos: number | null, organizador: string, van: string[], espera?: string[], notas?: string, contacto?: string]
+type Ejemplo = [id: string, dia: number, desde: string, hasta: string, titulo: string, tipo: Evento['tipo'], lugar: string, direccion: string, modo: Evento['modo'], cupos: number | null, organizador: string, van: string[], espera?: string[], notas?: string, contacto?: string, tema?: string, abierto?: string]
 
 // Las mismas personas, cupos y listas de espera del lienzo ("Tú" es Josefa)
 export function datosDeMaqueta(): Datos {
@@ -178,10 +179,14 @@ export function datosDeMaqueta(): Datos {
     ['asado', 14, '19:00', '21:00', 'Asado del grupo', 'comida', 'Rinconada Park', '777 Embarcadero Rd, Palo Alto', 'para_todos', null, DIEGO, [DIEGO, YO, ANDRES, BENJAMIN, CATALINA, FLORENCIA, IGNACIO, JOAQUIN, MARTINA, PAULA, SOFIA]],
     ['apple', 15, '09:30', '12:00', 'Visita a Apple Park', 'visita', 'Apple Park Visitor Center', '10600 N Tantau Ave, Cupertino', 'con_cupo', 6, SOFIA, [SOFIA, BENJAMIN, ANDRES, CATALINA, DIEGO, FLORENCIA], [IGNACIO, JOAQUIN, VICENTE]],
     ['half-moon-bay', 16, '10:00', '16:00', 'Paseo a Half Moon Bay', 'otro', 'Half Moon Bay', 'Half Moon Bay, CA', 'para_todos', null, MARTINA, [MARTINA, YO, ANDRES, BENJAMIN, CATALINA, DIEGO, FLORENCIA, IGNACIO, JOAQUIN, PAULA]],
+    // Intereses: uno primero para IA (a Josefa le interesa), uno primero para Fintech (no le interesa) y otro de Fintech ya abierto a todos
+    ['meetup-ia', 12, '18:00', '20:00', 'Meetup de IA', 'otro', 'Computer History Museum', '1401 N Shoreline Blvd, Mountain View', 'con_cupo', 10, CATALINA, [CATALINA, ANDRES, BENJAMIN, IGNACIO], [], 'Demos de agentes y una ronda de preguntas.', undefined, 'ia'],
+    ['charla-plaid', 13, '17:00', '18:30', 'Charla en Plaid', 'visita', 'Plaid', '1098 Harrison St, San Francisco', 'con_cupo', 8, DIEGO, [DIEGO, SOFIA, PAULA], [], 'Cómo conectan bancos en Latinoamérica.', undefined, 'fintech'],
+    ['visita-brex', 14, '16:00', '17:00', 'Visita a Brex', 'visita', 'Brex', '650 California St, San Francisco', 'con_cupo', 6, SOFIA, [SOFIA, VICENTE], [], '', undefined, 'fintech', '2027-01-10T16:00:00Z'],
   ]
   const dia = (n: number) => `2027-01-${String(n).padStart(2, '0')}`
   const llegada = (minutos: number) => new Date(Date.UTC(2027, 0, 2, 12, minutos)).toISOString()
-  const eventos: Evento[] = ejemplos.map(([id, d, desde, hasta, titulo, tipo, lugar, direccion, modo, cupos, organizador, , , notas, contacto]) => ({
+  const eventos: Evento[] = ejemplos.map(([id, d, desde, hasta, titulo, tipo, lugar, direccion, modo, cupos, organizador, , , notas, contacto, tema, abierto]) => ({
     id,
     titulo,
     tipo,
@@ -200,6 +205,8 @@ export function datosDeMaqueta(): Datos {
     creado_en: llegada(0),
     cambiado_en: llegada(0),
     cancelado_en: null,
+    tema: tema ?? null,
+    abierto_en: abierto ?? null,
   }))
   const asistentes: Asistente[] = ejemplos.flatMap(([id, , , , , , , , , , , van, espera = []]) => [
     ...van.map((persona, i) => ({ evento: id, persona, estado: 'va', desde: llegada(i) })),
@@ -354,4 +361,50 @@ export function cambiarTareasDeMaqueta(cambiar: (lista: Tarea[]) => Tarea[]) {
 export function cambiarAsignadosDeMaqueta(cambiar: (lista: Asignado[]) => Asignado[]) {
   tareasMaqueta ??= armarTareas()
   tareasMaqueta = { ...tareasMaqueta, asignados: cambiar(tareasMaqueta.asignados) }
+}
+
+// ---------- Intereses de ejemplo: los temas del diseño ("Tú" es Josefa; le interesan IA e Impacto) ----------
+type DatosIntereses = { temas: Tema[]; interesados: Interesado[] }
+let intereses: DatosIntereses | null = null
+
+function armarIntereses(): DatosIntereses {
+  const tema = (id: string, nombre: string, deQueTrata: string | null, creadoPor: string, creadoEl: string): Tema => ({
+    id, nombre, de_que_trata: deQueTrata, creado_por: creadoPor, creado_en: `${creadoEl}T15:00:00Z`, borrado_en: null,
+  })
+  const temas = [
+    tema('fintech', 'Fintech', 'Pagos, bancos y créditos.', DIEGO, '2027-01-04'),
+    tema('hardware', 'Hardware', 'Sensores, robots y fábricas.', ANDRES, '2027-01-05'),
+    tema('ia', 'IA', 'Modelos, agentes y datos.', CATALINA, '2027-01-04'),
+    tema('impacto', 'Impacto', 'Agua, energía y salud.', YO, '2027-01-04'),
+  ]
+  const gente: Record<string, string[]> = {
+    fintech: [DIEGO, SOFIA, PAULA, VICENTE],
+    hardware: [ANDRES, DIEGO, IGNACIO],
+    ia: [CATALINA, YO, ANDRES, BENJAMIN, IGNACIO, JOAQUIN],
+    impacto: [YO, FLORENCIA, MARTINA],
+  }
+  const interesados = Object.entries(gente).flatMap(([t, personas]) =>
+    personas.map((persona, i) => ({ tema: t, persona, desde: `${temas.find((x) => x.id === t)?.creado_en.slice(0, 10)}T${String(15 + i).padStart(2, '0')}:30:00Z` })),
+  )
+  return { temas, interesados }
+}
+
+export function temasDeMaqueta(): Tema[] {
+  intereses ??= armarIntereses()
+  return intereses.temas
+}
+
+export function interesadosDeMaqueta(): Interesado[] {
+  intereses ??= armarIntereses()
+  return intereses.interesados
+}
+
+export function cambiarTemasDeMaqueta(cambiar: (lista: Tema[]) => Tema[]) {
+  intereses ??= armarIntereses()
+  intereses = { ...intereses, temas: cambiar(intereses.temas) }
+}
+
+export function cambiarInteresadosDeMaqueta(cambiar: (lista: Interesado[]) => Interesado[]) {
+  intereses ??= armarIntereses()
+  intereses = { ...intereses, interesados: cambiar(intereses.interesados) }
 }

@@ -96,6 +96,7 @@ export const es = {
         no_estas: 'Ese día no estás allá.',
         cerrado: 'Solo van los que agrega quien organiza.',
         paso: 'Ese evento ya pasó.',
+        solo_tema: 'Por ahora es solo para los de su tema.',
         otro: 'No se pudo. Revisa tu conexión y vuelve a intentar.',
       },
       pendientesDe: (lista: string) => `Pendientes: ${lista}`,
@@ -162,6 +163,69 @@ export const es = {
     noCoinciden: 'No coinciden contigo.',
     incompleto: (nombre: string) => `${nombre} todavía no completa su perfil.`,
     aSuCargo: 'Contactos a su cargo',
+    intereses: 'Intereses',
+  },
+  // Intereses: temas de interés (Fintech, IA…) en Grupo, y eventos que van primero a los de un tema. "comun" lo usan
+  // Grupo, la Agenda y Hoy; cada pantalla suma su propia parte.
+  intereses: {
+    comun: {
+      // La vista de Grupo junto a «Estadías»
+      titulo: 'Intereses',
+      estadias: 'Estadías',
+      meInteresa: 'Me interesa',
+      teInteresa: 'Te interesa',
+      yaNoMeInteresa: 'Ya no me interesa',
+      // La línea de un evento que todavía es solo para los de un tema: si te interesa (o lo organizas) y si no
+      primeroPara: (tema: string) => `Primero para los de ${tema}`,
+      soloParaLosDe: (tema: string) => `Por ahora solo para los de ${tema}`,
+      necesitasConexion: 'Necesitas conexión para sumarte a un tema.',
+    },
+    // La lista de temas en Grupo
+    grupo: {
+      queVer: 'Qué ver en Grupo',
+      nuevo: 'Nuevo',
+      nuevoTema: 'Nuevo tema',
+      vacio: 'Todavía no hay temas.',
+      vacioAyuda: 'Un tema junta a quienes les interesa lo mismo, como Fintech o IA.',
+      nadie: 'Todavía no le interesa a nadie.',
+      teSumaste: (tema: string) => `Te sumaste a ${tema}.`,
+      creaste: (tema: string) => `Creaste ${tema}.`,
+      sinRedCrear: 'Necesitas conexión para crear un tema.',
+      sinRedCambiar: 'Necesitas conexión para cambiar un tema.',
+    },
+    // Un tema abierto
+    tema: {
+      atras: 'Grupo',
+      editar: 'Editar',
+      aQuienes: 'A quiénes les interesa',
+      proximos: 'Próximos eventos',
+      linea: (hora: string, texto: string) => `${hora} · ${texto}`,
+      soloElTema: 'Todavía no se abre a todos',
+      paraTodos: 'Ya es para todos',
+      sinEventos: (tema: string) => `Todavía no hay eventos para los de ${tema}.`,
+      loCreo: (nombre: string, dia: string) => `Lo creó ${nombre} el ${dia}.`,
+      loCreaste: (dia: string) => `Lo creaste tú el ${dia}.`,
+      borrar: 'Borrar tema',
+      borraste: (tema: string) => `Borraste ${tema}.`,
+      saliste: (tema: string) => `Ya no estás en ${tema}.`,
+      borrarPregunta: (tema: string) => `¿Borrar ${tema}?`,
+      borrarAviso: (eventos: string, varios: boolean, tema: string) =>
+        varios
+          ? `${eventos} todavía son solo para los de ${tema}. Si borras el tema, se abren a todos y les llega el aviso.`
+          : `${eventos} todavía es solo para los de ${tema}. Si borras el tema, se abre a todos y les llega el aviso.`,
+    },
+    // Crear y editar un tema
+    editar: {
+      nuevo: 'Nuevo tema',
+      editar: 'Editar tema',
+      nombre: 'Nombre',
+      deQueTrata: 'De qué se trata',
+      crear: 'Crear tema',
+      guardar: 'Guardar',
+      faltaNombre: 'Ponle un nombre al tema.',
+      repetido: (nombre: string) => `Ya hay un tema que se llama ${nombre}.`,
+    },
+
   },
   agenda: {
     titulo: 'Agenda',
@@ -207,7 +271,7 @@ export const es = {
       creaste: (titulo: string) => `Creaste ${titulo}.`,
       tomaste: 'Tomaste un cupo.',
       vasA: (titulo: string) => `Vas a ${titulo}.`,
-      motivos: { lleno: 'Ya no quedan cupos.', no_estas: 'Ese día no estás allá.', cerrado: 'Solo van los que agrega quien organiza.', paso: 'Ese evento ya pasó.' },
+      motivos: { lleno: 'Ya no quedan cupos.', no_estas: 'Ese día no estás allá.', cerrado: 'Solo van los que agrega quien organiza.', paso: 'Ese evento ya pasó.', solo_tema: 'Por ahora es solo para los de su tema.' },
       noSeCargo: 'No se pudo cargar la agenda. Revisa tu conexión.',
       reintentar: 'Reintentar',
     },
@@ -280,6 +344,12 @@ export const es = {
       sinRedSalir: 'Necesitas conexión para salir de la lista.',
       sinRedYaNoVoy: 'Necesitas conexión para cambiar tu respuesta.',
       sinRedQuienes: 'Necesitas conexión para cambiar quiénes van.',
+      // Un evento que va primero a los de un tema
+      abrirATodos: 'Abrir a todos',
+      todaviaNoSeAbre: 'Todavía no se abre a todos.',
+      abriste: (titulo: string) => `${titulo} ya es para todos.`,
+      sinRedAbrir: 'Necesitas conexión para abrirlo a todos.',
+      soloTema: (tema: string) => `Por ahora es solo para los de ${tema}.`,
       escribirNota: 'Escribir nota',
       editarNota: 'Editar tu nota',
       guardarNota: 'Guardar nota',
@@ -341,6 +411,12 @@ export const es = {
       modos: { para_todos: 'Para todos', con_cupo: 'Con cupo', cerrado: 'Cerrado' },
       explicaModo: { para_todos: 'Cada uno confirma si va.', con_cupo: 'Por orden de llegada, con lista de espera.', cerrado: 'Solo van los que agregues.' },
       verLos: (n: number) => `Ver los ${n}`,
+      // Un evento para todos o con cupo puede ir primero a los de un tema; uno cerrado suma a los de un tema
+      primeroPara: 'Primero para',
+      todos: 'Todos',
+      explicaTema: (tema: string) => `Solo los de ${tema} pueden sumarse y les llega el aviso, hasta que lo abras a todos.`,
+      agregarALosDe: 'Agregar a los de',
+      personasEtiqueta: 'Personas',
       agregarPersona: 'Agregar persona',
       notas: 'Notas',
       notasEjemplo: 'Algo que el grupo deba saber',
@@ -355,6 +431,16 @@ export const es = {
               : libres === 0
                 ? `Ninguno de los ${alla} que están allá tiene libre esa hora.`
                 : `${libres} de los ${alla} que están allá ${libres === 1 ? 'tiene' : 'tienen'} libre esa hora.`,
+      libresTema: (libres: number, alla: number, tema: string) =>
+        alla === 0
+          ? `Nadie de ${tema} está allá ese día.`
+          : alla === 1
+            ? `Hay 1 de ${tema} allá ese día y ${libres ? 'tiene' : 'no tiene'} libre esa hora.`
+            : libres === alla
+              ? `Los ${alla} de ${tema} que están allá tienen libre esa hora.`
+              : libres === 0
+                ? `Ninguno de los ${alla} de ${tema} que están allá tiene libre esa hora.`
+                : `${libres} de los ${alla} de ${tema} que están allá ${libres === 1 ? 'tiene' : 'tienen'} libre esa hora.`,
       grupoVera: 'El grupo solo verá que a esa hora no puedes.',
       reunionCon: (nombre: string) => `Reunión con ${nombre}`,
       pasara: (nombre: string, etapa: string) => `${nombre} pasará a ${etapa}.`,

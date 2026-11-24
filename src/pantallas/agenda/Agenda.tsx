@@ -13,6 +13,7 @@ import { cambiarContacto, useContactos, type Contacto } from '../../datos/contac
 import { borrarEvento, cambiarEvento, ErrorDeEvento, ir as irAlEvento, noIr, useAsistentes, useEventos, useOcupados, type Evento } from '../../datos/eventos.ts'
 import { conMayuscula, diaEn, diaLargo, rango } from '../../datos/fechas.ts'
 import { useViaje } from '../../datos/grupo.ts'
+import { useInteresados, useTemas } from '../../datos/intereses.ts'
 import { primerNombre } from '../../datos/nombres.ts'
 import { useSesion } from '../../datos/sesion.tsx'
 import { useTextos } from '../../textos.ts'
@@ -45,6 +46,8 @@ export function Agenda() {
   const { data: ocupados } = useOcupados()
   const { data: personas } = usePersonas()
   const { data: contactos } = useContactos()
+  const { data: temas } = useTemas()
+  const { data: interesados } = useInteresados()
   const aviso = useAviso()
   const [chile, setChile] = useHoraDeChile()
   const ahora = useAhora()
@@ -160,16 +163,18 @@ export function Agenda() {
       await irAlEvento(pieza.id)
       aviso.mostrar(pieza.estado === 'tomar' ? tv.tomaste : tv.vasA(pieza.titulo), () => void deshacer(() => noIr(pieza.id)))
     } catch (error) {
-      aviso.mostrar(error instanceof ErrorDeEvento && error.motivo !== 'otro' ? tv.motivos[error.motivo] : textos.noSeGuardo)
+      const tema = temas?.find((x) => x.id === pieza.evento.tema)
+      aviso.mostrar(error instanceof ErrorDeEvento && error.motivo === 'solo_tema' && tema ? textos.agenda.evento.soloTema(tema.nombre) : error instanceof ErrorDeEvento && error.motivo !== 'otro' ? tv.motivos[error.motivo] : textos.noSeGuardo)
     }
     setPendiente(null)
   }
 
   // ---------- Qué se ve ----------
   const cargando = !lista || !asistentes || !ocupados
-  const piezas = armarPiezas(lista ?? [], asistentes ?? [], ocupados ?? [], yo, ahora)
+  const piezas = armarPiezas(lista ?? [], asistentes ?? [], ocupados ?? [], yo, ahora, interesados)
   const porDias = porDia(soloVoy ? piezas.filter(deLosQueVoy) : piezas)
   const nombres = new Map((personas ?? []).map((p) => [p.id, primerNombre(p)]))
+  const nombresDeTemas = new Map((temas ?? []).map((x) => [x.id, x.nombre]))
   const semana = semanaDe(dia)
   const titulo = vista === 'dia' ? conMayuscula(diaLargo(dia)) : vista === 'semana' ? tv.semanaDel(rango(semana[0], semana[6])) : tituloMes(dia)
 
@@ -279,6 +284,7 @@ export function Agenda() {
         ahora={ahora}
         soloVoy={soloVoy}
         nombres={nombres}
+        temas={nombresDeTemas}
         elegido={elegido?.id}
         pendiente={pendiente}
         onAbrir={abrir}

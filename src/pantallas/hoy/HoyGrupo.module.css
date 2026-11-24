@@ -139,3 +139,14 @@
   color: var(--tinta);
   opacity: 0.45;
 }
+
+/* Primero para los de un tema: el ícono y el texto en una línea */
+.tema {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tema svg {
+  flex: none;
+}

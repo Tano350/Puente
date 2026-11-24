@@ -9,11 +9,12 @@ import type { TablesUpdate } from '../../datos/base.ts'
 import { cambiarContacto, puedeCambiar, seAgenda, useContactos, type Contacto } from '../../datos/contactos.ts'
 import { asistentesDe, borrarOcupado, cambiarEvento, cancelarEvento, crearEvento, libres, marcarOcupado, sumarAEvento, useAsistentes, useEventos, type Evento } from '../../datos/eventos.ts'
 import { ahora } from '../../datos/fechas.ts'
+import { useTemas } from '../../datos/intereses.ts'
 import { useSesion } from '../../datos/sesion.tsx'
 import { useTextos } from '../../textos.ts'
 import { avisarAlCerrar } from './CrearAviso.tsx'
 import { CrearBoleto } from './CrearBoleto.tsx'
-import { alReves, borradorDe, borradorInicial, CAMBIABLES, datosDe, rangoDe, validar, type Borrador, type Clase, type Errores } from './CrearBorrador.ts'
+import { alReves, borradorDe, borradorInicial, cambiosDeTema, CAMBIABLES, datosDe, rangoDe, validar, type Borrador, type Clase, type Errores } from './CrearBorrador.ts'
 import { CrearQuienes } from './CrearQuienes.tsx'
 import estilos from './CrearEvento.module.css'
 
@@ -31,7 +32,7 @@ type Props = {
 }
 
 // Cuántos del grupo tienen libre esa hora, cuando el día y la hora dejan de cambiar
-function useLibres(rango: { inicio: string; fin: string } | null) {
+function useLibres(rango: { inicio: string; fin: string } | null, tema: string | null) {
   const clave = rango ? `${rango.inicio}/${rango.fin}` : null
   const [quieta, setQuieta] = useState(clave)
   useEffect(() => {
@@ -39,7 +40,7 @@ function useLibres(rango: { inicio: string; fin: string } | null) {
     return () => window.clearTimeout(reloj)
   }, [clave])
   const [desde = '', hasta = ''] = quieta?.split('/') ?? []
-  const { data } = useQuery({ queryKey: ['libres', desde, hasta], queryFn: () => libres(desde, hasta), enabled: Boolean(quieta), placeholderData: keepPreviousData })
+  const { data } = useQuery({ queryKey: ['libres', desde, hasta, tema], queryFn: () => libres(desde, hasta, tema), enabled: Boolean(quieta), placeholderData: keepPreviousData })
   return clave ? data : undefined
 }
 
@@ -56,6 +57,7 @@ function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCrea
   const { data: asistentes } = useAsistentes()
   const { data: contactos } = useContactos()
   const { data: eventos } = useEventos()
+  const { data: temas } = useTemas()
   const sinRed = !useConectado()
   const t = textos.agenda.crear
   const te = textos.agenda.editar
@@ -71,8 +73,9 @@ function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCrea
   // Si el evento quedó pero falló al sumar a alguien, reintentar no lo duplica
   const creado = useRef<Evento | null>(null)
   const evento = borrador.clase === 'evento'
+  const tema = borrador.modo === 'cerrado' ? undefined : temas?.find((x) => x.id === borrador.tema)
   // Al editar no se muestra: los que ya van saldrían ocupados por el mismo evento
-  const disponibilidad = useLibres(evento && !editando ? rangoDe(borrador) : null)
+  const disponibilidad = useLibres(evento && !editando ? rangoDe(borrador) : null, borrador.modo === 'cerrado' ? null : borrador.tema)
   if (sesion.tipo !== 'dentro') return null
   const yo = sesion.persona
 
@@ -150,8 +153,9 @@ function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCrea
     const horas = rangoDe(inicial)
     const antes = horas && datosDe(inicial, horas)
     const cambiados = CAMBIABLES.filter((campo) => datos[campo] !== antes?.[campo])
-    if (cambiados.length === 0) return onCerrar()
-    const solo = (fuente: Record<(typeof CAMBIABLES)[number], unknown>) => Object.fromEntries(cambiados.map((campo) => [campo, fuente[campo]])) as TablesUpdate<'eventos'>
+    const tema = cambiosDeTema(original, datos, ahora())
+    if (cambiados.length === 0 && !tema) return onCerrar()
+    const solo = (fuente: Record<(typeof CAMBIABLES)[number], unknown>, deTema: TablesUpdate<'eventos'> | undefined) => ({ ...Object.fromEntries(cambiados.map((campo) => [campo, fuente[campo]])), ...deTema }) as TablesUpdate<'eventos'>
     // Con otro modo o más cupos, la lista de espera entra (o se borra) y deshacer no la devolvería, como al soltar un cupo
     const esperan = asistentesDe(original.id, asistentes ?? []).espera.length > 0
     const sinVuelta = esperan && (cambiados.includes('modo') || (datos.cupos ?? 0) > (original.cupos ?? 0))
@@ -159,7 +163,7 @@ function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCrea
     setGuardando(true)
     setFallo(false)
     try {
-      await cambiarEvento(original.id, solo(datos))
+      await cambiarEvento(original.id, solo(datos, tema?.cambio))
     } catch {
       setFallo(true)
       return
@@ -167,7 +171,7 @@ function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCrea
       enviando.current = false
       setGuardando(false)
     }
-    onGuardado?.(original, sinVuelta ? null : solo(original))
+    onGuardado?.(original, sinVuelta ? null : solo(original, tema?.antes))
   }
 
   const cancelar = async () => {
@@ -244,7 +248,7 @@ function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCrea
       {evento && disponibilidad && (
         <div className={estilos.libres} role="status">
           <Icono nombre="grupo" medida={16} trazo={2} />
-          {t.libres(disponibilidad.libres, disponibilidad.alla)}
+          {tema ? t.libresTema(disponibilidad.libres, disponibilidad.alla, tema.nombre) : t.libres(disponibilidad.libres, disponibilidad.alla)}
         </div>
       )}
       {evento ? (
@@ -253,9 +257,12 @@ function Formulario({ computador, desdeContacto, dia, editando, onCerrar, onCrea
             computador={computador}
             dia={borrador.dia}
             modo={borrador.modo}
+            tema={borrador.tema}
             elegidos={borrador.elegidos}
-            editando={Boolean(editando)}
-            onModo={(modo) => cambiar({ modo })}
+            editando={editando}
+            // Cerrado no lleva tema; al editar se conserva por si se arrepiente (al guardar, cerrado lo quita)
+            onModo={(modo) => cambiar(modo === 'cerrado' && !editando ? { modo, tema: null } : { modo })}
+            onTema={(tema) => cambiar({ tema })}
             onElegidos={(elegidos) => cambiar({ elegidos })}
           />
           <label className={estilos.etiqueta} htmlFor="crear-notas">

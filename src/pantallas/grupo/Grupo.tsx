@@ -1,20 +1,22 @@
 import { useState } from 'react'
-import { Navigate, useNavigate, useParams } from 'react-router'
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router'
 import { Atras } from '../../componentes/Controles.tsx'
-import { EntradaPerfil } from '../../componentes/EntradaPerfil.tsx'
 import { Buscador } from '../../componentes/Buscador.tsx'
 import { LineaDelGrupo } from '../../componentes/LineaDelGrupo.tsx'
 import { DetallePersona, Tarjeta } from '../../componentes/Tarjeta.tsx'
 import { useEsComputador } from '../../componentes/useEsComputador.ts'
 import escritorio from '../../componentes/Escritorio.module.css'
 import { usePersonas, type Persona } from '../../datos/consultas.ts'
-import { diaCorto, diaDelMes, diaDeLaSemana, diaLargo, hoyEnCalifornia, rangoLargo, sumarDias, ventanaDelViaje } from '../../datos/fechas.ts'
+import { diaDelMes, diaDeLaSemana, diaLargo, hoyEnCalifornia, rangoLargo, sumarDias, ventanaDelViaje } from '../../datos/fechas.ts'
 import { coincide, estaAlla, integrantes, porLlegada, tieneFechas } from '../../datos/grupo.ts'
 import { nombreCompleto, primerNombre } from '../../datos/nombres.ts'
 import { useSesion } from '../../datos/sesion.tsx'
 import { Numero } from '../../movimiento/index.ts'
 import { useTextos, type Textos } from '../../textos.ts'
 import { BarrasDelGrupo } from './BarrasDelGrupo.tsx'
+import { CabeceraCelular, SegmentoGrupo } from './CabeceraGrupo.tsx'
+import { estadoDe } from './estado.ts'
+import { Intereses } from './Intereses.tsx'
 import estilos from './Grupo.module.css'
 
 // Marca donde va el número de la frase, para que salte al cambiar
@@ -49,21 +51,18 @@ function resumen(gente: Persona[], yo: string, hoy: string, textos: Textos): [st
   return [linea1, null]
 }
 
-// Cómo está cada uno hoy: "Allá", "Llega el 15 ene", "Último día", "Volvió"…
-function estadoDe(p: Persona, yo: string, hoy: string, textos: Textos): string {
-  const t = textos.grupo
-  if (!p.entro_en) return t.sinEntrar
-  if (!tieneFechas(p)) return t.sinFechas
-  const tuyo = p.id === yo
-  if (hoy < p.llega) return tuyo ? t.llegasCorto(diaCorto(p.llega)) : t.llega(diaCorto(p.llega))
-  if (hoy > p.vuelve) return tuyo ? t.volviste : t.volvio
-  return hoy === p.vuelve ? t.ultimoDia : t.alla
+// Grupo: las estadías y, en /grupo/intereses, los temas de interés
+export function Grupo() {
+  const { pathname } = useLocation()
+  if (pathname.startsWith('/grupo/intereses')) return <Intereses />
+  return <Estadias />
 }
 
-export function Grupo() {
+function Estadias() {
   const textos = useTextos()
   const sesion = useSesion()
   const navigate = useNavigate()
+  const location = useLocation()
   const { id } = useParams()
   const esComputador = useEsComputador()
   const { data: personas } = usePersonas()
@@ -89,7 +88,10 @@ export function Grupo() {
       <div className={escritorio.pantalla}>
         <div className={escritorio.cabecera}>
           <div>
-            <h1 className={escritorio.titulo}>{t.titulo}</h1>
+            <div className={estilos.tituloFilaPc}>
+              <h1 className={escritorio.titulo}>{t.titulo}</h1>
+              <SegmentoGrupo vista="estadias" />
+            </div>
             <div className={escritorio.linea1}>{linea1}</div>
             {linea2 && <div className={escritorio.linea2}>{linea2}</div>}
           </div>
@@ -125,15 +127,16 @@ export function Grupo() {
     )
   }
 
-  // Celular: el perfil de una persona es otra pantalla, con "Grupo" para volver
+  // Celular: el perfil de una persona es otra pantalla, con "Grupo" para volver (o el tema, si se abrió desde uno)
   if (id) {
+    const volver = location.state as { volverA?: string; volverTexto?: string } | null
     const persona = gente.find((p) => p.id === id && p.entro_en)
     if (!persona) return personas ? <Navigate to="/grupo" replace /> : null
     if (persona.id === yo.id) return <Navigate to="/perfil" replace />
     return (
       <div className={estilos.ficha}>
         <div className={estilos.volver}>
-          <Atras texto={t.titulo} onClick={() => navigate('/grupo')} />
+          <Atras texto={volver?.volverTexto ?? t.titulo} onClick={() => navigate(volver?.volverA ?? '/grupo')} />
         </div>
         <Tarjeta persona={persona} />
         <DetallePersona persona={persona} yo={yo} />
@@ -169,14 +172,10 @@ export function Grupo() {
 
   return (
     <div className={estilos.celular}>
-      <div className={estilos.cabecera}>
-        <div className={estilos.cabeceraFila}>
-          <h1 className={estilos.titulo}>{t.titulo}</h1>
-          <EntradaPerfil />
-        </div>
+      <CabeceraCelular vista="estadias">
         <div className={estilos.linea1}>{fraseDelCelular}</div>
         {linea2 && <div className={estilos.linea2}>{linea2}</div>}
-      </div>
+      </CabeceraCelular>
       <BarrasDelGrupo gente={gente} ventana={ventana} yo={yo.id} hoy={hoy} abrir={abrir} describir={describir} onVer={setDiaVisto} />
     </div>
   )

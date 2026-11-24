@@ -27,6 +27,8 @@ export const rutas = createBrowserRouter([
           { path: 'gastos/:id?/:accion?', lazy: () => import('./pantallas/gastos/Gastos.tsx').then((m) => ({ Component: m.Gastos })) },
           // Una sola ruta, para que elegir a alguien no reinicie la búsqueda
           { path: 'grupo/:id?', lazy: () => import('./pantallas/grupo/Grupo.tsx').then((m) => ({ Component: m.Grupo })) },
+          // Intereses, dentro de Grupo: /grupo/intereses, /grupo/intereses/nuevo, /grupo/intereses/:tema y /grupo/intereses/:tema/editar
+          { path: 'grupo/intereses/:tema?/:accion?', lazy: () => import('./pantallas/grupo/Grupo.tsx').then((m) => ({ Component: m.Grupo })) },
           { path: 'perfil', lazy: () => import('./pantallas/perfil/TuPerfil.tsx').then((m) => ({ Component: m.TuPerfil })) },
           { path: 'perfil/invitados', lazy: () => import('./pantallas/perfil/Invitados.tsx').then((m) => ({ Component: m.Invitados })) },
           { path: '*', element: <Navigate to="/hoy" replace /> },
