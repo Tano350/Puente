@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { conMayuscula, diaLargo } from '../../datos/fechas.ts'
+import { ConPastilla } from '../../componentes/ConPastilla.tsx'
 import { useTextos } from '../../textos.ts'
 import estilos from './VistaFranja.module.css'
 
@@ -8,7 +9,7 @@ export function VistaFranja({ dias, elegido, hoy, computador, onElegir, onSemana
   const tv = useTextos().agenda.vista
   const toque = useRef<{ x: number; y: number } | null>(null)
   return (
-    <div
+    <ConPastilla
       className={computador ? estilos.franjaPc : estilos.franja}
       onTouchStart={(e) => {
         toque.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
@@ -40,6 +41,6 @@ export function VistaFranja({ dias, elegido, hoy, computador, onElegir, onSemana
           </button>
         )
       })}
-    </div>
+    </ConPastilla>
   )
 }

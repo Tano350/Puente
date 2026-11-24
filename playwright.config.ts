@@ -21,6 +21,9 @@ export default defineConfig({
     locale: 'es-CL',
     timezoneId: 'America/Santiago',
     trace: 'retain-on-failure',
+    // Sin animaciones (src/movimiento): las pruebas no esperan a que algo termine de moverse. Las que prueban el
+    // movimiento lo encienden con test.use({ reducedMotion: 'no-preference' }).
+    reducedMotion: 'reduce',
   },
   projects: [
     {

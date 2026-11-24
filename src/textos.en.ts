@@ -125,7 +125,8 @@ export const en: Textos = {
   },
   grupo: {
     titulo: 'Group',
-    hayAlla: (n: number, total: number) => `Today, ${n} of ${total} are in California.`,
+    hayAlla: (n: number | string, total: number) => `Today, ${n} of ${total} are in California.`,
+    hayAllaEl: (fecha: string, n: number | string, total: number) => `On ${fecha}, ${n} of ${total} are in California.`,
     nadieTodavia: 'No one has arrived yet.',
     volvieronTodos: 'Everyone is back.',
     llegasPrimero: (dia: string) => `You arrive first, on ${dia}.`,
@@ -577,6 +578,7 @@ export const en: Textos = {
     idioma: 'Language',
     idiomaCambiado: { es: 'Puente quedó en español.', en: 'Puente is now in English.' },
     modoOscuro: 'Dark mode',
+    sonido: 'Sound and vibration',
     necesitaConexion: 'You need a connection.',
   },
   fechas: {
@@ -657,6 +659,9 @@ export const en: Textos = {
       sinRedNueva: 'You need a connection to create tasks.',
       sinRedTomar: 'You need a connection to take a task.',
       meLaTomo: 'I’ll take it',
+      soloPuedeMarcar: (nombre: string) => `Only ${nombre} can check it off.`,
+      primeroTomala: 'Take it first with “I’ll take it.”',
+      hecha: 'Done',
       marcasteTuya: 'You marked yours as done.',
       marcaste: (titulo: string) => `You marked “${titulo}” as done.`,
       desmarcaste: (titulo: string) => `You unchecked “${titulo}”.`,

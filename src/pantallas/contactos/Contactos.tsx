@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router'
 import { Buscador } from '../../componentes/Buscador.tsx'
+import { ConPastilla } from '../../componentes/ConPastilla.tsx'
 import { Aviso } from '../../componentes/Controles.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
 import { SinConexion } from '../../componentes/SinConexion.tsx'
@@ -121,6 +122,9 @@ export function Contactos() {
   const todos = (contactos ?? []).map((c) => (c.id === movido?.id ? { ...c, etapa: movido.etapa } : c))
   const nombres = new Map((personas ?? []).map((p) => [p.id, primerNombre(p)]))
   const responsable = (c: Contacto): Responsable => (c.responsable === yo.id ? { texto: t.tu, tuyo: true } : { texto: nombres.get(c.responsable) ?? '', tuyo: false })
+  // Arrastrar a otro estado: lo mismo que tocar las tuercas del detalle. Si no se puede, el aviso dice por qué.
+  const puedeMover = (c: Contacto) => puedeCambiar(c, yo) && !sinRed
+  const noPuedeMover = (c: Contacto) => aviso.mostrar(puedeCambiar(c, yo) ? t.detalle.sinRedEstado : t.detalle.soloPuede(nombres.get(c.responsable) ?? ''))
   // Con "Míos" ya se ve lo tuyo, así que se filtra entre los demás
   const responsables = (personas ?? [])
     .filter((p) => p.id !== yo.id && !p.sacada_en)
@@ -142,14 +146,14 @@ export function Contactos() {
 
   // ---------- Piezas de las dos formas ----------
   const segmento = (
-    <div role="group" aria-label={tl.queVer} className={estilos.segmento}>
+    <ConPastilla role="group" aria-label={tl.queVer} className={estilos.segmento}>
       <button type="button" aria-pressed={!mios} onClick={() => setMios(false)}>
         {tl.todos}
       </button>
       <button type="button" aria-pressed={mios} onClick={() => setMios(true)}>
         {tl.mios}
       </button>
-    </div>
+    </ConPastilla>
   )
   const nada = busqueda.trim()
     ? { texto: tl.ningunoCoincide(busqueda.trim()), boton: textos.borrarBusqueda, accion: () => setBusqueda('') }
@@ -216,9 +220,10 @@ export function Contactos() {
                 mios={mios}
                 elegido={abierto?.id}
                 responsable={responsable}
-                puedeMover={(c) => puedeCambiar(c, yo) && !sinRed}
+                puedeMover={puedeMover}
                 onAbrir={(c) => abrir(`/contactos/${c.id}`)}
                 onMover={(c, etapa) => void mover(c, etapa)}
+                onNoPuede={noPuedeMover}
               />
             ) : (
               sinResultados
@@ -269,7 +274,19 @@ export function Contactos() {
               </button>
             </div>
           )}
-          {visibles.length > 0 ? <ListaPorEtapa contactos={visibles} mios={mios} responsable={responsable} onAbrir={(c) => abrir(`/contactos/${c.id}`)} /> : sinResultados}
+          {visibles.length > 0 ? (
+            <ListaPorEtapa
+              contactos={visibles}
+              mios={mios}
+              responsable={responsable}
+              puedeMover={puedeMover}
+              onAbrir={(c) => abrir(`/contactos/${c.id}`)}
+              onMover={(c, etapa) => void mover(c, etapa)}
+              onNoPuede={noPuedeMover}
+            />
+          ) : (
+            sinResultados
+          )}
         </>
       )}
       {vacio && sinContactos}

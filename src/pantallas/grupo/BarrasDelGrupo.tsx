@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import type { Persona } from '../../datos/consultas.ts'
-import { indiceEnElViaje, mesesDe, type Ventana } from '../../datos/fechas.ts'
-import { porLlegada, porNombre, tieneFechas } from '../../datos/grupo.ts'
+import { diaConSemana, indiceEnElViaje, mesesDe, sumarDias, type Ventana } from '../../datos/fechas.ts'
+import { estaAlla, porLlegada, porNombre, tieneFechas } from '../../datos/grupo.ts'
 import { primerNombre } from '../../datos/nombres.ts'
+import { cuerpo, diaBajo, seguir, sonar, vibrar } from '../../movimiento/index.ts'
 import { useTextos } from '../../textos.ts'
 import estilos from './BarrasDelGrupo.module.css'
 
@@ -19,7 +20,12 @@ type Props = {
   abrir: (persona: Persona) => (() => void) | undefined
   // La frase entera de cada fila, para el lector de pantalla: nombre, estado y fechas
   describir: (persona: Persona) => string
+  // Al arrastrar de lado sobre las barras, el día que queda bajo el dedo (null al soltar)
+  onVer: (dia: string | null) => void
 }
+
+// "mié 20": el día corto que va sobre la raya mientras se arrastra
+const diaCortito = (iso: string) => `${diaConSemana(iso).split(/[ ,]/)[0].toLowerCase()} ${Number(iso.slice(8))}`
 
 function iguales(a: Record<string, Lado>, b: Record<string, Lado>): boolean {
   const llaves = Object.keys(a)
@@ -29,9 +35,14 @@ function iguales(a: Record<string, Lado>, b: Record<string, Lado>): boolean {
 // Grupo en el celular: la estadía de cada uno es una barra con su nombre adentro, tú primero y después por orden de
 // llegada, como un horario. La raya de hoy pasa por detrás de las barras. Quien no tiene fechas, o todavía no entra,
 // va al final y sin barra. Toda la fila se toca y abre el perfil.
-export function BarrasDelGrupo({ gente, ventana: viaje, yo, hoy, abrir, describir }: Props) {
+export function BarrasDelGrupo({ gente, ventana: viaje, yo, hoy, abrir, describir, onVer }: Props) {
   const t = useTextos().grupo
   const lista = useRef<HTMLUListElement>(null)
+  const zona = useRef<HTMLDivElement>(null)
+  const raya = useRef<HTMLSpanElement>(null)
+  const etiqueta = useRef<HTMLSpanElement>(null)
+  // El día que se está mirando al arrastrar (índice en el viaje); null si no se arrastra
+  const [mirando, setMirando] = useState<number | null>(null)
   // Si el nombre no cabe en su barra (una estadía corta), va al lado: a la derecha o, si ahí no hay espacio, a la izquierda
   const [fuera, setFuera] = useState<Record<string, Lado>>({})
 
@@ -67,6 +78,38 @@ export function BarrasDelGrupo({ gente, ventana: viaje, yo, hoy, abrir, describi
   const cortes = meses.slice(1).map((_, i) => meses.slice(0, i + 1).reduce((dias, mes) => dias + mes.dias, 0))
   const hoyEnLaLinea = indiceEnElViaje(hoy, viaje)
   const verHoy = hoyEnLaLinea >= 0 && hoyEnLaLinea < viaje.dias
+  // Arrastrar de lado mueve la raya de hoy al día que queda bajo el dedo (de a un día, con resorte); al soltar, vuelve
+  const mover = (dia: number | null, ancho: number) => {
+    const x = dia === null ? 0 : ((dia - hoyEnLaLinea) * ancho) / viaje.dias
+    for (const el of [raya.current, etiqueta.current]) if (el) cuerpo(el).meta({ x })
+  }
+  const arrastrar = (e: ReactPointerEvent) => {
+    const caja = zona.current
+    if (!verHoy || !caja) return
+    let ultimo = -1
+    const ver = (x: number) => {
+      const r = caja.getBoundingClientRect()
+      const dia = diaBajo(x, r.left, r.width, viaje.dias)
+      if (dia === ultimo) return
+      if (ultimo !== -1) {
+        sonar('giro', 0.3)
+        vibrar(3)
+      }
+      ultimo = dia
+      setMirando(dia)
+      mover(dia, r.width)
+      onVer(sumarDias(viaje.desde, dia))
+    }
+    seguir(e, {
+      eje: 'x',
+      alMover: (p) => ver(p.x),
+      alSoltar: () => {
+        setMirando(null)
+        mover(null, 0)
+        onVer(null)
+      },
+    })
+  }
   const nombre = (p: Persona) => (p.id === yo ? t.tu : primerNombre(p))
 
   // El lector de pantalla lee la frase entera; la barra y el nombre son solo para la vista
@@ -102,14 +145,16 @@ export function BarrasDelGrupo({ gente, ventana: viaje, yo, hoy, abrir, describi
       </div>
       {verHoy && (
         <div className={estilos.hoyArriba} aria-hidden="true">
-          <span style={{ left: porcentaje(hoyEnLaLinea + 0.5) }}>{t.hoyRaya}</span>
+          <span ref={etiqueta} style={{ left: porcentaje(hoyEnLaLinea + 0.5) }}>
+            {mirando === null || mirando === hoyEnLaLinea ? t.hoyRaya : diaCortito(sumarDias(viaje.desde, mirando))}
+          </span>
         </div>
       )}
-      <div className={estilos.cuerpo}>
+      <div ref={zona} className={estilos.cuerpo} data-arrastrable onPointerDown={arrastrar}>
         {cortes.map((dia) => (
           <span key={dia} className={estilos.corte} style={{ left: porcentaje(dia) }} />
         ))}
-        {verHoy && <span className={estilos.hoy} style={{ left: porcentaje(hoyEnLaLinea + 0.5) }} />}
+        {verHoy && <span ref={raya} className={estilos.hoy} style={{ left: porcentaje(hoyEnLaLinea + 0.5) }} />}
         <ul ref={lista} className={estilos.filas} aria-label={t.estadias}>
           {conFechas.map((p) => {
             const llega = enElViaje(indiceEnElViaje(p.llega, viaje))
@@ -122,6 +167,7 @@ export function BarrasDelGrupo({ gente, ventana: viaje, yo, hoy, abrir, describi
                 aria-hidden="true"
                 data-barra={p.id}
                 data-tu={p.id === yo}
+                data-ausente={mirando !== null && !estaAlla(p, sumarDias(viaje.desde, mirando))}
                 data-fuera={fuera[p.id]}
                 style={{ left: porcentaje(llega), width: porcentaje(vuelve - llega + 1) }}
               >

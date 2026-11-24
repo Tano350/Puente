@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { abrir, es, esCelular } from './ayuda.ts'
+import { abrir, arrastrar, es, esCelular } from './ayuda.ts'
 
 const GRUPO = '/grupo?maqueta=lista&hoy=2027-01-12'
 const g = es.grupo
@@ -26,6 +26,40 @@ test.describe('Grupo', () => {
     // Toda la fila se toca; la tuya abre Tu perfil
     await filas.first().click()
     await expect(page.getByRole('main').getByRole('heading', { name: es.perfil.titulo, level: 1 })).toBeVisible()
+  })
+
+  test('en el celular, arrastrar de lado sobre las barras muestra otro día y al soltar vuelve a hoy', async ({ page }) => {
+    test.skip(!esCelular(page), 'Las barras son del celular')
+    await abrir(page, GRUPO)
+    const principal = page.getByRole('main')
+    const barras = principal.getByRole('list', { name: g.estadias })
+    await expect(principal.getByText(g.hayAlla(12, 14))).toBeVisible()
+    const caja = await barras.boundingBox()
+    if (!caja) throw new Error('Las barras no se ven')
+    const y = caja.y + 40
+    // Hoy es el 12; la mitad del viaje queda mucho después
+    await arrastrar(page, { x: caja.x + caja.width * 0.2, y }, { x: caja.x + caja.width * 0.85, y: y + 3 }, { pasos: 10 })
+    // Al soltar, todo vuelve a hoy
+    await expect(principal.getByText(g.hayAlla(12, 14))).toBeVisible()
+    await expect(principal.getByText(g.hoyRaya, { exact: true })).toBeVisible()
+    // Mientras se arrastra (sin soltar) la frase cambia de día
+    const cdp = await page.context().newCDPSession(page)
+    const tocar = (type: 'touchStart' | 'touchMove' | 'touchEnd', x?: number) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: x === undefined ? [] : [{ x, y, id: 1 }] })
+    await tocar('touchStart', caja.x + caja.width * 0.2)
+    for (let i = 1; i <= 8; i++) await tocar('touchMove', caja.x + caja.width * (0.2 + i * 0.08))
+    await expect(principal.getByText(/^El .+ hay \d+ de 14 allá\.$/)).toBeVisible()
+    await expect(principal.getByText(g.hayAlla(12, 14))).toHaveCount(0)
+    await tocar('touchEnd')
+    await cdp.detach()
+    await expect(principal.getByText(g.hayAlla(12, 14))).toBeVisible()
+  })
+
+  test('en el celular, tocar una barra sigue abriendo el perfil', async ({ page }) => {
+    test.skip(!esCelular(page), 'Las barras son del celular')
+    await abrir(page, GRUPO)
+    const principal = page.getByRole('main')
+    await principal.getByRole('button', { name: /Catalina/ }).first().click()
+    await expect(principal.getByText('Catalina Pérez')).toBeVisible()
   })
 
   test('abrir a una persona', async ({ page }) => {

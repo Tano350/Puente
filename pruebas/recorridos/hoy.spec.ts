@@ -1,9 +1,35 @@
 import { expect, test } from '@playwright/test'
-import { abrir, es, esCelular, LISTA } from './ayuda.ts'
+import { abrir, arrastrar, centroDe, es, esCelular, LISTA } from './ayuda.ts'
 
 const v = es.hoy.viaje
 
 test.describe('Hoy durante el viaje', () => {
+  test.describe('la tuerca grande', () => {
+    // Con movimiento de verdad: suelta, sigue girando y se asienta en un lado de la tuerca
+    test.use({ reducedMotion: 'no-preference' })
+    test('se gira con el dedo o el mouse y se asienta en un múltiplo de 60°', async ({ page }) => {
+      await abrir(page, LISTA)
+      const tuerca = page.locator('[data-arrastrable]').filter({ has: page.locator('svg') }).first()
+      await expect(tuerca).toBeVisible()
+      const c = await centroDe(tuerca)
+      await arrastrar(page, { x: c.x + 36, y: c.y }, { x: c.x, y: c.y + 36 })
+      const giro = () => tuerca.locator('svg').evaluate((el) => Number.parseFloat(getComputedStyle(el).rotate) || 0)
+      // Quieta: dos lecturas seguidas iguales
+      await expect
+        .poll(async () => {
+          const a = await giro()
+          await page.waitForTimeout(250)
+          return Math.abs((await giro()) - a) < 0.001
+        })
+        .toBe(true)
+      const grados = await giro()
+      expect(grados).not.toBe(0)
+      expect(Math.abs(grados / 60 - Math.round(grados / 60))).toBeLessThan(0.01)
+      // La cuenta de adentro sigue derecha
+      await expect(tuerca.getByText(es.hoy.diaDelViaje(1)[0], { exact: true })).toBeVisible()
+    })
+  })
+
   test('la línea del día va en orden y marca la hora de ahora', async ({ page }) => {
     await abrir(page, LISTA)
     await expect(page.getByRole('heading', { name: es.hoy.titulo, level: 1 })).toBeVisible()

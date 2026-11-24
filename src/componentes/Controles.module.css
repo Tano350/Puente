@@ -213,13 +213,12 @@
   background: var(--acento);
 }
 
-/* La pista también se hunde (base.css); como esta transición le gana a la de allá, las repite */
+/* La pista también se oscurece al apretar (base.css); como esta transición le gana a la de allá, las repite. La perilla
+   salta de lado con resorte (Pista en Controles.tsx), por eso su posición no lleva transición. */
 .pista,
 .perilla {
   transition:
     background-color 110ms ease-out,
-    left 110ms ease-out,
-    translate 110ms ease-out,
     box-shadow 110ms ease-out,
     filter 110ms ease-out;
 }
@@ -304,6 +303,11 @@
   z-index: 20;
 }
 
+/* Mientras baja para cerrarse, ya no se toca */
+.hojaFondo[data-bajando] {
+  pointer-events: none;
+}
+
 .hojaVelo {
   position: absolute;
   inset: 0;
@@ -325,6 +329,19 @@
   padding: 8px 20px calc(28px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--regla);
   border-radius: 14px 14px 0 0;
+  background: var(--panel);
+  /* Se baja con el dedo (lo que se desplaza adentro sigue desplazándose) */
+  touch-action: none;
+}
+
+/* Debajo, el mismo color: cuando la hoja sube con resorte y se pasa un poco, no se ve un hueco */
+.hoja::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: -1px;
+  right: -1px;
+  height: 120px;
   background: var(--panel);
 }
 
@@ -368,6 +385,13 @@
   font-size: 15px;
   line-height: 20px;
   box-shadow: 0 8px 24px var(--sombra);
+  /* Se tira hacia el lado para descartarlo */
+  touch-action: none;
+}
+
+/* Mientras sale, ya no se toca */
+.aviso[data-saliendo] {
+  pointer-events: none;
 }
 
 .avisoSobrePie {

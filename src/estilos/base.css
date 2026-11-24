@@ -109,12 +109,12 @@ button {
   outline-offset: 2px;
 }
 
-/* Respuesta al tocar ("hundido"), para todo lo que se aprieta: con el mouse encima sube 1 px con una sombra corta; al
-   apretar baja 1 px y se oscurece. Con movimiento reducido solo cambia el tono.
+/* Respuesta al tocar ("hundido"): con el mouse encima, una sombra corta; al apretar se oscurece. El movimiento (subir,
+   hundirse y rebotar con resorte, inclinar las tarjetas) lo hace src/movimiento/apretar.ts, que escucha en el documento.
+   Con movimiento reducido solo cambia el tono.
    Cada selector va entero dentro de :where(), que no suma especificidad: lo propio de cada pantalla gana (un anillo de
-   selección, la sombra de un botón flotante, una transición). Usa translate y filter, no transform, para no pisar las
-   transformaciones que ya tienen algunos elementos. Para excluir un elemento: data-sin-hundido. Un interruptor que es
-   solo la zona de toque alrededor de su pista (un único hijo con data-activo) mueve la pista, no la zona. */
+   selección, la sombra de un botón flotante, una transición). Para excluir un elemento: data-sin-hundido. Un interruptor
+   que es solo la zona de toque alrededor de su pista (un único hijo con data-activo) cambia la pista, no la zona. */
 :where(
     :is(
         button,
@@ -129,7 +129,6 @@ button {
     [role='switch']:not(:disabled, [aria-disabled='true'], [data-sin-hundido]) > [data-activo]:only-child
   ) {
   transition:
-    translate 110ms ease-out,
     box-shadow 110ms ease-out,
     filter 110ms ease-out;
 }
@@ -148,7 +147,6 @@ button {
         ):not(:disabled, [aria-disabled='true'], [data-sin-hundido], [role='switch']:has(> [data-activo]:only-child)):hover,
       [role='switch']:not(:disabled, [aria-disabled='true'], [data-sin-hundido]):hover > [data-activo]:only-child
     ) {
-    translate: 0 -1px;
     box-shadow: 0 2px 0 var(--hundido-sombra);
   }
 }
@@ -167,7 +165,6 @@ button {
         ):not(:disabled, [aria-disabled='true'], [data-sin-hundido], [role='switch']:has(> [data-activo]:only-child)):active,
       [role='switch']:not(:disabled, [aria-disabled='true'], [data-sin-hundido]):active > [data-activo]:only-child
     ) {
-    translate: 0 1px;
     box-shadow: none;
   }
 }
@@ -205,6 +202,13 @@ button {
     ) {
     filter: brightness(0.94);
   }
+}
+
+/* Lo que se arrastra o se mantiene apretado (src/movimiento/gesto.ts): sin seleccionar texto ni abrir el menú del teléfono */
+[data-arrastrable] {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

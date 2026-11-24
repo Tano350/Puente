@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Icono } from '../../componentes/Icono.tsx'
 import { useConectado } from '../../datos/conexion.ts'
 import type { Evento, Ocupado } from '../../datos/eventos.ts'
 import { CHILE, conMayuscula, hora } from '../../datos/fechas.ts'
+import { useFlip } from '../../movimiento/index.ts'
 import { useTextos } from '../../textos.ts'
 import { ciudad, lugarYCiudad, type Pieza, type PiezaEvento } from './AgendaDatos.ts'
 import { AgendaRato } from './AgendaRato.tsx'
@@ -44,6 +45,9 @@ export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy,
   // Sin señal, "Tomar cupo" y "Voy" quedan apagados (la ficha de arriba dice por qué)
   const sinRed = !useConectado()
   const [rato, setRato] = useState<Ocupado | null>(null)
+  // Al pasar de "Todo" a "A los que voy", lo que queda se desliza a su lugar
+  const lista = useRef<HTMLOListElement>(null)
+  useFlip(lista)
   // La hoja va también con el día vacío: así queda el aviso al borrar lo último del día
   const hoja = <AgendaRato rato={rato} computador={computador} onCerrar={() => setRato(null)} />
   if (piezas.length === 0)
@@ -183,7 +187,7 @@ export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy,
         </>
       )
       return (
-        <li key={p.id}>
+        <li key={p.id} data-flip={p.id}>
           <button type="button" className={estilos.filaPc} aria-pressed={p.tipo === 'evento' ? elegido === p.id : undefined} onClick={() => abrir(p)} {...aria(p)} {...comun}>
             {contenido}
           </button>
@@ -193,7 +197,7 @@ export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy,
 
     const debajo = extra(p)
     return (
-      <li key={p.id} className={estilos.fila} {...comun}>
+      <li key={p.id} className={estilos.fila} data-flip={p.id} {...comun}>
         {horas}
         {via}
         <div className={estilos.texto}>
@@ -227,7 +231,7 @@ export function AgendaDia({ dia, piezas, computador, chile, hoy, ahora, soloVoy,
 
   return (
     <>
-      <ol className={computador ? estilos.listaPc : estilos.lista}>{filas}</ol>
+      <ol ref={lista} className={computador ? estilos.listaPc : estilos.lista}>{filas}</ol>
       {hoja}
     </>
   )

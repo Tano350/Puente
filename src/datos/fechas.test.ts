@@ -1,7 +1,7 @@
 // Pruebas de la ventana del viaje: node --test src/datos/fechas.test.ts
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { indiceEnElViaje, mesesDe, VIAJE, ventanaDelViaje } from './fechas.ts'
+import { diaDelMes, indiceEnElViaje, mesesDe, VIAJE, ventanaDelViaje } from './fechas.ts'
 import { cambiarIdioma } from './idioma.ts'
 
 test('si nadie se sale, la ventana es enero y febrero', () => {
@@ -43,4 +43,9 @@ test('los meses de la ventana, con sus días', () => {
     ['January', 'February'],
   )
   cambiarIdioma('es')
+})
+
+test('el día del mes, sin el día de la semana', () => {
+  assert.equal(diaDelMes('2027-01-20', 'es'), '20 de enero')
+  assert.equal(diaDelMes('2027-02-03', 'en'), 'February 3')
 })

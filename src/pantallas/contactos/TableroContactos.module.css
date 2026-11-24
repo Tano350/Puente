@@ -101,9 +101,6 @@
 }
 
 .tarjetas {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
   flex: 1;
   min-height: 0;
   margin-top: 12px;
@@ -119,6 +116,37 @@
   outline-offset: -1px;
 }
 
+.pila {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* La columna bajo el puntero: su tuerca y su nombre en acento */
+.columna[data-sobre='true'] .tuerca {
+  background: var(--acento);
+}
+
+.columna[data-sobre='true'] .etapa {
+  color: var(--acento);
+}
+
+/* El hueco al final de la columna, donde va a caer (arrastre.ts) */
+.hueco {
+  position: relative;
+  flex: none;
+  height: 0;
+  overflow: hidden;
+}
+
+.hueco::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px dashed var(--acento);
+  border-radius: 6px;
+}
+
 .tarjeta {
   display: block;
   flex: none;
@@ -129,6 +157,8 @@
   background: var(--panel);
   text-align: left;
   cursor: pointer;
+  /* En una pantalla táctil la columna se desplaza; para llevar la tarjeta hay que mantenerla apretada */
+  touch-action: pan-y;
 }
 
 .tarjeta:hover {
@@ -142,6 +172,11 @@
 
 .tarjeta[data-arrastrado='true'] {
   opacity: 0.45;
+}
+
+/* La copia levantada que sigue al puntero */
+.fantasma {
+  box-shadow: 0 14px 30px var(--sombra);
 }
 
 [data-descartado='true'] .tarjeta {

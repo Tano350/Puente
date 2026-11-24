@@ -1,11 +1,10 @@
-import { useState, type ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 import { Aviso } from '../../componentes/Controles.tsx'
 import { EntradaPerfil } from '../../componentes/EntradaPerfil.tsx'
 import { InterruptorHoraDeChile, useHoraDeChile } from '../../componentes/HoraDeChile.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
 import { SinConexion } from '../../componentes/SinConexion.tsx'
-import { Tuerca } from '../../componentes/Tuerca.tsx'
 import { useAviso } from '../../componentes/useAviso.ts'
 import { useEsComputador } from '../../componentes/useEsComputador.ts'
 import { estaConectado, useConectado } from '../../datos/conexion.ts'
@@ -19,6 +18,7 @@ import { estaAlla } from '../../datos/grupo.ts'
 import { primerNombre } from '../../datos/nombres.ts'
 import { useSesion, type Persona } from '../../datos/sesion.tsx'
 import { useAsignados, useTareas } from '../../datos/tareas.ts'
+import { useFlip } from '../../movimiento/index.ts'
 import { useTextos, type Textos } from '../../textos.ts'
 import { DetalleEvento } from '../agenda/DetalleEvento.tsx'
 import { ResumenRendicion } from '../gastos/Rendicion.tsx'
@@ -27,6 +27,7 @@ import { activosDe } from '../tareas/comun.ts'
 import { loProximo, momentoDelViaje, porConfirmar, reunionesSinNota, tambienHoy, tuDia, useAhora, type Parada } from './HoyDatos.ts'
 import { TambienHoy } from './HoyGrupo.tsx'
 import { armarEstaciones, Linea, Paradas, type MarcaAhora } from './HoyLinea.tsx'
+import { TuercaGira } from './HoyTuerca.tsx'
 import { HojaPendientes, ListaPendientes, pendientesDe } from './HoyPendientes.tsx'
 import { AllaHoy, BoletosSinNota, HojaReuniones, ParaCerrar, type Cierre } from './HoyVolver.tsx'
 import estilos from './Hoy.module.css'
@@ -67,6 +68,9 @@ export function Hoy() {
   const [cierreElegido, setCierreElegido] = useState<Cierre['id']>('notas')
   const [hoja, setHoja] = useState<'pendientes' | 'reuniones' | null>(null)
   const [yendo, setYendo] = useState<string | null>(null)
+  // Un evento que sumas vuela de "También hoy" a "Tu día" (los dos llevan data-flip="ev-<id>")
+  const raiz = useRef<HTMLDivElement>(null)
+  useFlip(raiz)
   if (sesion.tipo !== 'dentro') return null
   const { persona } = sesion
   const t = textos.hoy
@@ -258,14 +262,15 @@ export function Hoy() {
         </div>
         {computador && <SinConexion sobrePanel />}
         {tuerca && (
-          <div className={estilos.tuerca}>
-            <Tuerca ancho={104} />
+          <TuercaGira className={estilos.tuerca}>
             <span className={estilos.cuenta}>
               <span className={estilos.chico}>{tuerca[0]}</span>
-              <span className={estilos.numero}>{tuerca[1]}</span>
+              <span className={estilos.numero} data-pop>
+                {tuerca[1]}
+              </span>
               <span className={estilos.chico}>{tuerca[2]}</span>
             </span>
-          </div>
+          </TuercaGira>
         )}
         {!computador && (
           <div className={estilos.perfil}>
@@ -291,7 +296,7 @@ export function Hoy() {
         <DetalleEvento evento={eventoElegido} computador onCerrar={() => setElegido(null)} />
       ) : null
     return (
-      <div className={estilos.hoy}>
+      <div ref={raiz} className={estilos.hoy}>
         {cabeza}
         <div className={estilos.cuerpo}>
           <div className={estilos.columnas}>
@@ -306,7 +311,7 @@ export function Hoy() {
   }
 
   return (
-    <div className={estilos.hoy}>
+    <div ref={raiz} className={estilos.hoy}>
       {cabeza}
       {secciones}
       <HojaPendientes abierta={hoja === 'pendientes'} pendientes={pendientes.lista} onCerrar={() => setHoja(null)} />

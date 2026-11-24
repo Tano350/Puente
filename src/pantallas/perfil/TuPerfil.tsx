@@ -17,6 +17,7 @@ import { useIdioma, type Idioma } from '../../datos/idioma.ts'
 import { useSesion, type Persona } from '../../datos/sesion.tsx'
 import { useCuantoSinSubir } from '../../datos/sinSenal.ts'
 import { cambiarTema, useTema } from '../../datos/tema.ts'
+import { cambiarSonido, useSonido } from '../../movimiento/index.ts'
 import { useTextos } from '../../textos.ts'
 import {
   borradorPerfil,
@@ -263,6 +264,7 @@ export function TuPerfil() {
   const dispositivo = useDispositivo()
   const idioma = useIdioma()
   const tema = useTema()
+  const sonido = useSonido()
   const hayConexion = useConectado()
   const { data: personas = [] } = usePersonas()
   const aviso = useAviso()
@@ -318,6 +320,8 @@ export function TuPerfil() {
       {fila(<Fila etiqueta={t.idioma} valor={nombreDelIdioma(idioma)} onClick={() => setEligiendoIdioma((abierta) => !abierta)} />)}
       {/* Solo en este dispositivo, como el teléfono: se puede querer claro en uno y oscuro en otro */}
       {fila(<FilaInterruptor etiqueta={t.modoOscuro} activo={tema === 'oscuro'} onCambio={(oscuro) => cambiarTema(oscuro ? 'oscuro' : 'claro')} />)}
+      {/* También solo en este dispositivo: apagado, salvo que se encienda */}
+      {fila(<FilaInterruptor etiqueta={t.sonido} activo={sonido} onCambio={cambiarSonido} />)}
       {fila(<Fila etiqueta={textos.avisos.titulo} valor={dispositivo.avisos ? t.activados : t.apagados} onClick={() => abrir('avisos')} />, true)}
       {!dispositivo.instalada && fila(<Fila etiqueta={textos.primeraVez.tareas.instalar} onClick={() => setAbierto('instalar')} />)}
       {persona.administra &&

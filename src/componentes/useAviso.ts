@@ -3,6 +3,11 @@ import { useEffect, useRef, useState } from 'react'
 // Se ve un aviso a la vez: mostrar uno cierra el que haya en otra parte de la pantalla
 const abiertos = new Set<() => void>()
 
+// Cierra el aviso que se esté viendo (al tirarlo hacia el lado)
+export function cerrarAvisos() {
+  for (const cerrar of abiertos) cerrar()
+}
+
 // El aviso de abajo dura unos segundos; si se puede deshacer, un poco más
 export function useAviso() {
   const [aviso, setAviso] = useState<{ texto: string; deshacer?: () => void } | null>(null)

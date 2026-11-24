@@ -8,13 +8,17 @@ import { DetallePersona, Tarjeta } from '../../componentes/Tarjeta.tsx'
 import { useEsComputador } from '../../componentes/useEsComputador.ts'
 import escritorio from '../../componentes/Escritorio.module.css'
 import { usePersonas, type Persona } from '../../datos/consultas.ts'
-import { diaCorto, diaDeLaSemana, diaLargo, hoyEnCalifornia, rangoLargo, sumarDias, ventanaDelViaje } from '../../datos/fechas.ts'
+import { diaCorto, diaDelMes, diaDeLaSemana, diaLargo, hoyEnCalifornia, rangoLargo, sumarDias, ventanaDelViaje } from '../../datos/fechas.ts'
 import { coincide, estaAlla, integrantes, porLlegada, tieneFechas } from '../../datos/grupo.ts'
 import { nombreCompleto, primerNombre } from '../../datos/nombres.ts'
 import { useSesion } from '../../datos/sesion.tsx'
+import { Numero } from '../../movimiento/index.ts'
 import { useTextos, type Textos } from '../../textos.ts'
 import { BarrasDelGrupo } from './BarrasDelGrupo.tsx'
 import estilos from './Grupo.module.css'
+
+// Marca donde va el número de la frase, para que salte al cambiar
+const MARCA = '\u0000'
 
 // Arriba de Grupo: cuántos hay allá hoy y quién llega o vuelve esta semana
 function resumen(gente: Persona[], yo: string, hoy: string, textos: Textos): [string, string | null] {
@@ -64,6 +68,8 @@ export function Grupo() {
   const esComputador = useEsComputador()
   const { data: personas } = usePersonas()
   const [busqueda, setBusqueda] = useState('')
+  // En el celular, el día que se mira al arrastrar sobre las barras (null: hoy)
+  const [diaVisto, setDiaVisto] = useState<string | null>(null)
   if (sesion.tipo !== 'dentro') return null
   const yo = sesion.persona
   const t = textos.grupo
@@ -141,6 +147,26 @@ export function Grupo() {
   const describir = (p: Persona) =>
     t.fila(p.id === yo.id ? t.tu : nombreCompleto(p), estadoDe(p, yo.id, hoy, textos), tieneFechas(p) ? rangoLargo(p.llega, p.vuelve) : null)
 
+  // "Hoy hay 12 de 14 allá." cambia a "El 20 de enero hay 9 de 14 allá." mientras se arrastra (el día de la semana ya va
+  // sobre la raya); el número salta al cambiar
+  const hayEl = (dia: string) => gente.filter((p) => estaAlla(p, dia)).length
+  const conNumero = (texto: string, n: number) => {
+    const [antes, despues] = texto.split(MARCA)
+    return (
+      <>
+        {antes}
+        <Numero valor={n} conSonido={false} />
+        {despues}
+      </>
+    )
+  }
+  const fraseDelCelular =
+    diaVisto !== null
+      ? conNumero(t.hayAllaEl(diaDelMes(diaVisto), MARCA, gente.length), hayEl(diaVisto))
+      : linea1 === t.hayAlla(hayEl(hoy), gente.length)
+        ? conNumero(t.hayAlla(MARCA, gente.length), hayEl(hoy))
+        : linea1
+
   return (
     <div className={estilos.celular}>
       <div className={estilos.cabecera}>
@@ -148,10 +174,10 @@ export function Grupo() {
           <h1 className={estilos.titulo}>{t.titulo}</h1>
           <EntradaPerfil />
         </div>
-        <div className={estilos.linea1}>{linea1}</div>
+        <div className={estilos.linea1}>{fraseDelCelular}</div>
         {linea2 && <div className={estilos.linea2}>{linea2}</div>}
       </div>
-      <BarrasDelGrupo gente={gente} ventana={ventana} yo={yo.id} hoy={hoy} abrir={abrir} describir={describir} />
+      <BarrasDelGrupo gente={gente} ventana={ventana} yo={yo.id} hoy={hoy} abrir={abrir} describir={describir} onVer={setDiaVisto} />
     </div>
   )
 }

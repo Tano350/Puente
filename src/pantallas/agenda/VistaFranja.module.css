@@ -5,6 +5,9 @@
   gap: 4px;
   margin-top: 10px;
   touch-action: pan-y;
+  /* La marca del día elegido (ConPastilla): del alto de los días */
+  --marca-arriba: 0px;
+  --marca-radio: 8px;
 }
 
 /* Computador: en su propia caja, arriba del día */
@@ -15,6 +18,8 @@
   border: 1px solid var(--regla);
   border-radius: 10px;
   background: var(--panel);
+  --marca-arriba: 4px;
+  --marca-radio: 8px;
 }
 
 .dia {

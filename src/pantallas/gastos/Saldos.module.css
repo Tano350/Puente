@@ -1,5 +1,6 @@
 /* ---------- Tu tarjeta: arriba de la lista en el celular, arriba de la columna de la derecha en el computador ---------- */
 .tarjeta {
+  position: relative;
   padding: 14px 16px;
   border-radius: 12px;
   background: var(--panel);
@@ -76,6 +77,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  position: relative;
   padding: 14px 16px;
   border-radius: 12px;
   background: var(--panel);

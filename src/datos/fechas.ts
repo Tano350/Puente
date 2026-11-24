@@ -108,6 +108,13 @@ export function diaLargo(iso: string, idioma: Idioma = idiomaActual()): string {
   return `${n.dias[f.getUTCDay()]} ${f.getUTCDate()} de ${n.meses[f.getUTCMonth()]}`
 }
 
+// "15 de enero" o "January 15", sin el día de la semana (cuando ya se ve al lado)
+export function diaDelMes(iso: string, idioma: Idioma = idiomaActual()): string {
+  const f = aFecha(iso)
+  const n = NOMBRES[idioma]
+  return idioma === 'en' ? `${n.meses[f.getUTCMonth()]} ${f.getUTCDate()}` : `${f.getUTCDate()} de ${n.meses[f.getUTCMonth()]}`
+}
+
 // "viernes 15" o "Friday the 15th", para lo que pasa en los próximos días
 export function diaDeLaSemana(iso: string, idioma: Idioma = idiomaActual()): string {
   const f = aFecha(iso)

@@ -1,0 +1,32 @@
+.grupo {
+  position: relative;
+}
+
+/* Las opciones van encima de la marca; el color de la letra cambia junto con la marca que llega */
+.grupo > :not([data-pastilla]) {
+  position: relative;
+  transition: color 0.18s ease-out;
+}
+
+/* La marca pone el fondo de lo elegido (doble clase: le gana a la regla de cada pantalla) */
+.grupo.grupo > [aria-pressed='true'],
+.grupo.grupo > [aria-selected='true'] {
+  background: transparent;
+}
+
+.marca {
+  position: absolute;
+  top: var(--marca-arriba, 3px);
+  bottom: var(--marca-arriba, 3px);
+  left: 0;
+  border-radius: var(--marca-radio, 6px);
+  background: var(--marca-fondo, var(--tinta));
+  pointer-events: none;
+}
+
+/* Con alto contraste (Windows), el sistema marca lo elegido: la marca no hace falta */
+@media (forced-colors: active) {
+  .marca {
+    display: none;
+  }
+}

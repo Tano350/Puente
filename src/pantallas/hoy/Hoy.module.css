@@ -66,6 +66,8 @@
   width: 104px;
   height: 90px;
   color: var(--tinta);
+  touch-action: none;
+  cursor: grab;
 }
 
 .tuerca svg {

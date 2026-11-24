@@ -88,6 +88,8 @@ test.describe('Gastos', () => {
     await p.getByRole('button', { name: an.anotar }).click()
     await expect(gasto(page, 'Café de prueba')).toHaveAccessibleName(new RegExp(g.lista.conmigo.solotuyo))
     await gasto(page, 'Café de prueba').click()
+    // Primero el detalle abierto: mientras la lista sigue a la vista, "Solo tuyo" aparece dos veces
+    await expect(panel(page, 'Café de prueba').getByRole('heading', { name: 'Café de prueba' })).toBeVisible()
     await expect(panel(page, 'Café de prueba').getByText(g.detalle.soloTuyo)).toBeVisible()
   })
 
@@ -313,15 +315,23 @@ test.describe('Gastos', () => {
   test('saldar: marcar que pagué y deshacer', async ({ page }) => {
     await abrir(page, GASTOS)
     await expect(page.getByText(g.saldos.debes, { exact: true }).first()).toBeVisible()
+    // El monto de la deuda, tal como se ve antes de pagar
+    const monto = page.locator('[data-monto]:visible').first()
+    const deuda = await monto.innerText()
+    expect(deuda).toMatch(/\d/)
     await page.getByRole('button', { name: g.saldos.saldar }).first().click()
     const hoja = page.getByRole(esCelular(page) ? 'dialog' : 'complementary', { name: g.saldos.saldar })
     await expect(hoja.getByText(g.saldos.lePagas('Martina'))).toBeVisible()
     await hoja.getByRole('button', { name: g.saldos.marcarPagado }).click()
     const aviso = page.getByRole('status').filter({ hasText: g.saldos.pagaste('Martina') })
     await expect(aviso).toBeVisible()
+    // La tarjeta pasa a "al día" y el monto de la deuda se va
     await expect(page.getByText(g.saldos.alDia).first()).toBeVisible()
+    await expect(page.locator('[data-monto]:visible')).toHaveCount(0)
     await aviso.getByRole('button', { name: es.deshacer }).click()
+    // Deshacer devuelve la deuda, con el mismo monto
     await expect(page.getByText(g.saldos.debes, { exact: true }).first()).toBeVisible()
+    await expect(page.locator('[data-monto]:visible').first()).toHaveText(deuda)
   })
 
   test('rendición: marcar y desmarcar gastos', async ({ page }) => {
@@ -335,6 +345,8 @@ test.describe('Gastos', () => {
     await cafe.click()
     await expect(cafe).toHaveAttribute('aria-checked', 'false')
     await expect(page.getByText(g.rendicion.marca)).toBeVisible()
+    // El total de "Vas a rendir" se actualiza (aria-live) y queda en cero
+    await expect(page.locator('[aria-live="polite"]').filter({ hasText: /^US\$ 0,00$/ })).toBeVisible()
     const uber = page.getByRole('checkbox', { name: /Uber al Plug and Play/ })
     await uber.click()
     await expect(uber).toHaveAttribute('aria-checked', 'true')

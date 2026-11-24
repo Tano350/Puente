@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { abrir, es, esCelular } from './ayuda.ts'
+import { abrir, arrastrar, centroDe, es, esCelular } from './ayuda.ts'
 
 const a = es.agenda
 const ev = a.evento
@@ -80,6 +80,21 @@ test.describe('Agenda', () => {
     await expect(d.getByText(ev.tienesCupo)).toBeVisible()
     await expect(d.getByRole('link', { name: ev.comoLlegar })).toBeVisible()
     await expect(d.getByRole('button', { name: ev.soltarCupo })).toBeVisible()
+  })
+
+  test('el boleto se agarra y vuelve a su lugar al soltarlo', async ({ page }) => {
+    await abrir(page, AGENDA)
+    await evento(page, 'Plug and Play').click()
+    const d = detalle(page)
+    const boleto = d.locator('[data-carta]').filter({ hasText: 'Plug and Play' })
+    await expect(boleto).toBeVisible()
+    const antes = await boleto.boundingBox()
+    const c = await centroDe(boleto)
+    await arrastrar(page, c, { x: c.x - 60, y: c.y + 50 }, { mantener: 420 })
+    await expect.poll(async () => Math.round((await boleto.boundingBox())?.x ?? -1)).toBe(Math.round(antes?.x ?? -2))
+    await expect.poll(async () => Math.round((await boleto.boundingBox())?.y ?? -1)).toBe(Math.round(antes?.y ?? -2))
+    // Sigue entero: el estado del talón no cambió
+    await expect(d.getByText(ev.tuCupo)).toBeVisible()
   })
 
   test('tomar un cupo y deshacer', async ({ page }) => {

@@ -40,6 +40,8 @@
 
 .cuerpo {
   position: relative;
+  /* Hacia los lados lo maneja el gesto de mirar otro día; hacia arriba y abajo se desplaza la pantalla */
+  touch-action: pan-y;
   margin-top: 2px;
 }
 
@@ -98,6 +100,16 @@ button.filaSinFechas {
   border-radius: 13px;
   background: var(--sec);
   color: var(--sobre);
+}
+
+.barra[data-ausente='true'] {
+  opacity: 0.3;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .barra {
+    transition: opacity 0.15s;
+  }
 }
 
 .barra[data-tu='true'] {

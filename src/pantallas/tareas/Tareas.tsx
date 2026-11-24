@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router'
+import { ConPastilla } from '../../componentes/ConPastilla.tsx'
 import { Aviso } from '../../componentes/Controles.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
 import { SinConexion } from '../../componentes/SinConexion.tsx'
@@ -119,14 +120,14 @@ export function Tareas() {
   const vacio = tareas?.length === 0
   const sinMias = !vacio && mias && orden.length === 0
   const segmento = (
-    <div role="group" aria-label={tl.queVer} className={estilos.segmento}>
+    <ConPastilla role="group" aria-label={tl.queVer} className={estilos.segmento}>
       <button type="button" aria-pressed={!mias} onClick={() => setMias(false)}>
         {tl.todas}
       </button>
       <button type="button" aria-pressed={mias} onClick={() => setMias(true)}>
         {tl.mias}
       </button>
-    </div>
+    </ConPastilla>
   )
   const lista = (
     <ListaTareas

@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react'
 import { hoyEnCalifornia } from '../datos/fechas.ts'
 import { useSesion } from '../datos/sesion.tsx'
 import { useTextos } from '../textos.ts'
+import { Pista } from './Controles.tsx'
 import estilos from './HoraDeChile.module.css'
 
 const GUARDADA = 'puente.horaDeChile'
@@ -48,9 +49,7 @@ export function InterruptorHoraDeChile({ activo, onCambio }: { activo: boolean; 
     <span className={estilos.hora}>
       <span aria-hidden="true">{textos.agenda.horaDeChile}</span>
       <button type="button" role="switch" aria-checked={activo} aria-label={textos.agenda.horaDeChile} className={estilos.interruptor} onClick={() => onCambio(!activo)}>
-        <span className={estilos.pista} data-activo={activo}>
-          <span className={estilos.perilla} />
-        </span>
+        <Pista activo={activo} />
       </button>
     </span>
   )
