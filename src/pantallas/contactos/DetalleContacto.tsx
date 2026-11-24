@@ -12,6 +12,7 @@ import { cambiarContacto, puedeCambiar, seAgenda, type Canal, type Contacto, typ
 import { useEventos, useNotasReunion } from '../../datos/eventos.ts'
 import { primerNombre } from '../../datos/nombres.ts'
 import { useSesion } from '../../datos/sesion.tsx'
+import { Brillo } from '../../movimiento/index.ts'
 import { useTextos } from '../../textos.ts'
 import { DetalleEtapas } from './DetalleEtapas.tsx'
 import { DetalleNotas } from './DetalleNotas.tsx'
@@ -93,7 +94,10 @@ export function DetalleContacto({ contacto, computador, onCerrar, onEditar }: { 
 
   // Agendar la reunión es crearla en la Agenda; al crearla, el contacto pasa a "Reunión agendada"
   const agendar = () => navigate('/agenda/nuevo', { state: { contacto: contacto.id } })
-  const elegirEtapa = (etapa: Etapa) => (seAgenda(contacto.etapa, etapa) ? agendar() : void cambiarEtapa(etapa))
+  // Devuelve la promesa del cambio: la tuerca llevada rodando espera en la etapa nueva mientras se guarda
+  const elegirEtapa = (etapa: Etapa) => (seAgenda(contacto.etapa, etapa) ? agendar() : cambiarEtapa(etapa))
+  // Tocar o llevar una tuerca sin poder: el aviso dice por qué
+  const noPuedeEtapa = () => aviso.mostrar(puede ? d.sinRedEstado : d.soloPuede(responsable ? primerNombre(responsable) : ''))
 
   // El paso siguiente va abajo. Después de la reunión, quien no ha escrito su nota la escribe en el evento.
   // Sin conexión, cambiar el estado o agendar queda apagado; escribir la nota sigue activo
@@ -122,7 +126,7 @@ export function DetalleContacto({ contacto, computador, onCerrar, onEditar }: { 
   // ---------- Partes ----------
   const Nombre = computador ? 'h2' : 'h1'
   const tarjeta = (
-    <div className={estilos.tarjeta} data-cinta={Boolean(contacto.organizacion)}>
+    <div className={estilos.tarjeta} data-cinta={Boolean(contacto.organizacion)} data-carta="">
       {contacto.organizacion && <span className={estilos.cinta}>{contacto.organizacion}</span>}
       <Nombre className={estilos.nombre}>{contacto.nombre}</Nombre>
       {(contacto.personal || descartado) && (
@@ -155,6 +159,7 @@ export function DetalleContacto({ contacto, computador, onCerrar, onEditar }: { 
           </a>
         </div>
       )}
+      <Brillo />
     </div>
   )
 
@@ -179,7 +184,7 @@ export function DetalleContacto({ contacto, computador, onCerrar, onEditar }: { 
   const cuerpo = (
     <>
       {tarjeta}
-      <DetalleEtapas etapa={contacto.etapa} etapaEn={contacto.etapa_en} activa={puede} apagada={sinRed} onElegir={elegirEtapa} />
+      <DetalleEtapas etapa={contacto.etapa} etapaEn={contacto.etapa_en} activa={puede} apagada={sinRed} onElegir={elegirEtapa} onNoPuede={noPuedeEtapa} />
       {cambiaResponsable ? (
         <button type="button" className={estilos.responsable} aria-haspopup="dialog" aria-disabled={sinRed} onClick={() => !sinRed && setEligiendo(true)}>
           {quien}

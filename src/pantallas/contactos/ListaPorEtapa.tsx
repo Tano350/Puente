@@ -1,18 +1,46 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Icono } from '../../componentes/Icono.tsx'
-import { ETAPAS, type Contacto } from '../../datos/contactos.ts'
+import { ETAPAS, seAgenda, type Contacto, type Etapa } from '../../datos/contactos.ts'
 import { useTextos } from '../../textos.ts'
+import { festejar, useArrastre } from './arrastre.ts'
+import { Hueco } from './Hueco.tsx'
 import estilos from './ListaPorEtapa.module.css'
 
 export type Responsable = { texto: string; tuyo: boolean }
 
-type Props = { contactos: Contacto[]; mios: boolean; responsable: (contacto: Contacto) => Responsable; onAbrir: (contacto: Contacto) => void }
+type Props = {
+  contactos: Contacto[]
+  mios: boolean
+  responsable: (contacto: Contacto) => Responsable
+  puedeMover: (contacto: Contacto) => boolean
+  onAbrir: (contacto: Contacto) => void
+  onMover: (contacto: Contacto, etapa: Etapa) => void
+  onNoPuede: (contacto: Contacto) => void
+}
 
-// Celular: los contactos por estado, colgando de la línea de tuercas; los descartados van al final, plegados
-export function ListaPorEtapa({ contactos, mios, responsable, onAbrir }: Props) {
+// Celular: los contactos por estado, colgando de la línea de tuercas; los descartados van al final, plegados.
+// Quien puede cambiar un contacto lo mantiene apretado y lo lleva a otro estado (los descartados solo se abren).
+export function ListaPorEtapa({ contactos, mios, responsable, puedeMover, onAbrir, onMover, onNoPuede }: Props) {
   const textos = useTextos()
   const t = textos.contactos
   const [verDescartados, setVerDescartados] = useState(false)
+  const lista = useRef<HTMLDivElement>(null)
+  const arrastre = useArrastre<Contacto>({
+    contenedor: lista,
+    zonas: 'filas',
+    flip: true,
+    clave: (c) => c.id,
+    zonaDe: (c) => c.etapa,
+    puede: puedeMover,
+    alNoPoder: onNoPuede,
+    alSoltar: (c, zona, el) => {
+      const etapa = zona as Etapa
+      onMover(c, etapa)
+      if (!seAgenda(c.etapa, etapa)) festejar(el)
+    },
+    claseFantasma: estilos.fantasma,
+    desplazable: () => lista.current?.closest('main'),
+  })
   const grupos = ETAPAS.map((etapa) => ({ etapa, lista: contactos.filter((c) => c.etapa === etapa) })).filter((g) => g.lista.length > 0)
   const descartados = contactos.filter((c) => c.etapa === 'descartado')
   // Si solo quedan descartados, se ven sin tener que abrirlos
@@ -30,30 +58,42 @@ export function ListaPorEtapa({ contactos, mios, responsable, onAbrir }: Props) 
   )
 
   return (
-    <div className={estilos.lista}>
+    <div ref={lista} className={estilos.lista}>
       {grupos.map((g, i) => {
         const primera = i === 0
         const ultima = i === grupos.length - 1
+        const recibe = arrastre.arrastrado !== null && arrastre.arrastrado.etapa !== g.etapa
         return (
-          <section key={g.etapa}>
-            <div className={estilos.cabeza} data-primera={primera}>
+          <section key={g.etapa} data-zona={g.etapa} data-sobre={arrastre.sobre === g.etapa}>
+            <div className={estilos.cabeza} data-primera={primera} data-flip={`etapa:${g.etapa}`}>
               <span className={estilos.riel} aria-hidden="true">
                 {!(primera && ultima) && <span className={estilos.tramo} data-desde={primera ? 'tuerca' : undefined} data-hasta={ultima ? 'tuerca' : undefined} />}
-                <span className={estilos.tuerca} />
+                <span className={estilos.tuerca} data-tuerca="" />
               </span>
               <h2 className={estilos.etapa}>
                 {t.etapas[g.etapa]}
-                <span className={estilos.cuenta}>{g.lista.length}</span>
+                <span className={estilos.cuenta} data-cuenta="">
+                  {g.lista.length}
+                </span>
               </h2>
             </div>
             {g.lista.map((c) => {
               const r = responsable(c)
               return (
-                <button key={c.id} type="button" className={estilos.fila} onClick={() => onAbrir(c)}>
+                <button
+                  key={c.id}
+                  type="button"
+                  className={estilos.fila}
+                  data-flip={c.id}
+                  data-arrastrable=""
+                  data-arrastrado={arrastre.arrastrado?.id === c.id}
+                  onPointerDown={(e) => arrastre.empezar(e, c)}
+                  onClick={() => onAbrir(c)}
+                >
                   <span className={estilos.riel} aria-hidden="true">
                     {!ultima && <span className={estilos.tramo} />}
                   </span>
-                  <span className={estilos.contenido}>
+                  <span className={estilos.contenido} data-fantasma="">
                     <span className={estilos.quien}>
                       {nombre(c)}
                       {c.organizacion && <span className={estilos.org}>{c.organizacion}</span>}
@@ -67,11 +107,17 @@ export function ListaPorEtapa({ contactos, mios, responsable, onAbrir }: Props) 
                 </button>
               )
             })}
+            {recibe && (
+              <div className={estilos.huecoFila} aria-hidden="true">
+                <span className={estilos.riel}>{!ultima && <span className={estilos.tramo} />}</span>
+                <Hueco abierto={arrastre.sobre === g.etapa} alto={arrastre.alto} className={estilos.hueco} />
+              </div>
+            )}
           </section>
         )
       })}
       {descartados.length > 0 && (
-        <div className={estilos.descartados}>
+        <div className={estilos.descartados} data-flip="descartados">
           <button type="button" className={estilos.plegar} aria-expanded={abiertos} onClick={() => setVerDescartados(!abiertos)}>
             <span className={estilos.flecha} data-abierta={abiertos}>
               <Icono nombre="derecha" medida={18} trazo={2} />

@@ -1,5 +1,6 @@
 .boleto {
   position: relative;
+  border-radius: 10px;
   min-height: 168px;
 }
 

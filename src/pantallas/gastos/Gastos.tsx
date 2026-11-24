@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router'
+import { ConPastilla } from '../../componentes/ConPastilla.tsx'
 import { Aviso } from '../../componentes/Controles.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
 import { SinConexion } from '../../componentes/SinConexion.tsx'
@@ -240,7 +241,7 @@ export function Gastos() {
           </div>
         )}
         <h1 className={estilos.titulo}>{t.titulo}</h1>
-        <div role="tablist" aria-label={tl.vistas} className={estilos.pestanas}>
+        <ConPastilla role="tablist" aria-label={tl.vistas} className={estilos.pestanas}>
           {PESTANAS.map((p, i) => (
             <button
               key={p}
@@ -259,7 +260,7 @@ export function Gastos() {
               {t.pestanas[p]}
             </button>
           ))}
-        </div>
+        </ConPastilla>
       </div>
       <div id="gastos-vista" role="tabpanel" aria-labelledby={`gastos-${pestana}`}>
         {pestana === 'gastos' ? (

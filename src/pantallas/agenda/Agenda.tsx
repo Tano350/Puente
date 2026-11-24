@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router'
+import { ConPastilla } from '../../componentes/ConPastilla.tsx'
 import { Aviso } from '../../componentes/Controles.tsx'
 import { InterruptorHoraDeChile, useHoraDeChile } from '../../componentes/HoraDeChile.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
@@ -222,7 +223,7 @@ export function Agenda() {
     pestanas.current[destino]?.focus()
   }
   const pestanasVista = (
-    <div role="tablist" aria-label={tv.vistas} className={esComputador ? estilos.segmentoPc : estilos.pestanas}>
+    <ConPastilla role="tablist" aria-label={tv.vistas} className={esComputador ? estilos.segmentoPc : estilos.pestanas}>
       {VISTAS.map((v, i) => (
         <button
           key={v}
@@ -241,17 +242,17 @@ export function Agenda() {
           {tv.nombres[v]}
         </button>
       ))}
-    </div>
+    </ConPastilla>
   )
   const filtro = (
-    <div role="group" aria-label={tv.queVer} className={esComputador ? estilos.segmentoPc : estilos.segmento}>
+    <ConPastilla role="group" aria-label={tv.queVer} className={esComputador ? estilos.segmentoPc : estilos.segmento}>
       <button type="button" aria-pressed={!soloVoy} onClick={() => setSoloVoy(false)}>
         {tv.todo}
       </button>
       <button type="button" aria-pressed={soloVoy} onClick={() => setSoloVoy(true)}>
         {tv.aLosQueVoy}
       </button>
-    </div>
+    </ConPastilla>
   )
   // Las flechas van a cualquier día, semana o mes: antes, durante o después del viaje
   const flecha = (paso: number) => (

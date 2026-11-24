@@ -6,6 +6,7 @@
   .barra {
     display: flex;
     flex-direction: column;
+    position: relative;
     flex: none;
     width: 232px;
     padding: 24px 14px 20px;
@@ -41,6 +42,7 @@
 }
 
 .enlace {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -56,10 +58,20 @@
   color: var(--tinta);
 }
 
-.activo,
-.activo:hover {
+/* El fondo de la sección elegida es uno solo, que se desliza (usePastilla) */
+.elegida {
+  position: absolute;
+  top: 0;
+  left: 14px;
+  right: 14px;
+  border-radius: 6px;
   background: var(--activo-fondo);
   box-shadow: inset 3px 0 0 var(--acento);
+  pointer-events: none;
+}
+
+.activo,
+.activo:hover {
   color: var(--barra-activo);
   font-weight: 500;
 }

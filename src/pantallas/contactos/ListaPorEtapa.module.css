@@ -91,6 +91,8 @@
   background: transparent;
   text-align: left;
   cursor: pointer;
+  /* El dedo desplaza la lista; para llevar un contacto a otro estado hay que mantenerlo apretado */
+  touch-action: pan-y;
 }
 
 .contenido {
@@ -150,6 +152,50 @@
 .responsable[data-tu='true'] {
   font-weight: 500;
   color: var(--acento);
+}
+
+/* ---------- Llevar un contacto a otro estado (arrastre.ts) ---------- */
+/* La copia levantada que sigue al dedo */
+.fantasma {
+  padding-right: 12px;
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: 0 14px 30px var(--sombra);
+}
+
+/* El original queda desvanecido en su lugar */
+.fila[data-arrastrado='true'] .contenido {
+  opacity: 0.3;
+}
+
+/* El estado bajo el dedo: su tuerca y su nombre en acento */
+section[data-sobre='true'] .tuerca {
+  background: var(--acento);
+}
+
+section[data-sobre='true'] .etapa {
+  color: var(--acento);
+}
+
+/* El hueco al final del estado, donde va a caer */
+.huecoFila {
+  display: flex;
+  align-items: stretch;
+}
+
+.hueco {
+  position: relative;
+  flex: 1;
+  height: 0;
+  overflow: hidden;
+}
+
+.hueco::before {
+  content: '';
+  position: absolute;
+  inset: 4px 0;
+  border: 2px dashed var(--acento);
+  border-radius: 10px;
 }
 
 /* ---------- Descartados ---------- */

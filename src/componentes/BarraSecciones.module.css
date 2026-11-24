@@ -1,4 +1,5 @@
 .barra {
+  position: relative;
   display: flex;
   flex: none;
   height: calc(76px + env(safe-area-inset-bottom));
@@ -14,6 +15,7 @@
 }
 
 .enlace {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -26,8 +28,17 @@
   text-decoration: none;
 }
 
+/* La raya de la sección elegida es una sola, que se desliza (usePastilla) */
+.raya {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: var(--acento);
+  pointer-events: none;
+}
+
 .activo {
-  border-top-color: var(--acento);
   color: var(--barra-activo);
   font-weight: 500;
 }

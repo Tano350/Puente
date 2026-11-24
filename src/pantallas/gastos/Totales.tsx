@@ -1,10 +1,14 @@
 import { plata, useGastos, usePartes } from '../../datos/gastos.ts'
 import { useSesion } from '../../datos/sesion.tsx'
+import { Brillo, Numero } from '../../movimiento/index.ts'
 import { useTextos } from '../../textos.ts'
 import { totales, type Totales } from './TotalesDatos.ts'
 import estilos from './Totales.module.css'
 
 // "Mis gastos" y "Gastos totales": dos cifras lado a lado, cada una en su tarjeta, sobre la tarjeta de saldo
+// Numero entrega centavos con decimales mientras rueda
+const centavos = (n: number) => plata(Math.round(n))
+
 function useTotales(): Totales | null {
   const sesion = useSesion()
   const { data: gastos } = useGastos()
@@ -24,9 +28,12 @@ export function ResumenTotales() {
   return (
     <dl className={estilos.resumen}>
       {cifras.map((c) => (
-        <div key={c.rotulo} className={estilos.cifra}>
+        <div key={c.rotulo} className={estilos.cifra} data-carta>
           <dt className={estilos.rotulo}>{c.rotulo}</dt>
-          <dd className={estilos.monto}>{plata(c.monto)}</dd>
+          <dd className={estilos.monto}>
+            <Numero valor={c.monto} formato={centavos} />
+          </dd>
+          <Brillo />
         </div>
       ))}
     </dl>

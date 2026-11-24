@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { Aviso } from '../../componentes/Controles.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
 import { PanelEncima } from '../../componentes/Paneles.tsx'
@@ -8,6 +8,7 @@ import { consultas } from '../../datos/consultas.ts'
 import { plata, prepararBoleta, puedeCambiarBoleta, quitarBoleta, rendir, subirBoleta, type Gasto } from '../../datos/gastos.ts'
 import { nombreCompleto } from '../../datos/nombres.ts'
 import { useSesion } from '../../datos/sesion.tsx'
+import { Brillo, chispasDesde, empujon, Numero } from '../../movimiento/index.ts'
 import { useTextos } from '../../textos.ts'
 import { diaDelGasto, resumir, usePorRendir, type PorRendir } from './RendicionDatos.ts'
 import { descargarRendicion } from './RendicionPdf.ts'
@@ -16,6 +17,9 @@ import estilos from './Rendicion.module.css'
 // La rendición (forma "Lista"): arriba "Vas a rendir" con el total y "Descargar rendición"; abajo, cada gasto en que
 // tienes parte, con su casilla (la misma que "Rindo este gasto" en el detalle del gasto).
 // En el celular es el contenido de la pestaña "Rendición"; en el computador, el panel encima de la lista que abre "Preparar".
+// Numero entrega centavos con decimales mientras rueda
+const centavos = (n: number) => plata(Math.round(n))
+
 export function VistaRendicion({ computador, onCerrar }: { computador: boolean; onCerrar?: () => void }) {
   const textos = useTextos()
   const t = textos.gastos.rendicion
@@ -110,14 +114,14 @@ export function VistaRendicion({ computador, onCerrar }: { computador: boolean; 
   else if (lista)
     cuerpo = (
       <>
-        <div className={estilos.tarjeta}>
+        <div className={estilos.tarjeta} data-carta>
           <div className={estilos.arriba}>
             <span className={estilos.textos}>
               <span className={estilos.etiqueta}>{t.vasARendir}</span>
               <span className={estilos.detalle}>{marcados.length ? t.cuantos(marcados.length, marcados.some((x) => x.monto !== x.gasto.monto)) : t.marca}</span>
             </span>
             <span className={estilos.total} aria-live="polite">
-              {plata(total)}
+              <Numero valor={total} formato={centavos} />
             </span>
           </div>
           {sinFoto > 0 && (
@@ -131,6 +135,7 @@ export function VistaRendicion({ computador, onCerrar }: { computador: boolean; 
             {descargando ? t.descargando : t.descargar}
           </button>
           {!conectado && <div className={estilos.necesita}>{t.necesitasConexion}</div>}
+          <Brillo />
         </div>
         <div className={estilos.lista}>
           {filas.map((x) => (
@@ -176,6 +181,17 @@ export function VistaRendicion({ computador, onCerrar }: { computador: boolean; 
 function Fila({ fila, subiendo, onAlternar, onAgregarFoto }: { fila: PorRendir; subiendo: boolean; onAlternar: () => void; onAgregarFoto?: () => void }) {
   const t = useTextos().gastos.rendicion
   const { gasto, monto, marcado } = fila
+  // La casilla salta al cambiar; al marcar, saltan chispas chicas
+  const caja = useRef<HTMLSpanElement>(null)
+  const primera = useRef(true)
+  useEffect(() => {
+    if (primera.current) {
+      primera.current = false
+      return
+    }
+    empujon(caja.current, { s: marcado ? 1.8 : 1 })
+    if (marcado) chispasDesde(caja.current, { cantidad: 0.35, velocidad: 200 })
+  }, [marcado])
   const dia = diaDelGasto(gasto.fecha, t)
   const faltaFoto = marcado && !gasto.boleta
   const sinFoto = (
@@ -187,7 +203,7 @@ function Fila({ fila, subiendo, onAlternar, onAgregarFoto }: { fila: PorRendir; 
   return (
     <div className={estilos.filaRaiz}>
       <button type="button" role="checkbox" aria-checked={marcado} className={estilos.fila} onClick={onAlternar}>
-        <span className={estilos.caja} aria-hidden="true">
+        <span ref={caja} className={estilos.caja} aria-hidden="true">
           {marcado && <Icono nombre="check" medida={14} trazo={3} />}
         </span>
         <span className={estilos.textos}>

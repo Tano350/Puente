@@ -23,6 +23,10 @@ import './datos/eventos.ts'
 import './datos/gastos.ts'
 import './datos/tareas.ts'
 import { rutas } from './rutas.tsx'
+import { instalarMovimiento } from './movimiento/index.ts'
+
+// Todo lo que se aprieta responde con resorte (src/movimiento/apretar.ts)
+instalarMovimiento()
 
 createRoot(document.getElementById('raiz')!).render(
   <StrictMode>

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { abrir, es } from './ayuda.ts'
+import { abrir, arrastrar, centroDe, deslizar, es } from './ayuda.ts'
 
 const t = es.tareas
 // Martes 10 de noviembre de 2026: "Mandar la carta a la Escuela" venció el domingo 8, el seguro vence el viernes 13
@@ -10,6 +10,8 @@ const MIEMBRO = '/tareas?maqueta=miembro&hoy=2026-11-10'
 const aviso = (page: Page, texto: string) => page.getByRole('status').filter({ hasText: texto })
 // La casilla de una tarea de la lista (su nombre es el título)
 const casilla = (page: Page, titulo: string) => page.getByRole('checkbox', { name: titulo, exact: true })
+// La fila de una tarea (el <li> que la contiene)
+const fila = (page: Page, titulo: string) => page.getByRole('listitem').filter({ has: page.getByText(titulo, { exact: true }) })
 // El botón de "Nueva" (en el celular dice "Nueva", pero se llama "Nueva tarea" en los dos)
 const nueva = (page: Page) => page.getByRole('button', { name: t.lista.nuevaTarea, exact: true }).first()
 
@@ -81,6 +83,43 @@ test.describe('Tareas', () => {
     await expect(page.getByRole('button', { name: t.detalle.borrar })).toHaveCount(0)
   })
 
+  test('deslizar una tuya a la derecha la marca y se deshace', async ({ page }) => {
+    await abrir(page, TAREAS)
+    await deslizar(page, fila(page, 'Mandar la carta a la Escuela'), 260)
+    await expect(casilla(page, 'Mandar la carta a la Escuela')).toBeChecked()
+    await expect(aviso(page, t.lista.marcaste('Mandar la carta a la Escuela'))).toBeVisible()
+    await aviso(page, t.lista.marcaste('Mandar la carta a la Escuela')).getByRole('button', { name: es.deshacer }).click()
+    await expect(casilla(page, 'Mandar la carta a la Escuela')).not.toBeChecked()
+  })
+
+  test('deslizar poco no marca nada', async ({ page }) => {
+    await abrir(page, TAREAS)
+    await deslizar(page, fila(page, 'Mandar la carta a la Escuela'), 40)
+    await expect(casilla(page, 'Mandar la carta a la Escuela')).not.toBeChecked()
+    await expect(page.getByRole('status')).toHaveCount(0)
+  })
+
+  test('deslizar la de otro explica quién la puede marcar', async ({ page }) => {
+    await abrir(page, TAREAS)
+    await deslizar(page, fila(page, 'Cotizar el Airbnb de Palo Alto'), 260)
+    await expect(page.getByRole('status').filter({ hasText: /^Solo .+ puede marcarla\.$/ })).toBeVisible()
+  })
+
+  test('deslizar una sin asignar pide tomarla primero', async ({ page }) => {
+    await abrir(page, TAREAS)
+    await deslizar(page, fila(page, 'Regalos para Plug and Play'), 260)
+    await expect(aviso(page, t.lista.primeroTomala)).toBeVisible()
+    await expect(page.getByRole('button', { name: t.lista.meLaTomo, exact: true })).toBeVisible()
+  })
+
+  test('arrastrar hacia abajo sobre la lista no marca nada', async ({ page }) => {
+    await abrir(page, TAREAS)
+    const centro = await centroDe(fila(page, 'Mandar la carta a la Escuela'))
+    await arrastrar(page, { x: centro.x - 40, y: centro.y }, { x: centro.x - 20, y: centro.y + 120 })
+    await expect(casilla(page, 'Mandar la carta a la Escuela')).not.toBeChecked()
+    await expect(page.getByRole('status')).toHaveCount(0)
+  })
+
   test('Hoy muestra tus tareas por hacer, la atrasada primero', async ({ page }) => {
     await abrir(page, '/hoy?maqueta=lista&hoy=2026-11-10')
     await expect(page.getByRole('button', { name: /Mandar la carta a la Escuela/ })).toBeVisible()
@@ -88,5 +127,21 @@ test.describe('Tareas', () => {
     await page.getByRole('button', { name: /1 tarea más/ }).click()
     await expect(page).toHaveURL(/\/tareas/)
     await expect(page.getByRole('button', { name: t.lista.mias, exact: true })).toHaveAttribute('aria-pressed', 'true')
+  })
+})
+
+// Con movimiento de verdad: la fila vuelve a su lugar y la tarea pasa a Hechas
+test.describe('Tareas con movimiento', () => {
+  test.use({ reducedMotion: 'no-preference' })
+
+  test('deslizar marca, la fila vuelve a su lugar y pasa a Hechas', async ({ page }) => {
+    await abrir(page, TAREAS)
+    const titulo = 'Mandar la carta a la Escuela'
+    await deslizar(page, fila(page, titulo), 260)
+    await expect(casilla(page, titulo)).toBeChecked()
+    // Se asienta: sin desplazamiento a un lado
+    await expect.poll(() => fila(page, titulo).locator('div').first().evaluate((el) => getComputedStyle(el).translate)).toMatch(/^(none|0px( 0px)?)$/)
+    // A los 2,5 s pasa a Hechas
+    await expect(page.getByRole('button', { name: t.comun.hechas(4) })).toBeVisible({ timeout: 6000 })
   })
 })

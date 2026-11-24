@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router'
+import { ConPastilla } from '../../componentes/ConPastilla.tsx'
 import { EntradaPerfil } from '../../componentes/EntradaPerfil.tsx'
 import { Icono } from '../../componentes/Icono.tsx'
 import { SinConexion } from '../../componentes/SinConexion.tsx'
@@ -8,7 +9,8 @@ import estilos from './Grupo.module.css'
 
 export type VistaGrupo = 'estadias' | 'intereses'
 
-// «Estadías | Intereses»: cambia entre las dos vistas de Grupo
+// «Estadías | Intereses»: cambia entre las dos vistas de Grupo. Cada vista arma el suyo: con la clave, la marca parte
+// desde donde estaba y se desliza a la otra opción
 export function SegmentoGrupo({ vista }: { vista: VistaGrupo }) {
   const textos = useTextos()
   const navigate = useNavigate()
@@ -16,14 +18,14 @@ export function SegmentoGrupo({ vista }: { vista: VistaGrupo }) {
     if (otra !== vista) navigate(otra === 'estadias' ? '/grupo' : '/grupo/intereses', { replace: true })
   }
   return (
-    <div role="group" aria-label={textos.intereses.grupo.queVer} className={estilos.segmento}>
+    <ConPastilla role="group" aria-label={textos.intereses.grupo.queVer} className={estilos.segmento} clave="grupo-vista">
       <button type="button" aria-pressed={vista === 'estadias'} onClick={() => ir('estadias')}>
         {textos.intereses.comun.estadias}
       </button>
       <button type="button" aria-pressed={vista === 'intereses'} onClick={() => ir('intereses')}>
         {textos.intereses.comun.titulo}
       </button>
-    </div>
+    </ConPastilla>
   )
 }
 

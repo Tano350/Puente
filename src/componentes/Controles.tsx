@@ -1,7 +1,10 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as EventoPuntero, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { diaConSemana } from '../datos/fechas.ts'
+import { cierraLaHoja, cuerpo, seguir, seVaElAviso, sinMovimiento, sonar, Valor } from '../movimiento/index.ts'
 import { useTextos } from '../textos.ts'
 import { Icono, type NombreIcono } from './Icono.tsx'
+import { cerrarAvisos } from './useAviso.ts'
 import estilos from './Controles.module.css'
 
 // Piezas que se repiten en todas las pantallas, con las medidas del lienzo.
@@ -147,14 +150,31 @@ export function CampoFecha({ id, etiqueta, valor, min, max, onCambio, error }: {
   )
 }
 
+// La pista de un interruptor: al cambiar, la perilla salta al otro lado con resorte (el CSS la deja en su lugar
+// nuevo; parte desde donde se veía)
+export function Pista({ activo }: { activo: boolean }) {
+  const perilla = useRef<HTMLSpanElement>(null)
+  const antes = useRef(activo)
+  useLayoutEffect(() => {
+    if (antes.current === activo || !perilla.current) return
+    antes.current = activo
+    const c = cuerpo(perilla.current)
+    c.pos({ x: c.p.x + (activo ? -20 : 20) }).meta({ x: 0 })
+    sonar('tick')
+  }, [activo])
+  return (
+    <span className={estilos.pista} data-activo={activo}>
+      <span ref={perilla} className={estilos.perilla} />
+    </span>
+  )
+}
+
 export function Interruptor({ etiqueta, activo, onCambio, ultimo = false }: { etiqueta: string; activo: boolean; onCambio: (activo: boolean) => void; ultimo?: boolean }) {
   return (
     <div className={`${estilos.interruptorFila} ${ultimo ? estilos.ultimo : ''}`}>
       <span className={estilos.interruptorTexto}>{etiqueta}</span>
       <button type="button" role="switch" aria-checked={activo} aria-label={etiqueta} className={estilos.interruptor} onClick={() => onCambio(!activo)}>
-        <span className={estilos.pista} data-activo={activo}>
-          <span className={estilos.perilla} />
-        </span>
+        <Pista activo={activo} />
       </button>
     </div>
   )
@@ -165,9 +185,7 @@ export function FilaInterruptor({ etiqueta, activo, onCambio }: { etiqueta: stri
   return (
     <button type="button" role="switch" aria-checked={activo} className={estilos.fila} onClick={() => onCambio(!activo)}>
       <span className={estilos.filaEtiqueta}>{etiqueta}</span>
-      <span className={estilos.pista} data-activo={activo}>
-        <span className={estilos.perilla} />
-      </span>
+      <Pista activo={activo} />
     </button>
   )
 }
@@ -195,9 +213,79 @@ export function Fila({ etiqueta, valor, onClick, sinFlecha = false, icono }: { e
   )
 }
 
-// Hoja que sube desde abajo, con el fondo oscurecido
+// Hoja que sube desde abajo con resorte, con el fondo oscurecido. Se baja con el dedo (desde cualquier parte que no
+// se esté desplazando) o tocando el fondo. Al cerrarse baja y recién entonces se quita; mientras baja ya no es un
+// diálogo para el lector de pantalla. Va en el body (portal), para que no la mueva lo que se mueve en la pantalla.
 export function Hoja({ abierta, etiqueta, onCerrar, alerta = false, children }: { abierta: boolean; etiqueta: string; onCerrar: () => void; alerta?: boolean; children: ReactNode }) {
   const textos = useTextos()
+  const [montada, setMontada] = useState(abierta)
+  if (abierta && !montada) setMontada(true)
+  // Mientras baja, sigue mostrando lo último que tenía (quien la abrió puede haber borrado sus datos)
+  const contenido = useRef<ReactNode>(children)
+  if (abierta) contenido.current = children
+  const hoja = useRef<HTMLDivElement>(null)
+  const velo = useRef<HTMLButtonElement>(null)
+  const alto = useRef(1)
+  const y = useRef<Valor | null>(null)
+  if (!y.current) {
+    y.current = new Valor(0, (v) => {
+      if (hoja.current) hoja.current.style.translate = Math.abs(v) < 0.01 ? '' : `0 ${v.toFixed(2)}px`
+      if (velo.current) velo.current.style.opacity = String(Math.min(1, Math.max(0, 1 - v / alto.current)))
+    })
+  }
+
+  useLayoutEffect(() => {
+    const el = hoja.current
+    const valor = y.current
+    if (!el || !valor) return
+    alto.current = Math.max(1, el.offsetHeight)
+    if (abierta) {
+      valor.alQuieto = null
+      // Parte desde abajo (la primera vez) o desde donde iba bajando; se aplica antes de dibujar, sin destello
+      valor.fijar(valor.x === 0 && valor.m === 0 ? alto.current + 30 : valor.x)
+      valor.ir(0)
+      return
+    }
+    if (sinMovimiento()) {
+      setMontada(false)
+      return
+    }
+    let listo = false
+    const quitar = () => {
+      if (listo) return
+      listo = true
+      setMontada(false)
+    }
+    valor.alQuieto = quitar
+    valor.ir(alto.current + 60)
+    const reloj = window.setTimeout(quitar, 900)
+    return () => window.clearTimeout(reloj)
+  }, [abierta, montada])
+
+  useEffect(() => {
+    if (abierta) sonar('hoja')
+  }, [abierta])
+
+  const arrastrar = (e: EventoPuntero<HTMLDivElement>) => {
+    const valor = y.current
+    const objetivo = e.target
+    if (!abierta || !valor || !(objetivo instanceof Element) || objetivo.closest('input, textarea, select, [contenteditable="true"]')) return
+    // Si lo tocado está dentro de algo desplazado hacia abajo, primero se desplaza eso
+    for (let n: Element | null = objetivo; n && n !== e.currentTarget; n = n.parentElement) if (n.scrollTop > 0) return
+    const desde = valor.x
+    seguir(e, {
+      eje: 'y',
+      sentido: 1,
+      alMover: (p) => valor.fijar(desde + (p.dy >= 0 ? p.dy : p.dy * 0.18)),
+      alSoltar: (p, cancelado) => {
+        if (!cancelado && cierraLaHoja(valor.x, alto.current, p.vy)) {
+          valor.v = Math.max(0, p.vy)
+          onCerrar()
+        } else valor.ir(0)
+      },
+    })
+  }
+
   useEffect(() => {
     if (!abierta) return
     const alPresionar = (e: KeyboardEvent) => {
@@ -214,15 +302,26 @@ export function Hoja({ abierta, etiqueta, onCerrar, alerta = false, children }: 
       if (antes?.isConnected) antes.focus({ preventScroll: true })
     }
   }, [abierta])
-  if (!abierta) return null
-  return (
-    <div className={estilos.hojaFondo}>
-      <button type="button" aria-label={textos.cerrar} className={estilos.hojaVelo} data-sin-hundido onClick={onCerrar} />
-      <div role={alerta ? 'alertdialog' : 'dialog'} aria-modal="true" aria-label={etiqueta} className={estilos.hoja}>
+  if (!montada) return null
+  const bajando = !abierta
+  return createPortal(
+    <div className={estilos.hojaFondo} data-bajando={bajando || undefined}>
+      <button type="button" ref={velo} aria-label={textos.cerrar} className={estilos.hojaVelo} data-sin-hundido tabIndex={bajando ? -1 : undefined} onClick={onCerrar} />
+      <div
+        ref={hoja}
+        role={bajando ? undefined : alerta ? 'alertdialog' : 'dialog'}
+        aria-modal={bajando ? undefined : true}
+        aria-label={bajando ? undefined : etiqueta}
+        aria-hidden={bajando || undefined}
+        inert={bajando || undefined}
+        className={estilos.hoja}
+        onPointerDown={arrastrar}
+      >
         <div aria-hidden="true" className={estilos.manilla} />
-        {children}
+        {contenido.current}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
@@ -250,16 +349,85 @@ export function Aviso({
   arriba?: boolean
 }) {
   const textos = useTextos()
-  if (!texto) return null
   const boton = accion ?? (onDeshacer && { texto: textos.deshacer, alHacer: onDeshacer })
-  return (
-    <div role="status" className={`${estilos.aviso} ${sobrePie ? estilos.avisoSobrePie : ''} ${conPanel ? estilos.avisoConPanel : ''} ${arriba ? estilos.avisoArriba : ''}`}>
-      <span className={estilos.avisoTexto}>{texto}</span>
-      {boton && (
-        <button type="button" className={estilos.deshacer} onClick={boton.alHacer}>
-          {boton.texto}
+  // Entra con resorte; al irse baja (o sube, si va arriba) y recién entonces se quita. Mientras sale muestra lo último.
+  const [montado, setMontado] = useState(Boolean(texto))
+  if (texto && !montado) setMontado(true)
+  const ultimo = useRef({ texto, boton })
+  if (texto) ultimo.current = { texto, boton }
+  const caja = useRef<HTMLDivElement>(null)
+  // Se tiró hacia el lado: ya se fue, no hace falta animar la salida
+  const tirado = useRef(false)
+
+  useLayoutEffect(() => {
+    const el = caja.current
+    if (!el) return
+    const c = cuerpo(el)
+    if (texto) {
+      tirado.current = false
+      c.alQuieto = null
+      c.fijar({ x: 0, r: 0 })
+      c.pos({ y: arriba ? -40 : 46, s: 0.92 }).meta({ y: 0, s: 1 })
+      return
+    }
+    if (tirado.current || sinMovimiento()) {
+      setMontado(false)
+      return
+    }
+    let listo = false
+    const quitar = () => {
+      if (listo) return
+      listo = true
+      setMontado(false)
+    }
+    c.alQuieto = quitar
+    c.meta({ y: arriba ? -110 : 110, s: 0.96 })
+    const reloj = window.setTimeout(quitar, 900)
+    return () => window.clearTimeout(reloj)
+  }, [texto, montado, arriba])
+
+  // Se descarta tirándolo hacia el lado (el que queda arriba hasta que lo cierran, no)
+  const tirar = (e: EventoPuntero<HTMLDivElement>) => {
+    const el = caja.current
+    if (arriba || !texto || !el) return
+    const c = cuerpo(el)
+    const ancho = el.offsetWidth
+    seguir(e, {
+      eje: 'x',
+      alMover: (p) => c.fijar({ x: p.dx, r: Math.max(-5, Math.min(5, p.dx / 45)) }),
+      alSoltar: (p, cancelado) => {
+        if (cancelado || !seVaElAviso(p.dx, ancho, p.vx)) {
+          c.meta({ x: 0, r: 0 })
+          return
+        }
+        tirado.current = true
+        const lado = Math.sign(p.dx || p.vx) || 1
+        c.meta({ x: lado * (ancho + 80), r: 0 }).vel({ x: p.vx })
+        c.alQuieto = () => cerrarAvisos()
+        window.setTimeout(cerrarAvisos, 700)
+        sonar('tick')
+      },
+    })
+  }
+
+  if (!montado) return null
+  const mostrado = texto ? { texto, boton } : ultimo.current
+  return createPortal(
+    <div
+      ref={caja}
+      role={texto ? 'status' : undefined}
+      aria-hidden={texto ? undefined : true}
+      data-saliendo={texto ? undefined : true}
+      className={`${estilos.aviso} ${sobrePie ? estilos.avisoSobrePie : ''} ${conPanel ? estilos.avisoConPanel : ''} ${arriba ? estilos.avisoArriba : ''}`}
+      onPointerDown={tirar}
+    >
+      <span className={estilos.avisoTexto}>{mostrado.texto}</span>
+      {mostrado.boton && (
+        <button type="button" className={estilos.deshacer} tabIndex={texto ? undefined : -1} onClick={mostrado.boton.alHacer}>
+          {mostrado.boton.texto}
         </button>
       )}
-    </div>
+    </div>,
+    document.body,
   )
 }

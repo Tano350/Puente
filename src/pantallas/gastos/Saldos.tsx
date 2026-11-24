@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router'
 import { Avatar } from '../../componentes/Avatar.tsx'
 import { Aviso } from '../../componentes/Controles.tsx'
@@ -6,6 +6,7 @@ import { Icono } from '../../componentes/Icono.tsx'
 import { useAviso } from '../../componentes/useAviso.ts'
 import { estaConectado } from '../../datos/conexion.ts'
 import { deshacerPago, marcarPagado, plata, type Pago, type Transferencia } from '../../datos/gastos.ts'
+import { Brillo, chispasDesde, empujon, NIVEL, Numero, sinMovimiento, sonar, vibrar } from '../../movimiento/index.ts'
 import { useTextos, type Textos } from '../../textos.ts'
 import { Flecha, Saldar } from './Saldar.tsx'
 import { useSaldos, type Saldos } from './SaldosDatos.ts'
@@ -17,6 +18,9 @@ import estilos from './Saldos.module.css'
 
 // En las listas todo es en dólares, así que los montos van sin "US$"
 const sinMoneda = (centavos: number) => plata(Math.abs(centavos)).replace('US$ ', '')
+// El monto que corre: Numero entrega centavos con decimales mientras rueda
+const centavos = (n: number) => plata(Math.round(n))
+const colorDe = (variable: string) => getComputedStyle(document.documentElement).getPropertyValue(variable).trim() || '#ff8a4c'
 const signo = (centavos: number) => (centavos > 0 ? 'mas' : centavos < 0 ? 'menos' : 'cero')
 // La palabra chica sobre el monto: "le deben" / "debe" (o "te deben" / "debes", si el saldo es tuyo)
 const palabraDeSaldo = (t: Textos['gastos']['saldos'], centavos: number, tuyo: boolean) =>
@@ -73,7 +77,39 @@ function Tarjeta({ datos, computador, compacta = false, abrirSaldar = false, onS
   }
   // Si ya no queda nada que saldar (alguien cambió un gasto), "Saldar" no queda pendiente de volver a abrirse solo
   if (saldando && !marcando && !puedeSaldar) setSaldando(false)
-  const s = situacion(datos, textos, compacta)
+  const real = situacion(datos, textos, compacta)
+  // Al marcar un pago, la tarjeta se queda con lo de antes mientras el monto corre hasta su valor nuevo
+  const [retenida, setRetenida] = useState<Situacion | null>(null)
+  const anterior = useRef(real)
+  const pagoEn = useRef(0)
+  const tarjeta = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    const antes = anterior.current
+    anterior.current = real
+    if (antes.tipo === 'debes' && real.monto < antes.monto && performance.now() - pagoEn.current < 5000 && !sinMovimiento()) {
+      setRetenida(real.tipo !== 'debes' ? antes : null)
+    } else if (real.monto > 0) setRetenida(null)
+  }, [real.monto, real.tipo]) // oxlint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const el = tarjeta.current?.querySelector<HTMLElement>('[data-monto]') ?? null
+    if (!retenida || !el) return
+    const fichas = window.setInterval(() => chispasDesde(el, { forma: 'ficha', colores: [colorDe('--en-contra'), colorDe('--cinta')], cantidad: 0.25, abanico: Math.PI * 1.2, velocidad: 240 }), 90)
+    const fin = window.setTimeout(() => {
+      window.clearInterval(fichas)
+      setRetenida(null)
+      empujon(tarjeta.current ?? el, { s: 2 })
+      chispasDesde(tarjeta.current ?? el, { colores: [colorDe('--a-favor')], cantidad: 0.7, velocidad: 380 })
+      sonar('exito')
+      vibrar([12, 40, 20])
+    }, NIVEL.rodarMs + 150)
+    return () => {
+      window.clearInterval(fichas)
+      window.clearTimeout(fin)
+    }
+  }, [retenida])
+  const s = retenida ? { ...retenida, monto: real.monto } : real
+  const hayMonto = s.monto > 0 || retenida !== null
 
   // "Deshacer" borra el pago recién marcado
   const deshacer = async (pago: Pago) => {
@@ -88,6 +124,7 @@ function Tarjeta({ datos, computador, compacta = false, abrirSaldar = false, onS
   }
   const marcar = async (transferencia: Transferencia) => {
     setMarcando(transferencia)
+    pagoEn.current = performance.now()
     try {
       const pago = await marcarPagado(transferencia.a, transferencia.monto)
       aviso.mostrar(t.pagaste(datos.nombre(transferencia.a)), () => void deshacer(pago))
@@ -106,40 +143,37 @@ function Tarjeta({ datos, computador, compacta = false, abrirSaldar = false, onS
   return (
     <>
       {compacta ? (
-        <div className={estilos.compacta}>
+        <div ref={tarjeta} className={estilos.compacta} data-carta>
           <span className={estilos.icono}>
             <Billetes />
           </span>
           <div className={estilos.situacion}>
             <div className={estilos.titulo}>
               {s.titulo}
-              {s.monto > 0 && (
-                <>
-                  {' '}
-                  <span className={estilos.montoEnTitulo} data-tipo={s.tipo}>
-                    {plata(s.monto)}
-                  </span>
-                </>
-              )}
+              {hayMonto && ' '}
+              {/* Siempre está puesto (escondido si no hay deuda), para que al volver la deuda el número corra hacia arriba */}
+              <span data-monto className={estilos.montoEnTitulo} data-tipo={s.tipo} hidden={!hayMonto}>
+                <Numero valor={s.monto} formato={centavos} />
+              </span>
             </div>
             {s.detalle && <div className={estilos.detalle}>{s.detalle}</div>}
           </div>
           {puedeSaldar && saldar}
+          <Brillo />
         </div>
       ) : (
-        <div className={estilos.tarjeta} data-computador={computador}>
+        <div ref={tarjeta} className={estilos.tarjeta} data-computador={computador} data-carta>
           <div className={estilos.fila}>
             <div className={estilos.situacion}>
               <div className={estilos.titulo}>{s.titulo}</div>
               {s.detalle && <div className={estilos.detalle}>{s.detalle}</div>}
             </div>
-            {s.monto > 0 && (
-              <div className={estilos.monto} data-tipo={s.tipo}>
-                {plata(s.monto)}
-              </div>
-            )}
+            <div data-monto className={estilos.monto} data-tipo={s.tipo} hidden={!hayMonto}>
+              <Numero valor={s.monto} formato={centavos} />
+            </div>
           </div>
           {puedeSaldar && saldar}
+          <Brillo />
         </div>
       )}
       {saldando && <Saldar datos={datos} computador={computador} marcando={marcando} onMarcar={(x) => void marcar(x)} onCerrar={() => setSaldando(false)} />}

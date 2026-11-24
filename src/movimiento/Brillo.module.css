@@ -1,0 +1,21 @@
+.brillo {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: var(--brillo, 0);
+  background: radial-gradient(circle at var(--brillo-x, 50%) var(--brillo-y, 30%), rgb(255 255 255 / 0.18), rgb(255 255 255 / 0) 58%);
+  transition: opacity 0.25s ease-out;
+}
+
+/* En modo claro las tarjetas son blancas: el brillo es un velo azul muy suave */
+:root[data-tema='claro'] .brillo {
+  background: radial-gradient(circle at var(--brillo-x, 50%) var(--brillo-y, 30%), rgb(26 109 184 / 0.07), rgb(26 109 184 / 0) 58%);
+}
+
+@media (forced-colors: active), (prefers-contrast: more), (prefers-reduced-motion: reduce) {
+  .brillo {
+    display: none;
+  }
+}

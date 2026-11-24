@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react'
+import { useLayoutEffect, useRef, type ReactNode } from 'react'
+import { cuerpo } from '../movimiento/index.ts'
 import { useTextos } from '../textos.ts'
 import { Pie } from './Controles.tsx'
 import { Icono } from './Icono.tsx'
@@ -8,8 +9,13 @@ import estilos from './Paneles.module.css'
 // Va dentro de un contenedor con position: relative (el cuerpo de la pantalla).
 export function PanelEncima({ etiqueta, cabecera, pie, children, onCerrar }: { etiqueta: string; cabecera?: ReactNode; pie?: ReactNode; children: ReactNode; onCerrar: () => void }) {
   const textos = useTextos()
+  // Al abrirse entra desde la derecha (cambiar lo que muestra no lo vuelve a mover)
+  const panel = useRef<HTMLElement>(null)
+  useLayoutEffect(() => {
+    if (panel.current) cuerpo(panel.current).pos({ x: 48 }).meta({ x: 0 })
+  }, [])
   return (
-    <aside aria-label={etiqueta} className={estilos.panel}>
+    <aside ref={panel} aria-label={etiqueta} className={estilos.panel}>
       <div className={estilos.cabeza}>
         <div className={estilos.izquierda}>{cabecera}</div>
         <button type="button" aria-label={textos.cerrar} className={estilos.cerrar} onClick={onCerrar}>
@@ -26,7 +32,7 @@ export function PanelEncima({ etiqueta, cabecera, pie, children, onCerrar }: { e
 // Con "encima" tapa todo, también la barra de secciones (para lo que se termina o se cancela).
 export function PantallaConPie({ pie, children, encima = false }: { pie?: ReactNode; children: ReactNode; encima?: boolean }) {
   return (
-    <div className={encima ? estilos.encima : estilos.pantalla}>
+    <div className={encima ? estilos.encima : estilos.pantalla} data-encima={encima || undefined}>
       <div className={estilos.desplazable}>{children}</div>
       {pie && <Pie>{pie}</Pie>}
     </div>

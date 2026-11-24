@@ -153,7 +153,7 @@ export function Linea({ estaciones, ahora, grande, onAbrir, onNota }: { estacion
       {estaciones.map((e, i) => (
         <Fragment key={e.id}>
           {ahora?.en === i && <FilaAhora marca={ahora} estaciones={estaciones} />}
-          <li className={estilos.parada} data-estado={e.estado} data-destacada={e.destacada} data-grande={grande && e.destacada}>
+          <li className={estilos.parada} data-flip={`ev-${e.id}`} data-estado={e.estado} data-destacada={e.destacada} data-grande={grande && e.destacada}>
             <span className={estilos.horas}>
               <span className={estilos.hora}>{e.hora}</span>
               {e.horaChile && <span className={estilos.chile}>{e.horaChile}</span>}
@@ -196,7 +196,7 @@ export function Paradas({ estaciones, ahora, elegida, onElegir }: { estaciones: 
       {estaciones.map((e, i) => (
         <Fragment key={e.id}>
           {ahora?.en === i && <FilaAhora marca={ahora} estaciones={estaciones} compacta />}
-          <li>
+          <li data-flip={`ev-${e.id}`}>
             <button type="button" className={estilos.fila} data-estado={e.estado} data-destacada={e.destacada} aria-pressed={elegida === e.id} onClick={() => onElegir(e.id)}>
               <span className={estilos.horas}>
                 <span className={estilos.hora}>{e.hora}</span>

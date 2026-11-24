@@ -1,0 +1,5 @@
+/* Para que el salto se vea, el número es una caja (a un texto suelto no se le puede cambiar la escala) */
+.numero {
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+}

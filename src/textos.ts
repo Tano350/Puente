@@ -120,7 +120,10 @@ export const es = {
   },
   grupo: {
     titulo: 'Grupo',
-    hayAlla: (n: number, total: number) => `Hoy hay ${n} de ${total} allá.`,
+    // n puede ser una marca donde la pantalla pone el número que salta
+    hayAlla: (n: number | string, total: number) => `Hoy hay ${n} de ${total} allá.`,
+    // Al arrastrar de lado sobre las barras, otro día ("20 de enero")
+    hayAllaEl: (fecha: string, n: number | string, total: number) => `El ${fecha} hay ${n} de ${total} allá.`,
     nadieTodavia: 'Todavía no llega nadie.',
     volvieronTodos: 'Ya volvieron todos.',
     llegasPrimero: (dia: string) => `Llegas primero, el ${dia}.`,
@@ -679,6 +682,7 @@ export const es = {
     // El aviso al elegir: queda en el idioma que elegiste
     idiomaCambiado: { es: 'Puente quedó en español.', en: 'Puente is now in English.' },
     modoOscuro: 'Modo oscuro',
+    sonido: 'Sonido y vibración',
     necesitaConexion: 'Necesitas conexión.',
   },
   fechas: {
@@ -762,6 +766,11 @@ export const es = {
       sinRedNueva: 'Necesitas conexión para crear tareas.',
       sinRedTomar: 'Necesitas conexión para tomar una tarea.',
       meLaTomo: 'Me la tomo',
+      // Al deslizar una tarea que no se puede marcar
+      soloPuedeMarcar: (nombre: string) => `Solo ${nombre} puede marcarla.`,
+      primeroTomala: 'Primero tómala con «Me la tomo».',
+      // Lo que aparece detrás de una tarea al deslizarla para marcarla
+      hecha: 'Hecha',
       marcasteTuya: 'Marcaste la tuya como hecha.',
       marcaste: (titulo: string) => `Marcaste «${titulo}» como hecha.`,
       desmarcaste: (titulo: string) => `Desmarcaste «${titulo}».`,
