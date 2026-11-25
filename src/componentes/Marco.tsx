@@ -3,7 +3,7 @@ import { Outlet, useLocation, useNavigationType } from 'react-router'
 import { sincronizarSuscripcion } from '../datos/dispositivo.ts'
 import { modoMaqueta } from '../datos/maqueta.ts'
 import { useSesion } from '../datos/sesion.tsx'
-import { cuerpo, sinMovimiento } from '../movimiento/index.ts'
+import { cuerpo, NIVEL, repartir, sinMovimiento } from '../movimiento/index.ts'
 import { AvisoRechazos } from './AvisoRechazos.tsx'
 import { BarraLateral } from './BarraLateral.tsx'
 import { BarraSecciones } from './BarraSecciones.tsx'
@@ -13,7 +13,8 @@ import estilos from './Marco.module.css'
 
 // Al cambiar de pantalla: de una sección a otra, un deslizamiento corto hacia el lado de la sección nueva; en el
 // celular, lo que se abre dentro de una sección entra desde la derecha y al volver la pantalla llega desde la izquierda.
-// En el computador lo que se abre va en un panel encima, que entra solo (Paneles.tsx).
+// Y sus tarjetas y filas se reparten (repartir.ts). En el computador lo que se abre va en un panel encima, que entra
+// solo (Paneles.tsx).
 function lugar(ruta: string): { seccion: number; hondo: number } {
   const partes = ruta.split('/').filter(Boolean)
   const i = secciones.findIndex((s) => s.ruta === `/${partes[0] ?? ''}`)
@@ -30,15 +31,16 @@ function useCambioDePantalla(contenido: RefObject<HTMLElement | null>, ruta: str
     const de = lugar(antes)
     const a = lugar(ruta)
     let desde = 0
-    if (de.seccion !== a.seccion) desde = a.seccion > de.seccion ? 18 : -18
-    else if (!computador && a.hondo !== de.hondo) desde = a.hondo > de.hondo ? 70 : -40
+    if (de.seccion !== a.seccion) desde = a.seccion > de.seccion ? NIVEL.entraSeccion : -NIVEL.entraSeccion
+    else if (!computador && a.hondo !== de.hondo) desde = a.hondo > de.hondo ? NIVEL.entraAbrir : NIVEL.entraVolver
     if (!desde) return
     for (const hijo of Array.from(main.children)) {
       if (!(hijo instanceof HTMLElement)) continue
       // Una pantalla que tapa todo (crear, anotar) se mueve ella: es fija y no la arrastraría su contenedor
       const objetivo = hijo.querySelector<HTMLElement>('[data-encima]') ?? hijo
       cuerpo(objetivo).pos({ x: desde }).meta({ x: 0 })
-      objetivo.animate([{ opacity: 0.35 }, { opacity: 1 }], { duration: 200, easing: 'ease-out' })
+      objetivo.animate([{ opacity: NIVEL.entraOpacidad }, { opacity: 1 }], { duration: NIVEL.entraMs, easing: 'ease-out' })
+      repartir(objetivo)
     }
   }, [contenido, ruta, computador])
 }
@@ -50,11 +52,12 @@ export function Marco() {
   const contenido = useRef<HTMLElement>(null)
   const posiciones = useRef(new Map<string, number>())
   const computador = useEsComputador()
-  useCambioDePantalla(contenido, pathname, computador)
   // Lo que se abre parte desde arriba; al volver atrás, la pantalla aparece donde la dejaste
   useLayoutEffect(() => {
     contenido.current?.scrollTo(0, tipo === 'POP' ? (posiciones.current.get(key) ?? 0) : 0)
   }, [key, tipo])
+  // Después de dejar la pantalla donde va, para repartir lo que se ve
+  useCambioDePantalla(contenido, pathname, computador)
   // Una vez al abrir la app con sesión: deja guardada la suscripción de avisos de este dispositivo
   const sesion = useSesion()
   const personaId = sesion.tipo === 'dentro' ? sesion.persona.id : null

@@ -45,7 +45,7 @@ export function ListaGastos({ gastos, partes, yo, nombres, hoy, computador, eleg
             const c = conmigo(g, partes, yo)
             const monto = plata(g.monto)
             return (
-              <button key={g.id} type="button" className={estilos.fila} aria-pressed={computador ? elegido === g.id : undefined} onClick={() => onAbrir(g)}>
+              <button key={g.id} type="button" className={estilos.fila} aria-pressed={computador ? elegido === g.id : undefined} onClick={() => onAbrir(g)} data-reparte>
                 <span className={estilos.icono}>
                   <Icono nombre={iconoDe(g.categoria)} medida={22} />
                 </span>

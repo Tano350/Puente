@@ -24,9 +24,12 @@ import './datos/gastos.ts'
 import './datos/tareas.ts'
 import { rutas } from './rutas.tsx'
 import { instalarMovimiento } from './movimiento/index.ts'
+import { instalarActualizacion } from './datos/actualizacion.ts'
 
 // Todo lo que se aprieta responde con resorte (src/movimiento/apretar.ts)
 instalarMovimiento()
+// La app instalada busca y se pone la versión nueva sola (src/datos/actualizacion.ts)
+instalarActualizacion()
 
 createRoot(document.getElementById('raiz')!).render(
   <StrictMode>
