@@ -193,7 +193,7 @@ function ListaSaldos({ datos, enColumna }: { datos: Saldos; enColumna: boolean }
         {datos.gente.map(({ persona, saldo }) => {
           const tuyo = persona.id === datos.yo
           return (
-            <li key={persona.id} className={estilos.persona}>
+            <li key={persona.id} className={estilos.persona} data-reparte>
               {tuyo ? (
                 <span className={estilos.tuAvatar} aria-hidden="true">
                   {textos.gastos.tu}
@@ -230,7 +230,7 @@ function ComoSaldar({ datos }: { datos: Saldos }) {
   // Para lectores de pantalla va la frase entera ("Le transfieres US$ 84,00 a Diego."); la flecha es solo para la vista
   const quien = (id: string) => (id === datos.yo ? null : datos.nombre(id))
   const fila = (clave: string, de: string, a: string, monto: number, hecha: boolean) => (
-    <li key={clave} className={estilos.transferencia} data-tuya={de === datos.yo || a === datos.yo} data-hecha={hecha}>
+    <li key={clave} className={estilos.transferencia} data-tuya={de === datos.yo || a === datos.yo} data-hecha={hecha} data-reparte>
       <span className={estilos.oculto}>{t.frase(quien(de), quien(a), plata(monto), hecha)}</span>
       <span className={estilos.quienes} aria-hidden="true">
         <span className={estilos.quien}>{datos.nombre(de)}</span>

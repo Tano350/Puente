@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react'
+import { NIVEL } from './fisica.ts'
 import { Valor } from './resortes.ts'
 
 // Dónde quedó cada marca con clave: un selector que cambia de pantalla (Estadías / Intereses) se arma de nuevo en la
@@ -21,12 +22,16 @@ export function usePastilla(contenedor: RefObject<HTMLElement | null>, eje: 'x' 
       const aplicar = () => {
         const e = estado.current
         if (!e?.marca) return
+        // Mientras se desliza se estira: la punta llega primero y la cola la alcanza
+        const estirar = Math.min(NIVEL.estirar, Math.abs(e.pos.v) * 0.025)
+        const pos = e.pos.x - (e.pos.v > 0 ? estirar : 0)
+        const largo = Math.max(0, e.largo.x + estirar)
         if (eje === 'x') {
-          e.marca.style.translate = `${e.pos.x.toFixed(2)}px 0`
-          e.marca.style.width = `${Math.max(0, e.largo.x).toFixed(2)}px`
+          e.marca.style.translate = `${pos.toFixed(2)}px 0`
+          e.marca.style.width = `${largo.toFixed(2)}px`
         } else {
-          e.marca.style.translate = `0 ${e.pos.x.toFixed(2)}px`
-          e.marca.style.height = `${Math.max(0, e.largo.x).toFixed(2)}px`
+          e.marca.style.translate = `0 ${pos.toFixed(2)}px`
+          e.marca.style.height = `${largo.toFixed(2)}px`
         }
       }
       estado.current = { marca, pos: new Valor(0, aplicar), largo: new Valor(0, aplicar), visto: false }

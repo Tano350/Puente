@@ -69,3 +69,44 @@ export async function deslizar(page: Page, elemento: Locator, dx: number) {
   const desde = { x: caja.x + caja.width * (dx > 0 ? 0.25 : 0.75), y: caja.y + caja.height / 2 }
   await arrastrar(page, desde, { x: desde.x + dx, y: desde.y + 4 }, { pasos: 10 })
 }
+
+// Un toque de verdad en el centro de un elemento: el dedo (o el botón del mouse) queda apretado `ms` milisegundos
+export async function tocar(page: Page, elemento: Locator, ms = 80) {
+  const p = await centroDe(elemento)
+  if (esCelular(page)) {
+    const cdp = await page.context().newCDPSession(page)
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: p.x, y: p.y, id: 1 }] })
+    await page.waitForTimeout(ms)
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+    await cdp.detach()
+    return
+  }
+  await page.mouse.move(p.x, p.y)
+  await page.mouse.down()
+  await page.waitForTimeout(ms)
+  await page.mouse.up()
+}
+
+// Anota en cada cuadro, durante `ms`, la escala y el giro que el movimiento le pone a un elemento (estilos scale y
+// rotate). Devuelve cómo leerlas después.
+export async function anotarMovimiento(elemento: Locator, ms = 900) {
+  await elemento.evaluate((el: HTMLElement, ms) => {
+    const muestras: { s: number; r: number }[] = []
+    ;(window as unknown as { muestras: typeof muestras }).muestras = muestras
+    const desde = performance.now()
+    const mirar = () => {
+      muestras.push({ s: Number.parseFloat(el.style.scale) || 1, r: Number.parseFloat(el.style.rotate) || 0 })
+      if (performance.now() - desde < ms) requestAnimationFrame(mirar)
+    }
+    requestAnimationFrame(mirar)
+  }, ms)
+  return async () => {
+    await elemento.page().waitForTimeout(ms + 100)
+    const muestras = await elemento.page().evaluate(() => (window as unknown as { muestras: { s: number; r: number }[] }).muestras)
+    return {
+      menor: Math.min(...muestras.map((m) => m.s)),
+      mayor: Math.max(...muestras.map((m) => m.s)),
+      giro: Math.max(...muestras.map((m) => Math.abs(m.r))),
+    }
+  }
+}

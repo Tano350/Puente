@@ -122,7 +122,7 @@ export function BarrasDelGrupo({ gente, ventana: viaje, yo, hoy, abrir, describi
       </>
     )
     return (
-      <li key={p.id}>
+      <li key={p.id} data-reparte>
         {accion ? (
           <button type="button" className={clase} onClick={accion}>
             {contenido}

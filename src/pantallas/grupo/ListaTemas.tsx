@@ -31,7 +31,7 @@ export function ListaTemas({ temas, interesados, gente, yo, elegido, sinRed, onA
         const nombres = gente.filter((p) => dentro.has(p.id)).map((p) => (p.id === yo ? textos.grupo.tu : primerNombre(p)))
         const mio = leInteresa(tema.id, yo, [...interesados])
         return (
-          <li key={tema.id} className={estilos.tarjeta} data-elegida={elegido === tema.id}>
+          <li key={tema.id} className={estilos.tarjeta} data-elegida={elegido === tema.id} data-reparte>
             <button type="button" className={estilos.abrir} data-mio={mio} onClick={() => onAbrir(tema)}>
               <span className={estilos.nombre}>{tema.nombre}</span>
               {tema.de_que_trata && <span className={estilos.trata}>{tema.de_que_trata}</span>}

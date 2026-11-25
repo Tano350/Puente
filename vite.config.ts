@@ -8,6 +8,8 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      // El registro lo hace la app (src/datos/actualizacion.ts), para buscar versiones nuevas al volver a la pantalla
+      injectRegister: false,
       manifest: {
         name: 'Puente',
         short_name: 'Puente',
@@ -34,6 +36,10 @@ export default defineConfig({
         navigateFallbackDenylist: [/^\/(acerca|privacidad)$/],
         // Los avisos push viven en public/avisos-sw.js
         importScripts: ['/avisos-sw.js'],
+        // La primera vez, el service worker toma el control al instalarse. Una versión nueva, en cambio, espera a que
+        // la app se lo pida en un momento tranquilo y recarga enseguida (src/datos/actualizacion.ts)
+        clientsClaim: true,
+        skipWaiting: false,
       },
     }),
   ],

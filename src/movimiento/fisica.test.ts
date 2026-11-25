@@ -7,11 +7,13 @@ import {
   deslizoLoSuficiente,
   diaBajo,
   escalaSegunAncho,
+  fuerzaDeJugo,
   giroAlRodar,
   ladeo,
   llego,
   masCercana,
   NIVEL,
+  ondaDeJugo,
   PASO,
   pasoResorte,
   rodado,
@@ -32,10 +34,41 @@ function simular(k: number, c: number) {
   return { pasado: maximo - 100, segundos: Infinity }
 }
 
-test('el resorte de B llega en menos de un segundo y rebota un poco', () => {
+test('el resorte de B+ llega en menos de un segundo y rebota un poco', () => {
   const { pasado, segundos } = simular(NIVEL.rigidez, NIVEL.amortiguacion)
   assert.ok(segundos < 1, `tardó ${segundos} s`)
   assert.ok(pasado > 2 && pasado < 20, `se pasó ${pasado}`)
+})
+
+test('al apretar se hunde rápido, casi sin pasarse', () => {
+  // A los 50 ms ya recorrió más de la mitad: se ve antes de levantar el dedo en un toque corto
+  let x = 0
+  let v = 0
+  for (let i = 0; i < Math.round(0.05 / PASO); i++) [x, v] = pasoResorte(x, v, 100, NIVEL.rigidezApretar, NIVEL.amortiguacionApretar, PASO)
+  assert.ok(x > 50, `a los 50 ms va en ${x}`)
+  const { pasado, segundos } = simular(NIVEL.rigidezApretar, NIVEL.amortiguacionApretar)
+  assert.ok(pasado < 3, `se pasó ${pasado}`)
+  assert.ok(segundos < 0.4, `tardó ${segundos} s`)
+})
+
+test('el temblor al soltar parte fuerte y se apaga a tiempo', () => {
+  const duracion = NIVEL.jugoMs / 1000
+  assert.deepEqual(ondaDeJugo(0, duracion), { s: 0, r: 0 })
+  assert.deepEqual(ondaDeJugo(duracion, duracion), { s: 0, r: 0 })
+  const muestras = Array.from({ length: 400 }, (_, i) => ({ t: i / 1000, ...ondaDeJugo(i / 1000, duracion) }))
+  const mayor = (desde: number, hasta: number) => Math.max(...muestras.filter((m) => m.t >= desde && m.t < hasta).map((m) => Math.abs(m.s)))
+  assert.ok(mayor(0, 0.1) > 0.6, 'al principio se nota')
+  assert.ok(mayor(0.3, 0.4) < 0.05, 'al final casi no se mueve')
+  for (const m of muestras) assert.ok(Math.abs(m.s) <= 1 && Math.abs(m.r) <= 1)
+})
+
+test('lo ancho tiembla y se hunde menos que un botón, pero algo', () => {
+  assert.deepEqual(fuerzaDeJugo(90), { s: 1, r: 1 })
+  const ancha = fuerzaDeJugo(350)
+  assert.ok(ancha.s > 0.35 && ancha.s < 0.7, `escala ${ancha.s}`)
+  assert.ok(ancha.r > 0.3 && ancha.r < 0.7, `giro ${ancha.r}`)
+  assert.equal(escalaSegunAncho(NIVEL.apretar, 120, NIVEL.anchoApretar), NIVEL.apretar)
+  assert.ok(Math.abs(escalaSegunAncho(0.9, 360, 180) - 0.95) < 1e-9)
 })
 
 test('con amortiguación crítica el resorte no se pasa', () => {

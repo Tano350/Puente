@@ -1,4 +1,4 @@
-import { escalaSegunAncho, llego, NIVEL, PASO, pasoResorte } from './fisica.ts'
+import { escalaSegunAncho, fuerzaDeJugo, llego, NIVEL, ondaDeJugo, PASO, pasoResorte } from './fisica.ts'
 
 // El motor del movimiento: cada elemento que se mueve tiene un "cuerpo" con resortes (posición, giro, escala e
 // inclinación) que van hacia su meta. Un solo ciclo por cuadro mueve todo y se apaga cuando nada se mueve.
@@ -43,6 +43,9 @@ export class Cuerpo {
   readonly perspectiva: number
   readonly ancho: number
   private inclina = false
+  // El temblor al soltar: cuánto de escala y de giro, y desde cuándo (la hora del primer cuadro que lo dibuja; -1
+  // mientras no se dibuja: así no se pierde el primer salto si soltar abre algo que demora ese cuadro)
+  private temblor: { s: number; r: number; desde: number } | null = null
 
   constructor(el: HTMLElement | SVGElement) {
     this.el = el
@@ -75,13 +78,22 @@ export class Cuerpo {
     return this
   }
 
-  // Lo pone ahí mismo, sin resorte: para seguir al dedo
+  // Lo pone ahí mismo, sin resorte: para seguir al dedo (y deja de temblar)
   fijar(o: Partial<Valores>) {
     for (const q of Object.keys(o) as Prop[]) {
       this.p[q] = o[q] ?? 0
       this.m[q] = o[q] ?? 0
       this.v[q] = 0
     }
+    this.temblor = null
+    this.despertar()
+    return this
+  }
+
+  // Tiembla un instante (escala y giro que se apagan solos en NIVEL.jugoMs), sumado a lo que haga el resorte
+  jugo(s: number, r: number) {
+    if (reducido) return this
+    this.temblor = { s, r, desde: -1 }
     this.despertar()
     return this
   }
@@ -93,7 +105,7 @@ export class Cuerpo {
   }
 
   quieto(): boolean {
-    return PROPS.every((q) => llego(this.p[q], this.v[q], this.m[q], TOLERANCIA[q]))
+    return !this.temblor && PROPS.every((q) => llego(this.p[q], this.v[q], this.m[q], TOLERANCIA[q]))
   }
 
   asentar() {
@@ -103,8 +115,21 @@ export class Cuerpo {
     }
   }
 
-  aplicar() {
-    const { x, y, r, s, rx, ry } = this.p
+  // Escribe los estilos. `cuadro`: la hora del cuadro que se está dibujando (sin ella, fuera del ciclo, el temblor no
+  // avanza)
+  aplicar(cuadro?: number) {
+    const { x, y, rx, ry } = this.p
+    let { r, s } = this.p
+    if (this.temblor) {
+      if (cuadro !== undefined && this.temblor.desde < 0) this.temblor.desde = cuadro
+      const t = this.temblor.desde < 0 ? 0 : ((cuadro ?? performance.now()) - this.temblor.desde) / 1000
+      if (t >= NIVEL.jugoMs / 1000) this.temblor = null
+      else {
+        const onda = ondaDeJugo(t, NIVEL.jugoMs / 1000)
+        s += this.temblor.s * onda.s
+        r += this.temblor.r * onda.r
+      }
+    }
     const estilo = this.el.style
     estilo.translate = Math.abs(x) < 0.01 && Math.abs(y) < 0.01 ? '' : `${x.toFixed(2)}px ${y.toFixed(2)}px`
     estilo.rotate = Math.abs(r) < 0.01 ? '' : `${r.toFixed(2)}deg`
@@ -137,9 +162,18 @@ export function cuerpoExistente(el: Element): Cuerpo | undefined {
   return cuerpos.get(el)
 }
 
-// Escala según el ancho del elemento: lo ancho se mueve menos
-export function escala(el: HTMLElement | SVGElement, s: number): number {
-  return escalaSegunAncho(s, cuerpo(el).ancho)
+// Escala según el ancho del elemento: lo ancho se mueve menos (entero hasta `referencia` pixeles)
+export function escala(el: HTMLElement | SVGElement, s: number, referencia?: number): number {
+  return escalaSegunAncho(s, cuerpo(el).ancho, referencia)
+}
+
+// El temblor al soltar algo, como las cartas de Balatro: crece, se achica y gira un poco hacia un lado al azar.
+// Lo ancho tiembla menos. `fuerza` lo agranda o achica.
+export function darJugo(el: HTMLElement | SVGElement | null | undefined, fuerza = 1) {
+  if (!el || reducido) return
+  const c = cuerpo(el)
+  const f = fuerzaDeJugo(c.ancho)
+  c.jugo(NIVEL.jugo * f.s * fuerza, NIVEL.giroJugo * f.r * fuerza * (Math.random() < 0.5 ? -1 : 1))
 }
 
 // Un empujón: el elemento salta (y gira un poco, si se pide) y vuelve solo
@@ -232,7 +266,7 @@ function cuadro(ahora: number) {
       const fin = c.alQuieto
       c.alQuieto = null
       fin?.()
-    } else c.aplicar()
+    } else c.aplicar(ahora)
   }
   for (const v of valores) {
     const llegado = llego(v.x, v.v, v.m, 0.05)
